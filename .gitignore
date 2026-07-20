@@ -1,0 +1,23 @@
+# Dependencies and build output
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+
+# Logs and editor files
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# Source design files and generated exports
+*.psd
+*.psb
+*-Screens.zip
+exports/
