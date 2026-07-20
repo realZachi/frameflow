@@ -19,10 +19,11 @@ import { createAiController } from './ai/controller'
 import { AiGenerateModal } from './components/AiGenerateModal'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
+import { getDevicePlacement } from './mockups/catalog'
 import type { Background, CanvasElement, DeviceElement, ShapeElement, Slide, TemplateId, TextElement, TextPreset, ToolId, UploadAsset } from './types'
 import { downloadBlob, fileToDataUrl, uid } from './utils'
 
-const STORAGE_KEY = 'frameflow-project-v4'
+const STORAGE_KEY = 'frameflow-project-v5'
 
 const loadInitialState = (): { slides: Slide[]; uploads: UploadAsset[] } => {
   try {
@@ -135,6 +136,12 @@ export default function App() {
       : slide))
   }
 
+  const commitElementText = useCallback((slideId: string, elementId: string, patch: { text: string; html?: string }) => {
+    commit((current) => current.map((slide) => slide.id === slideId
+      ? { ...slide, elements: slide.elements.map((element) => element.id === elementId ? ({ ...element, ...patch } as CanvasElement) : element) }
+      : slide))
+  }, [commit])
+
   const selectElement = (id: string | null, slideId?: string) => {
     if (slideId) setActiveSlideId(slideId)
     setSelectedElementId(id)
@@ -179,13 +186,14 @@ export default function App() {
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement
-      const isTyping = target.matches('input, textarea, select, [contenteditable="true"]')
+      const isTyping = Boolean(target.closest?.('input, textarea, select, [contenteditable="true"]'))
+      if (isTyping) return
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault()
         if (event.shiftKey) redo()
         else undo()
       }
-      if (!isTyping && (event.key === 'Delete' || event.key === 'Backspace')) deleteSelected()
+      if (event.key === 'Delete' || event.key === 'Backspace') deleteSelected()
     }
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
@@ -234,10 +242,9 @@ export default function App() {
   }
 
   const addDevice = (deviceStyle: DeviceElement['deviceStyle']) => {
-    const isPhotoMockup = deviceStyle === 'tilted-hand'
+    const placement = getDevicePlacement(deviceStyle)
     const element: DeviceElement = {
-      id: uid('device'), type: 'device', x: isPhotoMockup ? -7 : 20, y: isPhotoMockup ? 38 : 30,
-      width: isPhotoMockup ? 114 : 62, rotation: isPhotoMockup ? 0 : -4, opacity: 1,
+      id: uid('device'), type: 'device', ...placement, opacity: 1,
       deviceStyle, screenTheme: 'coral', tiltX: 0, tiltY: 0, shadow: 55,
     }
     commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...slide, elements: [...slide.elements, element] } : slide))
@@ -260,7 +267,11 @@ export default function App() {
         elements: slide.elements.map((element) => element.id === deviceTarget.id ? { ...element, screenshot: asset.src } : element),
       } : slide))
     } else {
-      const element: DeviceElement = { id: uid('device'), type: 'device', x: 20, y: 30, width: 62, rotation: -4, opacity: 1, deviceStyle: 'midnight', screenTheme: 'coral', tiltX: 0, tiltY: 0, shadow: 55, screenshot: asset.src }
+      const deviceStyle: DeviceElement['deviceStyle'] = 'iphone-17-a'
+      const element: DeviceElement = {
+        id: uid('device'), type: 'device', ...getDevicePlacement(deviceStyle), opacity: 1,
+        deviceStyle, screenTheme: 'coral', tiltX: 0, tiltY: 0, shadow: 55, screenshot: asset.src,
+      }
       commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...slide, elements: [...slide.elements, element] } : slide))
       setSelectedElementId(element.id)
       setActiveTool('device')
@@ -498,6 +509,7 @@ export default function App() {
           onSetActiveSlide={setActiveSlideId}
           onSelectElement={selectElement}
           onUpdateElement={updateElementLive}
+          onCommitText={commitElementText}
           onCheckpoint={checkpoint}
           onDuplicateElement={duplicateSelected}
           onDeleteElement={deleteSelected}

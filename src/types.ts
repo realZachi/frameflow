@@ -32,6 +32,7 @@ export type BaseElement = {
 export type TextElement = BaseElement & {
   type: 'text'
   text: string
+  html?: string
   color: string
   fontFamily: string
   fontSize: number
@@ -55,7 +56,14 @@ export type TextElement = BaseElement & {
 
 export type DeviceElement = BaseElement & {
   type: 'device'
-  deviceStyle: 'midnight' | 'natural' | 'graphite' | 'android' | 'tilted-hand'
+  deviceStyle:
+    | 'iphone-17-a'
+    | 'iphone-17-b'
+    | 'iphone-17-c'
+    | 'iphone-17-d'
+    | 'iphone-17-e'
+    | 'iphone-17-f'
+    | 'tilted-hand'
   screenshot?: string
   screenTheme: 'coral' | 'mint' | 'night' | 'sun'
   tiltX: number

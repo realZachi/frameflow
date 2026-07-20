@@ -25,6 +25,7 @@ type Props = {
   onSetActiveSlide: (id: string) => void
   onSelectElement: (id: string | null, slideId?: string) => void
   onUpdateElement: (slideId: string, id: string, patch: Partial<CanvasElement>) => void
+  onCommitText: (slideId: string, id: string, patch: { text: string; html?: string }) => void
   onCheckpoint: () => void
   onDuplicateElement: () => void
   onDeleteElement: () => void
@@ -45,6 +46,7 @@ export const EditorCanvas = ({
   onSetActiveSlide,
   onSelectElement,
   onUpdateElement,
+  onCommitText,
   onCheckpoint,
   onDuplicateElement,
   onDeleteElement,
@@ -178,6 +180,7 @@ export const EditorCanvas = ({
                     onBeginDrag={(event, item) => begin('drag', event, slide.id, item)}
                     onBeginResize={(event, item) => begin('resize', event, slide.id, item)}
                     onBeginRotate={(event, item) => begin('rotate', event, slide.id, item)}
+                    onCommitText={(patch) => onCommitText(slide.id, element.id, patch)}
                   />
                 ))}
               </div>

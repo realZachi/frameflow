@@ -62,9 +62,9 @@ const shapeEnum = z.enum([
 const backgroundPatternEnum = z.enum(['none', 'dots', 'grid', 'diagonal', 'waves'])
 
 const deviceStyleEnum = z
-  .enum(['midnight', 'natural', 'graphite', 'android', 'tilted-hand'])
+  .enum(['iphone-17-a', 'iphone-17-b', 'iphone-17-c', 'iphone-17-d', 'iphone-17-e', 'iphone-17-f', 'tilted-hand'])
   .describe(
-    "Device mockup to render. 'midnight'/'natural'/'graphite' are flat iPhone CSS mockups (dark/titanium/graphite finishes). 'android' is a flat Android CSS mockup. 'tilted-hand' is a photorealistic hand holding a phone at an angle - use a wide width (~110-120) and x/y positioned so the whole hand is visible.",
+    "Photorealistic iPhone mockup. 'iphone-17-a' and 'iphone-17-b' are upright/front views (typically width 58-72). 'iphone-17-c', 'iphone-17-d', and 'iphone-17-e' are low angled views (typically width 90-112). 'iphone-17-f' is a leaning portrait phone (typically width 88-105). 'tilted-hand' is a hand holding the phone (typically width 110-120). Perspective, light, and shadow are baked into every overlay.",
   )
 
 const screenThemeEnum = z.enum(['coral', 'mint', 'night', 'sun']).describe('Tint applied to the device chrome/background behind the screenshot.')
@@ -296,10 +296,10 @@ export function createEditorTools(controller: AiEditorController) {
       x: z.number().describe(COORD_NOTE),
       y: z.number().describe(COORD_NOTE),
       width: z.number().describe(COORD_NOTE),
-      rotation: z.number().optional().describe('Rotation in degrees, -180 to 180. Defaults to -4 (0 for tilted-hand).'),
-      tiltX: z.number().optional().describe('3D tilt around the horizontal axis, -12 to 12. Defaults to 0.'),
-      tiltY: z.number().optional().describe('3D tilt around the vertical axis, -18 to 18. Defaults to 0.'),
-      shadow: z.number().optional().describe('Drop shadow intensity, 0-100. Defaults to 55.'),
+      rotation: z.number().optional().describe('Additional rotation in degrees, -180 to 180. Defaults to 0; the photographic perspective is already baked in.'),
+      tiltX: z.number().optional().describe('Reserved device field, -12 to 12. Photo mockups use their baked PSD perspective.'),
+      tiltY: z.number().optional().describe('Reserved device field, -18 to 18. Photo mockups use their baked PSD perspective.'),
+      shadow: z.number().optional().describe('Reserved device field, 0-100. Photo mockups include their original lighting and shadow.'),
       screenTheme: screenThemeEnum.optional().describe('Defaults to "coral".'),
       opacity: z.number().optional().describe('Opacity from 0 to 1. Defaults to 1.'),
     }),
@@ -315,7 +315,7 @@ export function createEditorTools(controller: AiEditorController) {
         x: clampX(x),
         y: clampY(y),
         width: clampWidth(width),
-        rotation: clampRotation(rotation ?? (deviceStyle === 'tilted-hand' ? 0 : -4)),
+        rotation: clampRotation(rotation ?? 0),
         opacity: clampOpacity(opacity ?? 1),
         deviceStyle,
         screenTheme: screenTheme ?? 'coral',

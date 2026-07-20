@@ -46,7 +46,7 @@ const device = (
   width: number,
   rotation: number,
   screenTheme: Extract<CanvasElement, { type: 'device' }>['screenTheme'],
-  style: Extract<CanvasElement, { type: 'device' }>['deviceStyle'] = 'midnight',
+  style: Extract<CanvasElement, { type: 'device' }>['deviceStyle'] = 'iphone-17-a',
   extra: Partial<Extract<CanvasElement, { type: 'device' }>> = {},
 ): Extract<CanvasElement, { type: 'device' }> => ({
   id: uid('device'),
@@ -102,7 +102,7 @@ export const makeTemplate = (template: TemplateId, name = 'Screen'): Slide => {
           letterSpacing: -0.2,
         }),
         shape('pill', 11, 33, 78, '#ded7c8', -3),
-        device(22, 31, 58, 5, 'mint', 'natural', { shadow: 45 }),
+        device(20, 31, 60, 0, 'mint', 'iphone-17-a', { shadow: 45 }),
         shape('spark', 10, 67, 13, '#ff5a36', -8),
         text('READY FOR REVIEW', 53, 91.5, 39, 9, '#777064', {
           align: 'right',
@@ -129,8 +129,8 @@ export const makeTemplate = (template: TemplateId, name = 'Screen'): Slide => {
           letterSpacing: 1.1,
           lineHeight: 1,
         }),
-        device(-4, 34, 61, -8, 'sun', 'graphite', { shadow: 44 }),
-        device(47, 31, 61, 7, 'coral', 'midnight', { shadow: 48 }),
+        device(-4, 34, 59, 0, 'sun', 'iphone-17-a', { shadow: 44 }),
+        device(45, 32, 59, 0, 'coral', 'iphone-17-b', { shadow: 48 }),
         shape('circle', 9, 79, 17, '#172015'),
         text('ALL\nSCREENS', 11.2, 81.3, 12.5, 8, '#d8ff55', {
           align: 'center',
@@ -157,7 +157,7 @@ export const makeTemplate = (template: TemplateId, name = 'Screen'): Slide => {
           lineHeight: 1,
         }),
         shape('circle', 71, 29, 20, '#ffe3b3'),
-        device(19, 30.5, 68, -4, 'night', 'natural', { shadow: 56 }),
+        device(1, 39, 98, 0, 'night', 'iphone-17-e', { shadow: 56 }),
         text('PNG', 8, 86.4, 30, 31, '#2c1612', { fontWeight: 830, lineHeight: 1 }),
         text('x ALL', 38, 89.1, 29, 12, '#7e2f21', {
           fontFamily: 'Instrument Sans Variable',
@@ -183,7 +183,7 @@ export const makeTemplate = (template: TemplateId, name = 'Screen'): Slide => {
       }),
       shape('circle', 74, 29, 18, '#ff5a36'),
       shape('spark', 7, 40, 15, '#d8ff55', 8),
-      device(22, 32.5, 70, -7, 'coral', 'midnight'),
+      device(-2, 39, 104, 0, 'coral', 'iphone-17-f'),
       text('01 — PRODUCT', 8, 91.5, 45, 9, '#9e99ad', {
         fontFamily: 'Instrument Sans Variable',
         fontWeight: 720,

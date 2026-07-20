@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { fontOptions, templateMeta } from '../data'
 import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
-import { deviceOptions } from '../mockups/catalog'
+import { deviceOptions, getDevicePlacement } from '../mockups/catalog'
 import { shapeCatalog } from '../shapes'
 import { getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { ShapeGraphic } from './ShapeGraphic'
@@ -107,9 +107,6 @@ const TextInspector = ({ element, onUpdate }: { element?: Extract<CanvasElement,
 
   return (
     <>
-      <Section title="Inhalt">
-        <textarea className="text-editor" value={element.text} onChange={(event) => onUpdate({ text: event.target.value })} rows={4} />
-      </Section>
       <Section title="Typografie">
         <FieldLabel>Schriftfamilie</FieldLabel>
         <label className="select-field">
@@ -253,12 +250,10 @@ const DevicePanel = ({ element, onAddDevice, onUpdate, onUploadToDevice }: {
             key={device.id}
             className={element?.deviceStyle === device.id ? 'is-selected' : ''}
             onClick={() => element
-              ? onUpdate(device.id === 'tilted-hand'
-                ? { deviceStyle: device.id, x: -7, y: 38, width: 114, rotation: 0 }
-                : { deviceStyle: device.id, x: 20, y: 30, width: 62 })
+              ? onUpdate({ deviceStyle: device.id, ...getDevicePlacement(device.id) })
               : onAddDevice(device.id)}
           >
-            <span className={`device-swatch device-swatch--${device.id}`}><i /></span>
+            <span className="device-swatch" style={{ backgroundImage: `url(${device.preview})` }}><i /></span>
             <small>{device.label}</small>
             {element?.deviceStyle === device.id && <Check size={13} />}
           </button>

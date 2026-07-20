@@ -1,8 +1,16 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { LockKeyhole } from 'lucide-react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
+import { Bold, Italic, LockKeyhole, Underline } from 'lucide-react'
 import type { CanvasElement } from '../types'
 import { photoMockups, type PhotoMockupDefinition } from '../mockups/catalog'
-import { hexToRgba } from '../utils'
+import { hexToRgba, richTextHasFormatting, richTextToPlain, sanitizeRichText } from '../utils'
 import { ShapeGraphic } from './ShapeGraphic'
 
 const FakeScreen = ({ theme }: { theme: Extract<CanvasElement, { type: 'device' }>['screenTheme'] }) => (
@@ -91,79 +99,68 @@ const PhotoMockup = ({ element, definition }: { element: Extract<CanvasElement, 
   }, [])
 
   const mapping = perspectiveMatrix(size.width, size.height, definition)
+  const screenClip = definition.screenMask
+    ? `inset(${definition.screenMask.top * mapping.sourceHeight}px ${definition.screenMask.right * mapping.sourceWidth}px ${definition.screenMask.bottom * mapping.sourceHeight}px ${definition.screenMask.left * mapping.sourceWidth}px round ${definition.screenMask.cornerRadius * mapping.sourceWidth}px)`
+    : undefined
 
   return (
     <div ref={containerRef} className="photo-mockup" style={{ aspectRatio: definition.canvasAspectRatio }}>
       {size.width > 0 && (
         <div
           className="photo-mockup-screen"
-          style={{ width: mapping.sourceWidth, height: mapping.sourceHeight, transform: mapping.transform }}
+          style={{ width: mapping.sourceWidth, height: mapping.sourceHeight, transform: mapping.transform, clipPath: screenClip }}
         >
           {element.screenshot
             ? <img src={element.screenshot} alt="Eingefügter App-Screenshot" draggable={false} />
             : <FakeScreen theme={element.screenTheme} />}
         </div>
       )}
-      <img className="photo-mockup-overlay" src={definition.overlay} alt="Gekipptes Smartphone in einer Hand" draggable={false} />
+      <img className="photo-mockup-overlay" src={definition.overlay} alt="Fotorealistisches iPhone-Mockup" draggable={false} />
     </div>
   )
 }
 
 export const DeviceMockup = ({ element }: { element: Extract<CanvasElement, { type: 'device' }> }) => {
   const photoDefinition = photoMockups[element.deviceStyle]
-  if (photoDefinition) return <PhotoMockup element={element} definition={photoDefinition} />
-
-  const style = {
-    '--tilt-x': `${element.tiltX}deg`,
-    '--tilt-y': `${element.tiltY}deg`,
-    '--device-shadow': `${element.shadow / 100}`,
-  } as CSSProperties
-
-  return (
-    <div className={`device-perspective device-${element.deviceStyle}`} style={style}>
-      <div className="device-shell">
-        <div className="device-side device-side--left" />
-        <div className="device-side device-side--right" />
-        <div className="device-screen">
-          {element.screenshot ? <img src={element.screenshot} alt="Eingefügter App-Screenshot" draggable={false} /> : <FakeScreen theme={element.screenTheme} />}
-        </div>
-        <div className="dynamic-island" />
-        <div className="device-glint" />
-      </div>
-    </div>
-  )
+  return <PhotoMockup element={element} definition={photoDefinition} />
 }
+
+const getTextElementStyle = (element: Extract<CanvasElement, { type: 'text' }>): CSSProperties => {
+  const decoration = [element.underline ? 'underline' : '', element.strikethrough ? 'line-through' : ''].filter(Boolean).join(' ')
+  const shadow = element.shadow ?? 0
+  return {
+    color: element.color,
+    fontFamily: element.fontFamily,
+    fontSize: element.fontSize,
+    fontWeight: element.fontWeight,
+    fontStyle: element.italic ? 'italic' : 'normal',
+    textAlign: element.align,
+    lineHeight: element.lineHeight,
+    letterSpacing: element.letterSpacing,
+    textDecorationLine: decoration || 'none',
+    textTransform: element.textTransform ?? 'none',
+    backgroundColor: hexToRgba(element.backgroundColor ?? '#ffffff', element.backgroundOpacity ?? 0),
+    padding: `${element.padding ?? 0}px`,
+    borderRadius: `${element.borderRadius ?? 0}px`,
+    WebkitTextStroke: `${element.strokeWidth ?? 0}px ${element.strokeColor ?? '#111116'}`,
+    textShadow: shadow > 0
+      ? `0 ${Math.max(1, shadow * 0.035)}px ${Math.max(2, shadow * 0.12)}px ${hexToRgba(element.shadowColor ?? '#000000', Math.min(0.65, shadow * 0.0065))}`
+      : 'none',
+  }
+}
+
+const escapeHtml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const textToSeedHtml = (element: Extract<CanvasElement, { type: 'text' }>) =>
+  element.html ?? escapeHtml(element.text).replace(/\n/g, '<br>')
 
 export const ElementContent = ({ element }: { element: CanvasElement }) => {
   if (element.type === 'text') {
-    const decoration = [element.underline ? 'underline' : '', element.strikethrough ? 'line-through' : ''].filter(Boolean).join(' ')
-    const shadow = element.shadow ?? 0
-    return (
-      <div
-        className="canvas-text"
-        style={{
-          color: element.color,
-          fontFamily: element.fontFamily,
-          fontSize: element.fontSize,
-          fontWeight: element.fontWeight,
-          fontStyle: element.italic ? 'italic' : 'normal',
-          textAlign: element.align,
-          lineHeight: element.lineHeight,
-          letterSpacing: element.letterSpacing,
-          textDecorationLine: decoration || 'none',
-          textTransform: element.textTransform ?? 'none',
-          backgroundColor: hexToRgba(element.backgroundColor ?? '#ffffff', element.backgroundOpacity ?? 0),
-          padding: `${element.padding ?? 0}px`,
-          borderRadius: `${element.borderRadius ?? 0}px`,
-          WebkitTextStroke: `${element.strokeWidth ?? 0}px ${element.strokeColor ?? '#111116'}`,
-          textShadow: shadow > 0
-            ? `0 ${Math.max(1, shadow * 0.035)}px ${Math.max(2, shadow * 0.12)}px ${hexToRgba(element.shadowColor ?? '#000000', Math.min(0.65, shadow * 0.0065))}`
-            : 'none',
-        }}
-      >
-        {element.text}
-      </div>
-    )
+    const style = getTextElementStyle(element)
+    if (element.html) {
+      return <div className="canvas-text" style={style} dangerouslySetInnerHTML={{ __html: element.html }} />
+    }
+    return <div className="canvas-text" style={style}>{element.text}</div>
   }
 
   if (element.type === 'device') return <DeviceMockup element={element} />
@@ -195,9 +192,65 @@ type CanvasItemProps = {
   onBeginDrag: (event: ReactPointerEvent, element: CanvasElement) => void
   onBeginResize: (event: ReactPointerEvent, element: CanvasElement) => void
   onBeginRotate: (event: ReactPointerEvent, element: CanvasElement) => void
+  onCommitText: (patch: { text: string; html?: string }) => void
 }
 
-export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag, onBeginResize, onBeginRotate }: CanvasItemProps) => {
+export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag, onBeginResize, onBeginRotate, onCommitText }: CanvasItemProps) => {
+  const [editing, setEditing] = useState(false)
+  const editableRef = useRef<HTMLDivElement>(null)
+  const committedRef = useRef(false)
+  const savedSelectionRef = useRef<Range | null>(null)
+
+  useEffect(() => {
+    if (!editing || element.type !== 'text') return
+    const node = editableRef.current
+    if (!node) return
+    node.innerHTML = textToSeedHtml(element)
+    committedRef.current = false
+    node.focus()
+    const selection = document.getSelection()
+    if (selection) {
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+    // Seed content only when entering edit mode; the div stays uncontrolled while editing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing])
+
+  const commitEdit = () => {
+    if (committedRef.current) return
+    committedRef.current = true
+    const node = editableRef.current
+    setEditing(false)
+    if (!node) return
+    const sanitized = sanitizeRichText(node.innerHTML)
+    const plain = richTextToPlain(sanitized)
+    if (plain.trim().length === 0) return
+    onCommitText({ text: plain, html: richTextHasFormatting(sanitized) ? sanitized : undefined })
+  }
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      commitEdit()
+    }
+  }
+
+  const saveSelection = () => {
+    const selection = document.getSelection()
+    if (selection && selection.rangeCount > 0) savedSelectionRef.current = selection.getRangeAt(0).cloneRange()
+  }
+
+  const restoreSelection = () => {
+    const selection = document.getSelection()
+    if (selection && savedSelectionRef.current) {
+      selection.removeAllRanges()
+      selection.addRange(savedSelectionRef.current)
+    }
+  }
+
   const style: CSSProperties = {
     left: `${element.x}%`,
     top: `${element.y}%`,
@@ -209,17 +262,102 @@ export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag
 
   return (
     <div
-      className={`canvas-item canvas-item--${element.type}${selected && !exporting ? ' is-selected' : ''}${element.locked ? ' is-locked' : ''}`}
+      className={`canvas-item canvas-item--${element.type}${selected && !exporting ? ' is-selected' : ''}${element.locked ? ' is-locked' : ''}${editing ? ' is-editing-text' : ''}`}
       style={style}
       onPointerDown={(event) => {
         event.stopPropagation()
+        if (editing) return
         onSelect()
         if (!element.locked) onBeginDrag(event, element)
       }}
+      onDoubleClick={() => {
+        if (element.type !== 'text' || element.locked || exporting) return
+        setEditing(true)
+      }}
+      onBlur={(event) => {
+        // Focus moving to the toolbar (e.g. the color input) must not end the edit session.
+        if (!editing || event.currentTarget.contains(event.relatedTarget as Node | null)) return
+        commitEdit()
+      }}
       data-element-id={element.id}
     >
-      <ElementContent element={element} />
-      {selected && !exporting && (
+      {editing && element.type === 'text' ? (
+        <div
+          ref={editableRef}
+          className="canvas-text"
+          style={getTextElementStyle(element)}
+          contentEditable
+          suppressContentEditableWarning
+          data-editing="true"
+          onKeyDown={handleKeyDown}
+        />
+      ) : (
+        <ElementContent element={element} />
+      )}
+      {editing && element.type === 'text' && !exporting && (
+        <div className="text-edit-toolbar" role="toolbar" aria-label="Textformatierung" onPointerDown={(event) => event.stopPropagation()}>
+          <input
+            type="color"
+            defaultValue={element.color}
+            title="Textfarbe"
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              saveSelection()
+            }}
+            onChange={(event) => {
+              editableRef.current?.focus()
+              restoreSelection()
+              // execCommand is deprecated, but there is no standards-track replacement for
+              // applying inline formatting to an arbitrary contenteditable selection.
+              document.execCommand('styleWithCSS', false, 'true')
+              document.execCommand('foreColor', false, event.target.value)
+            }}
+          />
+          <button
+            onPointerDown={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+            onClick={(event) => {
+              event.stopPropagation()
+              document.execCommand('styleWithCSS', false, 'false')
+              document.execCommand('bold')
+            }}
+            title="Fett"
+          >
+            <Bold size={13} />
+          </button>
+          <button
+            onPointerDown={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+            onClick={(event) => {
+              event.stopPropagation()
+              document.execCommand('styleWithCSS', false, 'false')
+              document.execCommand('italic')
+            }}
+            title="Kursiv"
+          >
+            <Italic size={13} />
+          </button>
+          <button
+            onPointerDown={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+            onClick={(event) => {
+              event.stopPropagation()
+              document.execCommand('styleWithCSS', false, 'false')
+              document.execCommand('underline')
+            }}
+            title="Unterstrichen"
+          >
+            <Underline size={13} />
+          </button>
+        </div>
+      )}
+      {selected && !exporting && !editing && (
         <div className="selection-frame" aria-hidden="true">
           {element.locked ? (
             <span className="lock-indicator"><LockKeyhole size={12} /></span>

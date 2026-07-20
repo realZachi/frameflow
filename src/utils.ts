@@ -58,6 +58,88 @@ export const getBackgroundStyle = (background: Background): CSSProperties => {
   return { backgroundColor: background.color1 }
 }
 
+const RICH_TEXT_INLINE_TAGS = new Set(['b', 'strong', 'i', 'em', 'u', 's', 'strike', 'span', 'br'])
+const RICH_TEXT_TAG_ALIASES: Record<string, string> = { strong: 'b', em: 'i', strike: 's' }
+const RICH_TEXT_BLOCK_TAGS = new Set(['div', 'p'])
+const RICH_TEXT_DROP_TAGS = new Set(['script', 'style', 'head'])
+
+const appendRichTextChildren = (source: Node, target: Node) => {
+  source.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      target.appendChild(document.createTextNode(node.textContent ?? ''))
+      return
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+    const element = node as Element
+    const tag = element.tagName.toLowerCase()
+
+    if (RICH_TEXT_DROP_TAGS.has(tag)) return
+
+    if (RICH_TEXT_BLOCK_TAGS.has(tag)) {
+      if (target.childNodes.length > 0) target.appendChild(document.createElement('br'))
+      appendRichTextChildren(element, target)
+      return
+    }
+
+    if (tag === 'br') {
+      target.appendChild(document.createElement('br'))
+      return
+    }
+
+    if (!RICH_TEXT_INLINE_TAGS.has(tag)) {
+      // Unknown inline tag: drop the tag, keep its text content.
+      appendRichTextChildren(element, target)
+      return
+    }
+
+    const normalizedTag = RICH_TEXT_TAG_ALIASES[tag] ?? tag
+
+    if (normalizedTag === 'span') {
+      const style = (element as HTMLElement).style
+      const keptStyles: string[] = []
+      if (style.color) keptStyles.push(`color: ${style.color}`)
+      if (style.fontWeight) keptStyles.push(`font-weight: ${style.fontWeight}`)
+      if (keptStyles.length === 0) {
+        // No surviving style: unwrap the span, keep its children.
+        appendRichTextChildren(element, target)
+        return
+      }
+      const span = document.createElement('span')
+      span.setAttribute('style', keptStyles.join('; '))
+      appendRichTextChildren(element, span)
+      target.appendChild(span)
+      return
+    }
+
+    const wrapper = document.createElement(normalizedTag)
+    appendRichTextChildren(element, wrapper)
+    target.appendChild(wrapper)
+  })
+}
+
+export function sanitizeRichText(input: string): string {
+  const parsed = new DOMParser().parseFromString(input, 'text/html')
+  const output = document.createElement('div')
+  appendRichTextChildren(parsed.body, output)
+
+  while (output.lastChild && output.lastChild.nodeType === Node.ELEMENT_NODE && (output.lastChild as Element).tagName === 'BR') {
+    output.removeChild(output.lastChild)
+  }
+
+  return output.innerHTML
+}
+
+export function richTextToPlain(html: string): string {
+  const parsed = new DOMParser().parseFromString(html, 'text/html')
+  parsed.querySelectorAll('br').forEach((br) => br.replaceWith('\n'))
+  return parsed.body.textContent ?? ''
+}
+
+export function richTextHasFormatting(html: string): boolean {
+  const parsed = new DOMParser().parseFromString(html, 'text/html')
+  return Boolean(parsed.querySelector('b, i, u, s, span'))
+}
+
 export const getBackgroundPatternStyle = (background: Background): CSSProperties => ({
   '--pattern-color': hexToRgba(background.patternColor ?? '#ffffff', clamp(background.patternOpacity ?? 0.12, 0, 0.8)),
   '--pattern-size': `${clamp(background.patternScale ?? 28, 10, 80)}px`,

@@ -46,6 +46,12 @@ const findAssetIdBySrc = (src: string | undefined, uploads: UploadAsset[]): stri
 }
 
 const serializeElement = (element: CanvasElement, uploads: UploadAsset[]): Record<string, unknown> => {
+  if (element.type === 'text') {
+    // Rich-text HTML is a canvas-only render source; the model only ever sees plain `text`.
+    const rest: Record<string, unknown> = { ...element }
+    delete rest.html
+    return rest
+  }
   if (element.type === 'device') {
     const { screenshot, ...rest } = element
     const screenshotAssetId = findAssetIdBySrc(screenshot, uploads)
@@ -157,6 +163,8 @@ export function createAiController(io: {
     for (const [key, value] of Object.entries(patch)) {
       if (allowedKeys.has(key)) filteredPatch[key] = value
     }
+    // A rewritten `text` invalidates any stale rich-text formatting stored in `html`.
+    if (element.type === 'text' && 'text' in filteredPatch) filteredPatch.html = undefined
 
     io.setSlides((current) =>
       current.map((s) =>
