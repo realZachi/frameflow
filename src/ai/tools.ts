@@ -27,7 +27,7 @@ const clampRotation = (v: number) => clamp(v, -180, 180)
 const clampOpacity = (v: number) => clamp(v, 0, 1)
 const clampPatternScale = (v: number) => clamp(v, 10, 80)
 
-const COORD_NOTE = 'Percent of the 1290x2796 canvas. x/y is the top-left corner of the element, width is percent of canvas width; height is automatic.'
+const COORD_NOTE = 'Percent of the 1290x2796 canvas. x/y is the top-left corner of the element, width is percent of canvas width; height is automatic. x/y may be negative (down to -35) and width may exceed 100 (up to 140), so elements can deliberately bleed off the canvas edges for cropped, dynamic compositions.'
 
 const notFound = (message: string) => ({ ok: false as const, error: message })
 
@@ -65,7 +65,7 @@ const backgroundPatternEnum = z.enum(['none', 'dots', 'grid', 'diagonal', 'waves
 const deviceStyleEnum = z
   .enum(['iphone-17-a', 'iphone-17-b', 'iphone-17-c', 'iphone-17-d', 'iphone-17-e', 'iphone-17-f', 'tilted-hand'])
   .describe(
-    "Photorealistic iPhone mockup. 'iphone-17-a' and 'iphone-17-b' are upright/front views (typically width 58-72). 'iphone-17-c', 'iphone-17-d', and 'iphone-17-e' are low angled views (typically width 90-112). 'iphone-17-f' is a leaning portrait phone (typically width 88-105). 'tilted-hand' is a hand holding the phone (typically width 110-120). Perspective, light, and shadow are baked into every overlay.",
+    "Photorealistic iPhone mockup. 'iphone-17-a' and 'iphone-17-b' are upright/front views (width 58-72 fully in frame). 'iphone-17-c', 'iphone-17-d', and 'iphone-17-e' are low angled views (width 90-112, or up to 115-140 with negative x/y for a dramatic cropped close-up). 'iphone-17-f' is a leaning portrait phone (width 88-105). 'tilted-hand' is a hand holding the phone (width 110-125, usually cropped by a canvas edge). Perspective, light, and shadow are baked into every overlay.",
   )
 
 const screenThemeEnum = z.enum(['coral', 'mint', 'night', 'sun']).describe('Tint applied to the device chrome/background behind the screenshot.')

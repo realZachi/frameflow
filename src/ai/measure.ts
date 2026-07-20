@@ -77,7 +77,11 @@ const overlapWarning = (boxA: ElementBox, typeA: string, boxB: ElementBox, typeB
 
   // Always phrase the warning from the text element's perspective; if both are text, keep encounter order.
   const [textBox, otherBox, otherType] = typeA === 'text' ? [boxA, boxB, typeB] : [boxB, boxA, typeA]
-  return `Text ${textBox.elementId} overlaps ${otherType} ${otherBox.elementId} by ${(ratio * 100).toFixed(1)}% of the smaller element.`
+  const base = `Text ${textBox.elementId} overlaps ${otherType} ${otherBox.elementId} by ${(ratio * 100).toFixed(1)}% of the smaller element`
+  if (otherType === 'device') {
+    return `${base} — fine if this is a deliberate text-over-device composition; confirm legibility in the rendered preview, otherwise reposition.`
+  }
+  return `${base} — overlapping text is almost always a defect; reposition or resize.`
 }
 
 export function measureSlideSync(slideId: string, elementTypes: Record<string, string>): SlideMeasurement | null {

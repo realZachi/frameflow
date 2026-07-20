@@ -99,7 +99,7 @@ export async function runAiGeneration(options: {
     onEvent({ type: 'status', message: 'Verbinde mit Google Gemini…' })
 
     const result = streamText({
-      model: google('gemini-3.5-flash'),
+      model: google('gemini-3.1-pro-preview'),
       instructions: buildInstructions(),
       messages: [{ role: 'user', content }],
       tools: createEditorTools(controller),
