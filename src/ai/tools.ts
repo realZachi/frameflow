@@ -1,6 +1,8 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { clamp } from '../utils'
+import { measureSlide, type ElementBox } from './measure'
+import { captureSlidePreview } from './preview'
 import type { AiEditorController } from './controller'
 import type { DeviceElement, ImageElement, ShapeElement, TextElement } from '../types'
 
@@ -53,6 +55,34 @@ const getElement = (controller: AiEditorController, slideId: string, elementId: 
   if (!slide) return undefined
   return slide.elements.find((element) => element.id === elementId)
 }
+
+const buildElementTypes = (controller: AiEditorController, slideId: string): Record<string, string> => {
+  const slide = getSlide(controller, slideId)
+  if (!slide) return {}
+  const map: Record<string, string> = {}
+  for (const element of slide.elements) {
+    const id = element.id
+    const type = element.type
+    if (typeof id === 'string' && typeof type === 'string') map[id] = type
+  }
+  return map
+}
+
+// Re-measures the slide after a mutation and picks out the affected element's rendered box.
+// Every mutating tool returns this alongside `ok: true` so the model can immediately see the
+// real, rendered result instead of trusting its own guess about where things ended up.
+const withMeasurement = async (
+  controller: AiEditorController,
+  slideId: string,
+  elementId: string,
+): Promise<{ box: ElementBox | null; slideWarnings: string[] }> => {
+  const elementTypes = buildElementTypes(controller, slideId)
+  const measurement = await measureSlide(slideId, elementTypes)
+  const box = measurement?.boxes.find((candidate) => candidate.elementId === elementId) ?? null
+  return { box, slideWarnings: measurement?.warnings ?? [] }
+}
+
+const MEASUREMENT_NOTE = "The result includes the element's actually rendered bounding box and any slide layout warnings — address warnings before moving on."
 
 export function createEditorTools(controller: AiEditorController) {
   const get_canvas_state = tool({
@@ -128,7 +158,7 @@ export function createEditorTools(controller: AiEditorController) {
   })
 
   const add_text = tool({
-    description: `Add a text element to a slide. ${COORD_NOTE}`,
+    description: `Add a text element to a slide. ${COORD_NOTE} ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
       text: z.string().describe('The copy to display. Use \\n for line breaks.'),
@@ -136,7 +166,11 @@ export function createEditorTools(controller: AiEditorController) {
       y: z.number().describe(COORD_NOTE),
       width: z.number().describe(COORD_NOTE),
       fontFamily: fontFamilyEnum,
-      fontSize: z.number().describe('Font size in canvas percent units (roughly px at 1290 width). Headlines ~54-72, body ~22-30.'),
+      fontSize: z
+        .number()
+        .describe(
+          'Font size in px on the internal 330px-wide canvas base (not the 1290px export size). Hero headlines 32-46, sub-headlines 18-24, supporting/body copy 13-17, small labels 9-12. Rule of thumb: fontSize 45 is roughly a capital letter spanning ~13% of canvas width. Values above ~52 are almost always a mistake.',
+        ),
       fontWeight: z.number().describe('Font weight, 100-900.'),
       color: z.string().describe('Text color as a hex string.'),
       align: z.enum(['left', 'center', 'right']),
@@ -167,12 +201,13 @@ export function createEditorTools(controller: AiEditorController) {
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
-      return { ok: true, elementId }
+      const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
+      return { ok: true, elementId, box, slideWarnings }
     },
   })
 
   const add_device = tool({
-    description: `Add a device mockup to a slide, optionally pre-loaded with an uploaded screenshot. ${COORD_NOTE}`,
+    description: `Add a device mockup to a slide, optionally pre-loaded with an uploaded screenshot. ${COORD_NOTE} ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
       deviceStyle: deviceStyleEnum,
@@ -210,12 +245,13 @@ export function createEditorTools(controller: AiEditorController) {
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
-      return { ok: true, elementId }
+      const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
+      return { ok: true, elementId, box, slideWarnings }
     },
   })
 
   const add_shape = tool({
-    description: `Add a decorative shape accent to a slide. ${COORD_NOTE}`,
+    description: `Add a decorative shape accent to a slide. ${COORD_NOTE} ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
       shape: z.enum(['circle', 'pill', 'spark']),
@@ -240,12 +276,13 @@ export function createEditorTools(controller: AiEditorController) {
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
-      return { ok: true, elementId }
+      const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
+      return { ok: true, elementId, box, slideWarnings }
     },
   })
 
   const add_image = tool({
-    description: `Add a free-floating uploaded image to a slide (not inside a device frame). ${COORD_NOTE}`,
+    description: `Add a free-floating uploaded image to a slide (not inside a device frame). ${COORD_NOTE} ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
       assetId: z.string().describe('Asset id (from get_canvas_state) of the uploaded image to place.'),
@@ -272,12 +309,13 @@ export function createEditorTools(controller: AiEditorController) {
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
-      return { ok: true, elementId }
+      const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
+      return { ok: true, elementId, box, slideWarnings }
     },
   })
 
   const set_device_screenshot = tool({
-    description: 'Replace the screenshot shown inside an existing device element.',
+    description: `Replace the screenshot shown inside an existing device element. ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
       elementId: z.string(),
@@ -291,13 +329,13 @@ export function createEditorTools(controller: AiEditorController) {
       const src = controller.getAssetSrc(assetId)
       if (!src) return notFound(assetNotFoundMessage(assetId))
       controller.updateElement(slideId, elementId, { screenshot: src })
-      return { ok: true }
+      const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
+      return { ok: true, elementId, box, slideWarnings }
     },
   })
 
   const update_element = tool({
-    description:
-      'Update fields on an existing element. Only pass the fields you want to change; unknown or type-inapplicable fields are ignored.',
+    description: `Update fields on an existing element. Only pass the fields you want to change; unknown or type-inapplicable fields are ignored. ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
       elementId: z.string(),
@@ -309,7 +347,12 @@ export function createEditorTools(controller: AiEditorController) {
       text: z.string().optional().describe('Text elements only.'),
       color: z.string().optional().describe('Hex color. Text and shape elements only.'),
       fontFamily: fontFamilyEnum.optional(),
-      fontSize: z.number().optional().describe('Text elements only.'),
+      fontSize: z
+        .number()
+        .optional()
+        .describe(
+          'Text elements only. Same px-on-330px-base sizing as add_text: hero headlines 32-46, sub-headlines 18-24, body 13-17, labels 9-12, rarely above ~52.',
+        ),
       fontWeight: z.number().optional().describe('Text elements only, 100-900.'),
       align: z.enum(['left', 'center', 'right']).optional().describe('Text elements only.'),
       lineHeight: z.number().optional().describe('Text elements only.'),
@@ -351,7 +394,8 @@ export function createEditorTools(controller: AiEditorController) {
       if (fields.shape !== undefined) patch.shape = fields.shape
 
       controller.updateElement(slideId, elementId, patch)
-      return { ok: true }
+      const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
+      return { ok: true, elementId, box, slideWarnings }
     },
   })
 
@@ -369,6 +413,48 @@ export function createEditorTools(controller: AiEditorController) {
     },
   })
 
+  const inspect_slide = tool({
+    description:
+      "Get the true rendered bounding box of every element on a slide (x/width as percent of canvas width, y/height as percent of canvas height) plus layout warnings (overflow, overlaps). Call it whenever you need to verify a slide's layout before moving on.",
+    inputSchema: z.object({ slideId: z.string() }),
+    execute: async ({ slideId }) => {
+      if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      const elementTypes = buildElementTypes(controller, slideId)
+      const measurement = await measureSlide(slideId, elementTypes)
+      if (!measurement) return notFound(slideNotFoundMessage(slideId))
+      return { ok: true, boxes: measurement.boxes, warnings: measurement.warnings }
+    },
+  })
+
+  const render_slide_preview = tool({
+    description:
+      'Render the slide to an image and return it so you can SEE your actual design. Use it after finishing each slide to check for text overflow, overlaps, poor contrast, and visual consistency with the other slides. Also returns the same layout warnings as inspect_slide.',
+    inputSchema: z.object({ slideId: z.string() }),
+    execute: async ({
+      slideId,
+    }): Promise<
+      { ok: true; warnings: string[]; image: string; mediaType: 'image/jpeg' } | { ok: false; error: string }
+    > => {
+      if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      const elementTypes = buildElementTypes(controller, slideId)
+      const [capture, measurement] = await Promise.all([captureSlidePreview(slideId), measureSlide(slideId, elementTypes)])
+      if (!capture) return { ok: false, error: `Failed to render a preview for slide ${slideId}.` }
+      return { ok: true, warnings: measurement?.warnings ?? [], image: capture.base64, mediaType: capture.mediaType }
+    },
+    toModelOutput: ({ output }) => {
+      if (output.ok) {
+        return {
+          type: 'content',
+          value: [
+            { type: 'text', text: JSON.stringify({ ok: true, warnings: output.warnings }) },
+            { type: 'file', mediaType: output.mediaType, data: { type: 'data', data: output.image } },
+          ],
+        }
+      }
+      return { type: 'text', value: JSON.stringify(output) }
+    },
+  })
+
   return {
     get_canvas_state,
     add_slide,
@@ -382,6 +468,8 @@ export function createEditorTools(controller: AiEditorController) {
     set_device_screenshot,
     update_element,
     delete_element,
+    inspect_slide,
+    render_slide_preview,
   }
 }
 

@@ -359,6 +359,7 @@ export default function App() {
 
   const prepareAiRun = (files: Array<{ name: string; dataUrl: string }>) => {
     checkpoint()
+    setSelectedElementId(null)
     preAiSlideIdsRef.current = new Set(slidesRef.current.map((slide) => slide.id))
     const bySrc = new Map(uploadsRef.current.map((asset) => [asset.src, asset]))
     const additions: UploadAsset[] = []

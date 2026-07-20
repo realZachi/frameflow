@@ -40,6 +40,10 @@ const describeToolCall = (toolName: string, input: unknown): string => {
       return 'Element aktualisiert'
     case 'delete_element':
       return 'Element gelöscht'
+    case 'inspect_slide':
+      return 'Layout vermessen'
+    case 'render_slide_preview':
+      return 'Vorschau geprüft'
     default:
       return `Werkzeug: ${toolName}`
   }
@@ -99,7 +103,7 @@ export async function runAiGeneration(options: {
       instructions: buildInstructions(),
       messages: [{ role: 'user', content }],
       tools: createEditorTools(controller),
-      stopWhen: isStepCount(48),
+      stopWhen: isStepCount(64),
       abortSignal: signal,
     })
 
