@@ -5,7 +5,8 @@
       "name": "frameflow-dev",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "port": 4173
+      "port": 4173,
+      "autoPort": true
     }
   ]
 }

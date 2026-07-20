@@ -31,7 +31,7 @@ const DEFAULT_NEW_SLIDE_BACKGROUND: Background = { type: 'solid', color1: '#1111
 const BASE_UPDATE_KEYS = new Set(['x', 'y', 'width', 'rotation', 'opacity'])
 const TYPE_UPDATE_KEYS: Record<CanvasElement['type'], Set<string>> = {
   text: new Set([
-    'text', 'color', 'fontFamily', 'fontSize', 'fontWeight', 'align', 'lineHeight', 'letterSpacing', 'italic',
+    'text', 'html', 'color', 'fontFamily', 'fontSize', 'fontWeight', 'align', 'lineHeight', 'letterSpacing', 'italic',
     'underline', 'strikethrough', 'textTransform', 'backgroundColor', 'backgroundOpacity', 'padding', 'borderRadius',
     'strokeColor', 'strokeWidth', 'shadow', 'shadowColor',
   ]),
@@ -46,12 +46,8 @@ const findAssetIdBySrc = (src: string | undefined, uploads: UploadAsset[]): stri
 }
 
 const serializeElement = (element: CanvasElement, uploads: UploadAsset[]): Record<string, unknown> => {
-  if (element.type === 'text') {
-    // Rich-text HTML is a canvas-only render source; the model only ever sees plain `text`.
-    const rest: Record<string, unknown> = { ...element }
-    delete rest.html
-    return rest
-  }
+  // Text elements keep `html` in the snapshot so existing per-word styling is visible;
+  // it is written only through the `highlights` tool input, never as raw HTML.
   if (element.type === 'device') {
     const { screenshot, ...rest } = element
     const screenshotAssetId = findAssetIdBySrc(screenshot, uploads)
@@ -163,8 +159,9 @@ export function createAiController(io: {
     for (const [key, value] of Object.entries(patch)) {
       if (allowedKeys.has(key)) filteredPatch[key] = value
     }
-    // A rewritten `text` invalidates any stale rich-text formatting stored in `html`.
-    if (element.type === 'text' && 'text' in filteredPatch) filteredPatch.html = undefined
+    // A rewritten `text` invalidates any stale rich-text formatting stored in `html`,
+    // unless the patch carries a freshly built `html` alongside it.
+    if (element.type === 'text' && 'text' in filteredPatch && !('html' in filteredPatch)) filteredPatch.html = undefined
 
     io.setSlides((current) =>
       current.map((s) =>

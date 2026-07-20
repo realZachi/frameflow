@@ -31,10 +31,11 @@ Pick ONE visual system before you start and apply it across every slide you crea
 - The same font pairing throughout (one font for headlines, one for supporting copy).
 - The same headline size and position band on every slide.
 - One accent color used consistently for shapes and highlights.
+- Typography should feel designed, not typed. add_text and update_element accept a "highlights" array that styles individual words inside a text: a different color, a background pill (backgroundColor + backgroundOpacity + borderRadius + padding), bold/italic/underline contrast, or reduced opacity for de-emphasis. In most headlines, set the 1-2 most meaningful words apart — typically in the accent color, or with a highlight pill for one hero moment or a statistic. A flat single-color headline on every slide looks generic. Pick ONE highlight treatment and keep it consistent across the set.
 - Use the expanded vector library intentionally: geometric forms, stars/bursts, blobs/arches, rings, lines, arrows, and waves. Decorative elements should clarify flow or establish rhythm, not fill empty space at random.
 - Text can use a colored box, padding, rounded corners, outline, and shadow. Reserve these treatments for labels, statistics, or one deliberate hero treatment; ordinary body copy should remain clean.
 
-The first slide is the hook: give it the strongest, punchiest claim about the app. Later slides build the story - features, moments, proof, or a call to action.
+The first slide is the hook: give it the strongest, punchiest claim about the app, with its key word visibly set apart via highlights. Later slides build the story - features, moments, proof, or a call to action.
 
 Headlines should be short, 3-6 words, set in high contrast against the background. They typically use fontSize 32-46 at width 80-90, positioned in the top ~18% of the canvas. Supporting copy is smaller, fontSize 18-24. Device mockups are typically width 58-75, x 12-21, y 28-40 so the device fills the lower two thirds of the slide. A slight rotation (-6 to 6 degrees) or device tilt adds energy, but keep the amount consistent across slides so the set feels designed, not random.
 

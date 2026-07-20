@@ -1,6 +1,7 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { clamp } from '../utils'
+import { buildHighlightHtml } from './richtext'
 import { measureSlide, type ElementBox } from './measure'
 import { captureSlidePreview } from './preview'
 import type { AiEditorController } from './controller'
@@ -68,6 +69,27 @@ const deviceStyleEnum = z
   )
 
 const screenThemeEnum = z.enum(['coral', 'mint', 'night', 'sun']).describe('Tint applied to the device chrome/background behind the screenshot.')
+
+const textHighlightSchema = z.object({
+  text: z.string().describe('Exact substring of the element text to style. Every exact occurrence of it gets this styling.'),
+  color: z.string().optional().describe('Hex text color for just this part, e.g. the accent color.'),
+  backgroundColor: z.string().optional().describe('Hex background color behind just this part — the highlighter-pen / pill look.'),
+  backgroundOpacity: z.number().optional().describe('Opacity of that background, 0-1. Defaults to 1.'),
+  borderRadius: z.number().optional().describe('Corner radius of that background in px on the internal 330px canvas base, 0-24. Only visible together with backgroundColor.'),
+  padding: z.number().optional().describe('Horizontal padding around the highlighted part in internal px, 0-12. Use with backgroundColor for a pill.'),
+  bold: z.boolean().optional().describe('Render just this part bold.'),
+  italic: z.boolean().optional().describe('Render just this part italic.'),
+  underline: z.boolean().optional().describe('Underline just this part.'),
+  strikethrough: z.boolean().optional().describe('Strike through just this part.'),
+  opacity: z.number().optional().describe('Opacity of just this part, 0-1, e.g. to de-emphasize a word.'),
+})
+
+const highlightsParam = z
+  .array(textHighlightSchema)
+  .optional()
+  .describe(
+    'Style parts of the text differently from the rest: accent-colored key words, highlight pills, mixed bold/italic. Each entry must be an exact substring of the text. Pass [] to remove all part-level styling. Whenever you change `text` without passing highlights, existing highlights are cleared.',
+  )
 
 // --- helpers to look up existing slide/element via the controller's snapshot -
 const getSlide = (controller: AiEditorController, slideId: string) => controller.snapshot().slides.find((slide) => slide.id === slideId)
@@ -221,6 +243,7 @@ export function createEditorTools(controller: AiEditorController) {
     inputSchema: z.object({
       slideId: z.string(),
       text: z.string().describe('The copy to display. Use \\n for line breaks.'),
+      highlights: highlightsParam,
       x: z.number().describe(COORD_NOTE),
       y: z.number().describe(COORD_NOTE),
       width: z.number().describe(COORD_NOTE),
@@ -250,10 +273,12 @@ export function createEditorTools(controller: AiEditorController) {
       rotation: z.number().optional().describe('Rotation in degrees, -180 to 180. Defaults to 0.'),
       opacity: z.number().optional().describe('Opacity from 0 to 1. Defaults to 1.'),
     }),
-    execute: async ({ slideId, text, x, y, width, fontFamily, fontSize, fontWeight, color, align, lineHeight, letterSpacing, italic, underline, strikethrough, textTransform, backgroundColor, backgroundOpacity, padding, borderRadius, strokeColor, strokeWidth, shadow, shadowColor, rotation, opacity }) => {
+    execute: async ({ slideId, text, highlights, x, y, width, fontFamily, fontSize, fontWeight, color, align, lineHeight, letterSpacing, italic, underline, strikethrough, textTransform, backgroundColor, backgroundOpacity, padding, borderRadius, strokeColor, strokeWidth, shadow, shadowColor, rotation, opacity }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      const html = highlights !== undefined ? buildHighlightHtml(text, highlights) : undefined
       const element: Omit<TextElement, 'id'> = {
         type: 'text',
+        ...(html !== undefined ? { html } : {}),
         x: clampX(x),
         y: clampY(y),
         width: clampWidth(width),
@@ -283,7 +308,8 @@ export function createEditorTools(controller: AiEditorController) {
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
-      return { ok: true, elementId, box, slideWarnings }
+      const unmatchedHighlights = (highlights ?? []).filter((h) => h.text && !text.includes(h.text)).map((h) => h.text)
+      return { ok: true, elementId, box, slideWarnings, ...(unmatchedHighlights.length > 0 ? { unmatchedHighlights } : {}) }
     },
   })
 
@@ -434,6 +460,7 @@ export function createEditorTools(controller: AiEditorController) {
       rotation: z.number().optional().describe('Rotation in degrees, -180 to 180.'),
       opacity: z.number().optional().describe('Opacity from 0 to 1.'),
       text: z.string().optional().describe('Text elements only.'),
+      highlights: highlightsParam,
       color: z.string().optional().describe('Hex color. Text and shape elements only.'),
       fontFamily: fontFamilyEnum.optional(),
       fontSize: z
@@ -476,6 +503,12 @@ export function createEditorTools(controller: AiEditorController) {
       if (fields.rotation !== undefined) patch.rotation = clampRotation(fields.rotation)
       if (fields.opacity !== undefined) patch.opacity = clampOpacity(fields.opacity)
       if (fields.text !== undefined) patch.text = fields.text
+      let unmatchedHighlights: string[] = []
+      if (fields.highlights !== undefined && existing.type === 'text') {
+        const plainText = fields.text ?? (typeof existing.text === 'string' ? existing.text : '')
+        patch.html = buildHighlightHtml(plainText, fields.highlights)
+        unmatchedHighlights = fields.highlights.filter((h) => h.text && !plainText.includes(h.text)).map((h) => h.text)
+      }
       if (fields.color !== undefined) patch.color = fields.color
       if (fields.fontFamily !== undefined) patch.fontFamily = fields.fontFamily
       if (fields.fontSize !== undefined) patch.fontSize = clampFontSize(fields.fontSize)
@@ -503,7 +536,7 @@ export function createEditorTools(controller: AiEditorController) {
 
       controller.updateElement(slideId, elementId, patch)
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
-      return { ok: true, elementId, box, slideWarnings }
+      return { ok: true, elementId, box, slideWarnings, ...(unmatchedHighlights.length > 0 ? { unmatchedHighlights } : {}) }
     },
   })
 

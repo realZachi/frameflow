@@ -99,6 +99,10 @@ const appendRichTextChildren = (source: Node, target: Node) => {
       const keptStyles: string[] = []
       if (style.color) keptStyles.push(`color: ${style.color}`)
       if (style.fontWeight) keptStyles.push(`font-weight: ${style.fontWeight}`)
+      if (style.backgroundColor) keptStyles.push(`background-color: ${style.backgroundColor}`)
+      if (style.borderRadius) keptStyles.push(`border-radius: ${style.borderRadius}`)
+      if (style.padding) keptStyles.push(`padding: ${style.padding}`)
+      if (style.opacity) keptStyles.push(`opacity: ${style.opacity}`)
       if (keptStyles.length === 0) {
         // No surviving style: unwrap the span, keep its children.
         appendRichTextChildren(element, target)
