@@ -76,6 +76,10 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .history-actions button { width: 32px; }
 .history-actions button:hover, .share-button:hover { background: #292925; color: white; }
 .share-button { gap: 6px; padding: 0 10px; font-size: 11px; }
+.ai-generate-button { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 7px; font-size: 11px; font-weight: 590; color: #f7f5ef; background: linear-gradient(135deg, rgba(255,87,61,.24), rgba(216,255,85,.16)); border: 1px solid rgba(216,255,85,.4); cursor: pointer; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.ai-generate-button svg { color: var(--acid); }
+.ai-generate-button:hover { border-color: rgba(216,255,85,.65); background: linear-gradient(135deg, rgba(255,87,61,.32), rgba(216,255,85,.26)); transform: translateY(-1px); }
+.ai-generate-button:disabled { transform: none; }
 .export-button { height: 38px; min-width: 132px; padding: 0 16px; border: 0; background: var(--acid); color: #171713; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; font-size: 12px; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,.3), 0 5px 16px rgba(216,255,85,.11); transition: transform .18s ease, background .18s ease; }
 .export-button:hover { transform: translateY(-1px); background: #e5ff87; }
 .export-button b { font-weight: 760; }
@@ -321,11 +325,55 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .toast strong { font-size: 10px; font-weight: 620; }
 .toast button { border: 0; background: transparent; color: #8f8f86; display: grid; place-items: center; cursor: pointer; }
 
+.ai-modal-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(24,24,20,.35); backdrop-filter: blur(3px); display: grid; place-items: center; padding: 24px; animation: ai-modal-fade .18s ease both; }
+@keyframes ai-modal-fade { from { opacity: 0; } }
+.ai-modal-card { width: 100%; max-width: 560px; max-height: 86vh; background: var(--panel); border: 1px solid #dcdbd3; border-radius: 14px; box-shadow: 0 24px 60px rgba(20,20,16,.28), 0 0 0 1px rgba(0,0,0,.04); display: flex; flex-direction: column; overflow: hidden; animation: ai-modal-in .22s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes ai-modal-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+.ai-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 14px; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+.ai-modal-title { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.ai-modal-title svg { color: var(--accent); }
+.ai-modal-title h2 { margin: 0; font-family: 'Bricolage Grotesque Variable'; font-size: 17px; letter-spacing: -.4px; }
+.ai-modal-close { width: 28px; height: 28px; border: 0; background: transparent; color: #8a8a81; border-radius: 6px; display: grid; place-items: center; cursor: pointer; }
+.ai-modal-close:hover { background: #ece9e1; color: #23231f; }
+
+.ai-modal-body { padding: 18px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #c9c9c1 transparent; }
+.ai-modal-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
+.ai-modal-field:last-child { margin-bottom: 0; }
+.ai-modal-field label { font-size: 10px; font-weight: 700; letter-spacing: .2px; color: var(--ink-soft); }
+.ai-modal-field input[type="password"], .ai-modal-field textarea { width: 100%; border: 1px solid #d9d9d2; border-radius: 8px; background: white; padding: 10px 12px; font-size: 12px; color: #2b2b27; }
+.ai-modal-field textarea { resize: vertical; min-height: 92px; line-height: 1.4; }
+.ai-modal-hint { font-size: 9px; color: var(--muted); line-height: 1.4; }
+
+.ai-modal-dropzone { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #b8b8ae; background: #efeee8; border-radius: 9px; color: #57574f; font-size: 11px; font-weight: 600; cursor: pointer; }
+.ai-modal-dropzone:hover { background: #e8e7e0; border-color: #9d9d92; }
+.ai-modal-thumbs { display: grid; grid-template-columns: repeat(auto-fill, 72px); gap: 8px; margin-top: 10px; }
+.ai-modal-thumb { position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px #dddcd5; }
+.ai-modal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ai-modal-thumb button { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border: 0; border-radius: 50%; background: rgba(20,20,16,.68); color: white; display: grid; place-items: center; cursor: pointer; }
+.ai-modal-thumb button:hover { background: rgba(20,20,16,.9); }
+
+.ai-modal-run { display: flex; flex-direction: column; gap: 12px; }
+.ai-modal-log { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; background: #20201c; border-radius: 9px; padding: 12px; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 10.5px; line-height: 1.5; scrollbar-width: thin; scrollbar-color: #46463f transparent; }
+.ai-modal-log-entry { color: #c3c2b9; }
+.ai-modal-log-entry--tool { color: #d8ff55; }
+.ai-modal-log-entry--spinner { display: flex; align-items: center; gap: 7px; color: #8f8f86; }
+.ai-modal-spinner { width: 11px; height: 11px; border: 2px solid rgba(216,255,85,.25); border-top-color: var(--acid); border-radius: 50%; animation: spin .7s linear infinite; flex: 0 0 auto; }
+.ai-modal-assistant-text { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 0; white-space: pre-line; }
+
+.ai-modal-result { padding: 10px 2px; }
+.ai-modal-result p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink); }
+.ai-modal-result--error p { color: #b5402a; }
+
+.ai-modal-footer { display: flex; justify-content: flex-end; padding: 14px 18px; border-top: 1px solid var(--line); background: #f3f2ec; flex: 0 0 auto; }
+.ai-modal-generate { min-width: 150px; }
+.ai-modal-btn-secondary { height: 36px; padding: 0 16px; border: 1px solid #d8d8d0; background: #f1f0eb; color: #3d3d37; border-radius: 8px; font-size: 11px; font-weight: 620; cursor: pointer; }
+.ai-modal-btn-secondary:hover { background: #e7e6df; }
+
 .mobile-blocker { display: none; }
 
 @media (max-width: 1120px) {
   .topbar { grid-template-columns: 250px 1fr 250px; }
-  .save-state, .share-button { display: none; }
+  .save-state, .share-button, .ai-generate-button { display: none; }
   .editor-shell { grid-template-columns: 72px 280px minmax(0,1fr); }
   .stage-noise { left: 352px; }
 }

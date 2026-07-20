@@ -10,10 +10,13 @@ import {
   Plus,
   Redo2,
   Share2,
+  Sparkles,
   Undo2,
   X,
 } from 'lucide-react'
 import { createInitialSlides, makeTemplate } from './data'
+import { createAiController } from './ai/controller'
+import { AiGenerateModal } from './components/AiGenerateModal'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
 import type { Background, CanvasElement, DeviceElement, Slide, TemplateId, ToolId, UploadAsset } from './types'
@@ -41,6 +44,7 @@ export default function App() {
   const [slides, setSlides] = useState<Slide[]>(initial.slides)
   const slidesRef = useRef(slides)
   const [uploads, setUploads] = useState<UploadAsset[]>(initial.uploads)
+  const uploadsRef = useRef(uploads)
   const [activeSlideId, setActiveSlideId] = useState(initial.slides[0].id)
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId>('templates')
@@ -50,12 +54,32 @@ export default function App() {
   const [exportProgress, setExportProgress] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const [historyState, setHistoryState] = useState({ undo: false, redo: false })
+  const [aiOpen, setAiOpen] = useState(false)
   const past = useRef<Slide[][]>([])
   const future = useRef<Slide[][]>([])
+  const preAiSlideIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     slidesRef.current = slides
   }, [slides])
+
+  useEffect(() => {
+    uploadsRef.current = uploads
+  }, [uploads])
+
+  const [aiController, setAiController] = useState<ReturnType<typeof createAiController> | null>(null)
+
+  useEffect(() => {
+    setAiController(createAiController({
+      getSlides: () => slidesRef.current,
+      setSlides: (updater) => {
+        const next = updater(slidesRef.current)
+        slidesRef.current = next
+        setSlides(next)
+      },
+      getUploads: () => uploadsRef.current,
+    }))
+  }, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -333,6 +357,36 @@ export default function App() {
     }
   }
 
+  const prepareAiRun = (files: Array<{ name: string; dataUrl: string }>) => {
+    checkpoint()
+    preAiSlideIdsRef.current = new Set(slidesRef.current.map((slide) => slide.id))
+    const bySrc = new Map(uploadsRef.current.map((asset) => [asset.src, asset]))
+    const additions: UploadAsset[] = []
+    const prepared = files.map((file) => {
+      let asset = bySrc.get(file.dataUrl)
+      if (!asset) {
+        asset = { id: uid('upload'), name: file.name, src: file.dataUrl }
+        additions.push(asset)
+        bySrc.set(asset.src, asset)
+      }
+      return { assetId: asset.id, name: asset.name, dataUrl: asset.src }
+    })
+    if (additions.length > 0) {
+      uploadsRef.current = [...additions, ...uploadsRef.current]
+      setUploads(uploadsRef.current)
+    }
+    return prepared
+  }
+
+  const handleAiFinished = (slidesCreated: number) => {
+    setToast(`${slidesCreated} Screens mit AI erstellt`)
+    const firstNewSlide = slidesRef.current.find((slide) => !preAiSlideIdsRef.current.has(slide.id))
+    if (firstNewSlide) {
+      setActiveSlideId(firstNewSlide.id)
+      setSelectedElementId(null)
+    }
+  }
+
   const canUndo = historyState.undo
   const canRedo = historyState.redo
 
@@ -346,6 +400,7 @@ export default function App() {
         </div>
         <div className="topbar-actions">
           <div className="history-actions"><button onClick={undo} disabled={!canUndo} title="Rückgängig (⌘Z)"><Undo2 size={17} /></button><button onClick={redo} disabled={!canRedo} title="Wiederholen (⇧⌘Z)"><Redo2 size={17} /></button></div>
+          <button className="ai-generate-button" onClick={() => setAiOpen(true)} disabled={exporting || !aiController}><Sparkles size={15} /> Mit AI generieren</button>
           <button className="share-button" onClick={shareProject}><Share2 size={16} /> Teilen</button>
           <button className="export-button" onClick={exportAll} disabled={exporting}>
             {exporting ? <><span className="export-spinner" /><b>{exportProgress}%</b></> : <><Download size={17} /><b>Alle als ZIP</b></>}
@@ -396,6 +451,15 @@ export default function App() {
       </div>
 
       {toast && <div className="toast"><span><Check size={14} /></span><strong>{toast}</strong><button onClick={() => setToast(null)}><X size={14} /></button></div>}
+      {aiController && (
+        <AiGenerateModal
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          controller={aiController}
+          onPrepareRun={prepareAiRun}
+          onFinished={handleAiFinished}
+        />
+      )}
       <div className="mobile-blocker"><div className="brand-symbol"><span>F</span><i /></div><h1>Mehr Platz für gute Ideen.</h1><p>Frameflow ist ein Desktop-Studio. Öffne den Editor auf einem größeren Bildschirm, um Screens präzise zu gestalten.</p></div>
     </div>
   )
