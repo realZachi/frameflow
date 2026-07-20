@@ -1,7 +1,7 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ChevronLeft, ChevronRight, Copy, Lock, LockOpen, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Lock, LockOpen, Plus, Trash2 } from 'lucide-react'
 import type { CanvasElement, Slide } from '../types'
-import { clamp } from '../utils'
+import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { CanvasItem } from './CanvasElementView'
 
 type Interaction = {
@@ -29,6 +29,7 @@ type Props = {
   onDuplicateElement: () => void
   onDeleteElement: () => void
   onToggleLock: () => void
+  onMoveElementLayer: (direction: -1 | 1) => void
   onAddSlide: () => void
   onDuplicateSlide: (id: string) => void
   onDeleteSlide: (id: string) => void
@@ -48,6 +49,7 @@ export const EditorCanvas = ({
   onDuplicateElement,
   onDeleteElement,
   onToggleLock,
+  onMoveElementLayer,
   onAddSlide,
   onDuplicateSlide,
   onDeleteSlide,
@@ -133,6 +135,8 @@ export const EditorCanvas = ({
           <button onClick={onToggleLock} title={selectedElement.locked ? 'Entsperren' : 'Sperren'}>
             {selectedElement.locked ? <LockOpen size={15} /> : <Lock size={15} />}
           </button>
+          <button onClick={() => onMoveElementLayer(-1)} title="Eine Ebene nach hinten"><ArrowDown size={15} /></button>
+          <button onClick={() => onMoveElementLayer(1)} title="Eine Ebene nach vorne"><ArrowUp size={15} /></button>
           <span />
           <button onClick={onDeleteElement} title="Löschen" className="danger"><Trash2 size={15} /></button>
         </div>
@@ -140,9 +144,8 @@ export const EditorCanvas = ({
       <div className="artboards" style={{ '--zoom': zoom } as React.CSSProperties}>
         {slides.map((slide, index) => {
           const isActive = slide.id === activeSlideId
-          const background = slide.background.type === 'gradient'
-            ? `linear-gradient(${slide.background.angle}deg, ${slide.background.color1}, ${slide.background.color2})`
-            : slide.background.color1
+          const backgroundStyle = { ...getBackgroundStyle(slide.background), ...getBackgroundPatternStyle(slide.background) }
+          const pattern = slide.background.pattern ?? 'none'
           return (
             <section className={`artboard-wrap${isActive ? ' is-active' : ''}`} key={slide.id}>
               <div className="artboard-actions">
@@ -158,12 +161,13 @@ export const EditorCanvas = ({
               <div
                 id={`artboard-${slide.id}`}
                 className="artboard-export"
-                style={{ background }}
+                style={{ backgroundColor: slide.background.color1 }}
                 onPointerDown={() => {
                   onSetActiveSlide(slide.id)
                   onSelectElement(null)
                 }}
               >
+                <div className={`artboard-background pattern-surface pattern--${pattern}`} style={backgroundStyle} />
                 {slide.elements.map((element) => (
                   <CanvasItem
                     key={element.id}

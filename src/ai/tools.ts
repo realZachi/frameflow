@@ -19,8 +19,12 @@ const clampTiltX = (v: number) => clamp(v, -12, 12)
 const clampTiltY = (v: number) => clamp(v, -18, 18)
 const clampShadow = (v: number) => clamp(v, 0, 100)
 const clampBorderRadius = (v: number) => clamp(v, 0, 100)
+const clampTextPadding = (v: number) => clamp(v, 0, 24)
+const clampTextStroke = (v: number) => clamp(v, 0, 3)
+const clampShapeStroke = (v: number) => clamp(v, 0, 12)
 const clampRotation = (v: number) => clamp(v, -180, 180)
 const clampOpacity = (v: number) => clamp(v, 0, 1)
+const clampPatternScale = (v: number) => clamp(v, 10, 80)
 
 const COORD_NOTE = 'Percent of the 1290x2796 canvas. x/y is the top-left corner of the element, width is percent of canvas width; height is automatic.'
 
@@ -34,10 +38,28 @@ const elementNotFoundMessage = (elementId: string, slideId: string) =>
 const assetNotFoundMessage = (assetId: string) => `No asset with id ${assetId}. Call get_canvas_state to see available asset ids.`
 
 const fontFamilyEnum = z
-  .enum(['Bricolage Grotesque Variable', 'Instrument Sans Variable', 'Fraunces', 'Arial, sans-serif'])
+  .enum([
+    'Bricolage Grotesque Variable',
+    'Syne Variable',
+    'Bebas Neue',
+    'Instrument Sans Variable',
+    'Manrope Variable',
+    'Fraunces',
+    'Playfair Display',
+    'DM Serif Display',
+    'Space Mono',
+    'Caveat',
+    'Arial, sans-serif',
+  ])
   .describe(
-    "Font to use. 'Bricolage Grotesque Variable' = expressive display grotesque for headlines (weights 200-800). 'Instrument Sans Variable' = clean neutral sans for body/UI text (weights 400-700). 'Fraunces' = editorial serif, only weight 600 is loaded so always pair it with fontWeight 600. 'Arial, sans-serif' = plain fallback, avoid unless asked.",
+    "Font to use. Display: 'Bricolage Grotesque Variable', 'Syne Variable', 'Bebas Neue' (400 only). Sans: 'Instrument Sans Variable', 'Manrope Variable'. Serif: 'Fraunces' (600), 'Playfair Display' (600/700), 'DM Serif Display' (400). Mono: 'Space Mono' (400/700). Handwritten: 'Caveat' (400/700). 'Arial, sans-serif' is a plain fallback.",
   )
+
+const shapeEnum = z.enum([
+  'circle', 'square', 'rounded-square', 'pill', 'triangle', 'diamond', 'star', 'burst', 'spark', 'blob', 'arch', 'ring', 'line', 'arrow', 'wave',
+])
+
+const backgroundPatternEnum = z.enum(['none', 'dots', 'grid', 'diagonal', 'waves'])
 
 const deviceStyleEnum = z
   .enum(['midnight', 'natural', 'graphite', 'android', 'tilted-hand'])
@@ -102,12 +124,23 @@ export function createEditorTools(controller: AiEditorController) {
           color1: z.string().describe('Primary color as a hex string, e.g. #111116.'),
           color2: z.string().describe('Secondary color as a hex string. For solid backgrounds, set this equal to color1.'),
           angle: z.number().describe('Gradient angle in degrees, 0-360. Ignored for solid backgrounds.'),
+          gradientKind: z.enum(['linear', 'radial']).optional().describe('Gradient geometry. Defaults to linear.'),
+          pattern: backgroundPatternEnum.optional().describe('Optional decorative background pattern.'),
+          patternColor: z.string().optional().describe('Hex color for the optional pattern.'),
+          patternOpacity: z.number().optional().describe('Pattern opacity, 0-0.8.'),
+          patternScale: z.number().optional().describe('Pattern scale on the internal canvas, 10-80.'),
         })
         .optional()
         .describe('Background for the new slide. Defaults to a near-black solid color.'),
     }),
     execute: async ({ name, background }) => {
-      const slideId = controller.addSlide({ name, background })
+      const normalizedBackground = background ? {
+        ...background,
+        angle: clampAngle(background.angle),
+        ...(background.patternOpacity !== undefined ? { patternOpacity: clamp(background.patternOpacity, 0, 0.8) } : {}),
+        ...(background.patternScale !== undefined ? { patternScale: clampPatternScale(background.patternScale) } : {}),
+      } : undefined
+      const slideId = controller.addSlide({ name, background: normalizedBackground })
       return { ok: true, slideId }
     },
   })
@@ -126,21 +159,47 @@ export function createEditorTools(controller: AiEditorController) {
   })
 
   const set_slide_background = tool({
-    description: 'Change a slide background. Solid fills use color1 only; gradients blend color1 to color2 at the given angle.',
+    description: 'Change a slide background. Supports solid fills, linear/radial gradients, uploaded images with overlays, and optional graphic patterns.',
     inputSchema: z.object({
       slideId: z.string(),
-      type: z.enum(['solid', 'gradient']),
+      type: z.enum(['solid', 'gradient', 'image']),
       color1: z.string().describe('Primary color as a hex string, e.g. #111116.'),
       color2: z.string().optional().describe('Secondary color as a hex string, used for gradients.'),
       angle: z.number().optional().describe('Gradient angle in degrees, 0-360.'),
+      gradientKind: z.enum(['linear', 'radial']).optional().describe('Gradient geometry. Defaults to linear.'),
+      imageAssetId: z.string().optional().describe('Required for image backgrounds. Asset id from get_canvas_state.'),
+      imageFit: z.enum(['cover', 'contain']).optional().describe('Image background fitting. Defaults to cover.'),
+      imagePosition: z.enum(['center', 'top', 'bottom']).optional().describe('Image focal position. Defaults to center.'),
+      overlayColor: z.string().optional().describe('Image overlay color as hex. Defaults to #111116.'),
+      overlayOpacity: z.number().optional().describe('Image overlay opacity, 0-1. Defaults to 0.18.'),
+      pattern: backgroundPatternEnum.optional().describe('Optional graphic pattern over the background.'),
+      patternColor: z.string().optional().describe('Pattern color as hex.'),
+      patternOpacity: z.number().optional().describe('Pattern opacity, 0-0.8.'),
+      patternScale: z.number().optional().describe('Pattern scale, 10-80 on the internal canvas.'),
     }),
-    execute: async ({ slideId, type, color1, color2, angle }) => {
+    execute: async ({ slideId, type, color1, color2, angle, gradientKind, imageAssetId, imageFit, imagePosition, overlayColor, overlayOpacity, pattern, patternColor, patternOpacity, patternScale }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      let image: string | undefined
+      if (type === 'image') {
+        if (!imageAssetId) return notFound('imageAssetId is required for an image background.')
+        image = controller.getAssetSrc(imageAssetId)
+        if (!image) return notFound(assetNotFoundMessage(imageAssetId))
+      }
       controller.setSlideBackground(slideId, {
         type,
         color1,
         ...(color2 !== undefined ? { color2 } : {}),
         ...(angle !== undefined ? { angle: clampAngle(angle) } : {}),
+        ...(gradientKind !== undefined ? { gradientKind } : {}),
+        ...(image !== undefined ? { image } : {}),
+        ...(imageFit !== undefined ? { imageFit } : {}),
+        ...(imagePosition !== undefined ? { imagePosition } : {}),
+        ...(overlayColor !== undefined ? { overlayColor } : {}),
+        ...(overlayOpacity !== undefined ? { overlayOpacity: clampOpacity(overlayOpacity) } : {}),
+        ...(pattern !== undefined ? { pattern } : {}),
+        ...(patternColor !== undefined ? { patternColor } : {}),
+        ...(patternOpacity !== undefined ? { patternOpacity: clamp(patternOpacity, 0, 0.8) } : {}),
+        ...(patternScale !== undefined ? { patternScale: clampPatternScale(patternScale) } : {}),
       })
       return { ok: true }
     },
@@ -177,10 +236,21 @@ export function createEditorTools(controller: AiEditorController) {
       lineHeight: z.number().optional().describe('Line height multiplier. Defaults to 1.05.'),
       letterSpacing: z.number().optional().describe('Letter spacing in px. Defaults to 0.'),
       italic: z.boolean().optional().describe('Defaults to false.'),
+      underline: z.boolean().optional().describe('Underline the text. Defaults to false.'),
+      strikethrough: z.boolean().optional().describe('Strike through the text. Defaults to false.'),
+      textTransform: z.enum(['none', 'uppercase', 'lowercase']).optional().describe('Visual text casing. Defaults to none.'),
+      backgroundColor: z.string().optional().describe('Optional text-box background color as hex.'),
+      backgroundOpacity: z.number().optional().describe('Text-box background opacity, 0-1. Defaults to 0.'),
+      padding: z.number().optional().describe('Text-box inner padding in px on the internal canvas, 0-24.'),
+      borderRadius: z.number().optional().describe('Text-box corner radius in px on the internal canvas, 0-40.'),
+      strokeColor: z.string().optional().describe('Optional text outline color as hex.'),
+      strokeWidth: z.number().optional().describe('Text outline width in px on the internal canvas, 0-3.'),
+      shadow: z.number().optional().describe('Text shadow intensity, 0-100.'),
+      shadowColor: z.string().optional().describe('Text shadow color as hex.'),
       rotation: z.number().optional().describe('Rotation in degrees, -180 to 180. Defaults to 0.'),
       opacity: z.number().optional().describe('Opacity from 0 to 1. Defaults to 1.'),
     }),
-    execute: async ({ slideId, text, x, y, width, fontFamily, fontSize, fontWeight, color, align, lineHeight, letterSpacing, italic, rotation, opacity }) => {
+    execute: async ({ slideId, text, x, y, width, fontFamily, fontSize, fontWeight, color, align, lineHeight, letterSpacing, italic, underline, strikethrough, textTransform, backgroundColor, backgroundOpacity, padding, borderRadius, strokeColor, strokeWidth, shadow, shadowColor, rotation, opacity }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
       const element: Omit<TextElement, 'id'> = {
         type: 'text',
@@ -198,6 +268,17 @@ export function createEditorTools(controller: AiEditorController) {
         lineHeight: clampLineHeight(lineHeight ?? 1.05),
         letterSpacing: clampLetterSpacing(letterSpacing ?? 0),
         italic: italic ?? false,
+        underline: underline ?? false,
+        strikethrough: strikethrough ?? false,
+        textTransform: textTransform ?? 'none',
+        backgroundColor: backgroundColor ?? '#ffffff',
+        backgroundOpacity: clampOpacity(backgroundOpacity ?? 0),
+        padding: clampTextPadding(padding ?? 0),
+        borderRadius: clamp(borderRadius ?? 0, 0, 40),
+        strokeColor: strokeColor ?? '#111116',
+        strokeWidth: clampTextStroke(strokeWidth ?? 0),
+        shadow: clampShadow(shadow ?? 0),
+        shadowColor: shadowColor ?? '#000000',
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
@@ -254,15 +335,18 @@ export function createEditorTools(controller: AiEditorController) {
     description: `Add a decorative shape accent to a slide. ${COORD_NOTE} ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
-      shape: z.enum(['circle', 'pill', 'spark']),
+      shape: shapeEnum,
       color: z.string().describe('Shape color as a hex string.'),
+      strokeColor: z.string().optional().describe('Outline color for filled shapes as a hex string.'),
+      strokeWidth: z.number().optional().describe('Outline width, or line thickness for line/ring/arrow/wave, 0-12.'),
+      shadow: z.number().optional().describe('Drop shadow intensity, 0-100.'),
       x: z.number().describe(COORD_NOTE),
       y: z.number().describe(COORD_NOTE),
       width: z.number().describe(COORD_NOTE),
       rotation: z.number().optional().describe('Rotation in degrees, -180 to 180. Defaults to 0.'),
       opacity: z.number().optional().describe('Opacity from 0 to 1. Defaults to 1.'),
     }),
-    execute: async ({ slideId, shape, color, x, y, width, rotation, opacity }) => {
+    execute: async ({ slideId, shape, color, strokeColor, strokeWidth, shadow, x, y, width, rotation, opacity }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
       const element: Omit<ShapeElement, 'id'> = {
         type: 'shape',
@@ -273,6 +357,9 @@ export function createEditorTools(controller: AiEditorController) {
         opacity: clampOpacity(opacity ?? 1),
         shape,
         color,
+        strokeColor: strokeColor ?? '#171713',
+        strokeWidth: clampShapeStroke(strokeWidth ?? (['line', 'arrow', 'wave'].includes(shape) ? 6 : shape === 'ring' ? 4 : 0)),
+        shadow: clampShadow(shadow ?? 10),
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
@@ -290,10 +377,11 @@ export function createEditorTools(controller: AiEditorController) {
       y: z.number().describe(COORD_NOTE),
       width: z.number().describe(COORD_NOTE),
       borderRadius: z.number().optional().describe('Corner radius, 0-100. Defaults to 4.'),
+      shadow: z.number().optional().describe('Drop shadow intensity, 0-100. Defaults to 32.'),
       rotation: z.number().optional().describe('Rotation in degrees, -180 to 180. Defaults to 0.'),
       opacity: z.number().optional().describe('Opacity from 0 to 1. Defaults to 1.'),
     }),
-    execute: async ({ slideId, assetId, x, y, width, borderRadius, rotation, opacity }) => {
+    execute: async ({ slideId, assetId, x, y, width, borderRadius, shadow, rotation, opacity }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
       const src = controller.getAssetSrc(assetId)
       if (!src) return notFound(assetNotFoundMessage(assetId))
@@ -306,6 +394,7 @@ export function createEditorTools(controller: AiEditorController) {
         opacity: clampOpacity(opacity ?? 1),
         src,
         borderRadius: clampBorderRadius(borderRadius ?? 4),
+        shadow: clampShadow(shadow ?? 32),
       }
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
@@ -358,17 +447,27 @@ export function createEditorTools(controller: AiEditorController) {
       lineHeight: z.number().optional().describe('Text elements only.'),
       letterSpacing: z.number().optional().describe('Text elements only.'),
       italic: z.boolean().optional().describe('Text elements only.'),
+      underline: z.boolean().optional().describe('Text elements only.'),
+      strikethrough: z.boolean().optional().describe('Text elements only.'),
+      textTransform: z.enum(['none', 'uppercase', 'lowercase']).optional().describe('Text elements only.'),
+      backgroundColor: z.string().optional().describe('Text elements only. Text-box background hex color.'),
+      backgroundOpacity: z.number().optional().describe('Text elements only, 0-1.'),
+      padding: z.number().optional().describe('Text elements only, 0-24 internal px.'),
+      strokeColor: z.string().optional().describe('Text or shape elements only. Hex outline color.'),
+      strokeWidth: z.number().optional().describe('Text elements 0-3; shape elements 0-12.'),
+      shadowColor: z.string().optional().describe('Text elements only. Hex shadow color.'),
       deviceStyle: deviceStyleEnum.optional(),
       screenTheme: screenThemeEnum.optional(),
       tiltX: z.number().optional().describe('Device elements only, -12 to 12.'),
       tiltY: z.number().optional().describe('Device elements only, -18 to 18.'),
-      shadow: z.number().optional().describe('Device elements only, 0-100.'),
-      borderRadius: z.number().optional().describe('Image elements only, 0-100.'),
-      shape: z.enum(['circle', 'pill', 'spark']).optional().describe('Shape elements only.'),
+      shadow: z.number().optional().describe('Text, device, image, or shape elements, 0-100.'),
+      borderRadius: z.number().optional().describe('Text elements 0-40; image elements 0-100.'),
+      shape: shapeEnum.optional().describe('Shape elements only.'),
     }),
     execute: async ({ slideId, elementId, ...fields }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
-      if (!getElement(controller, slideId, elementId)) return notFound(elementNotFoundMessage(elementId, slideId))
+      const existing = getElement(controller, slideId, elementId)
+      if (!existing) return notFound(elementNotFoundMessage(elementId, slideId))
 
       const patch: Record<string, unknown> = {}
       if (fields.x !== undefined) patch.x = clampX(fields.x)
@@ -385,12 +484,21 @@ export function createEditorTools(controller: AiEditorController) {
       if (fields.lineHeight !== undefined) patch.lineHeight = clampLineHeight(fields.lineHeight)
       if (fields.letterSpacing !== undefined) patch.letterSpacing = clampLetterSpacing(fields.letterSpacing)
       if (fields.italic !== undefined) patch.italic = fields.italic
+      if (fields.underline !== undefined) patch.underline = fields.underline
+      if (fields.strikethrough !== undefined) patch.strikethrough = fields.strikethrough
+      if (fields.textTransform !== undefined) patch.textTransform = fields.textTransform
+      if (fields.backgroundColor !== undefined) patch.backgroundColor = fields.backgroundColor
+      if (fields.backgroundOpacity !== undefined) patch.backgroundOpacity = clampOpacity(fields.backgroundOpacity)
+      if (fields.padding !== undefined) patch.padding = clampTextPadding(fields.padding)
+      if (fields.strokeColor !== undefined) patch.strokeColor = fields.strokeColor
+      if (fields.strokeWidth !== undefined) patch.strokeWidth = existing.type === 'text' ? clampTextStroke(fields.strokeWidth) : clampShapeStroke(fields.strokeWidth)
+      if (fields.shadowColor !== undefined) patch.shadowColor = fields.shadowColor
       if (fields.deviceStyle !== undefined) patch.deviceStyle = fields.deviceStyle
       if (fields.screenTheme !== undefined) patch.screenTheme = fields.screenTheme
       if (fields.tiltX !== undefined) patch.tiltX = clampTiltX(fields.tiltX)
       if (fields.tiltY !== undefined) patch.tiltY = clampTiltY(fields.tiltY)
       if (fields.shadow !== undefined) patch.shadow = clampShadow(fields.shadow)
-      if (fields.borderRadius !== undefined) patch.borderRadius = clampBorderRadius(fields.borderRadius)
+      if (fields.borderRadius !== undefined) patch.borderRadius = existing.type === 'text' ? clamp(fields.borderRadius, 0, 40) : clampBorderRadius(fields.borderRadius)
       if (fields.shape !== undefined) patch.shape = fields.shape
 
       controller.updateElement(slideId, elementId, patch)

@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type PointerEven
 import { LockKeyhole } from 'lucide-react'
 import type { CanvasElement } from '../types'
 import { photoMockups, type PhotoMockupDefinition } from '../mockups/catalog'
+import { hexToRgba } from '../utils'
+import { ShapeGraphic } from './ShapeGraphic'
 
 const FakeScreen = ({ theme }: { theme: Extract<CanvasElement, { type: 'device' }>['screenTheme'] }) => (
   <div className={`fake-screen fake-screen--${theme}`}>
@@ -134,6 +136,8 @@ export const DeviceMockup = ({ element }: { element: Extract<CanvasElement, { ty
 
 export const ElementContent = ({ element }: { element: CanvasElement }) => {
   if (element.type === 'text') {
+    const decoration = [element.underline ? 'underline' : '', element.strikethrough ? 'line-through' : ''].filter(Boolean).join(' ')
+    const shadow = element.shadow ?? 0
     return (
       <div
         className="canvas-text"
@@ -146,6 +150,15 @@ export const ElementContent = ({ element }: { element: CanvasElement }) => {
           textAlign: element.align,
           lineHeight: element.lineHeight,
           letterSpacing: element.letterSpacing,
+          textDecorationLine: decoration || 'none',
+          textTransform: element.textTransform ?? 'none',
+          backgroundColor: hexToRgba(element.backgroundColor ?? '#ffffff', element.backgroundOpacity ?? 0),
+          padding: `${element.padding ?? 0}px`,
+          borderRadius: `${element.borderRadius ?? 0}px`,
+          WebkitTextStroke: `${element.strokeWidth ?? 0}px ${element.strokeColor ?? '#111116'}`,
+          textShadow: shadow > 0
+            ? `0 ${Math.max(1, shadow * 0.035)}px ${Math.max(2, shadow * 0.12)}px ${hexToRgba(element.shadowColor ?? '#000000', Math.min(0.65, shadow * 0.0065))}`
+            : 'none',
         }}
       >
         {element.text}
@@ -156,14 +169,22 @@ export const ElementContent = ({ element }: { element: CanvasElement }) => {
   if (element.type === 'device') return <DeviceMockup element={element} />
 
   if (element.type === 'image') {
-    return <img className="canvas-image" src={element.src} alt="Hochgeladenes Motiv" draggable={false} style={{ borderRadius: `${element.borderRadius}%` }} />
+    const shadow = element.shadow ?? 32
+    return (
+      <img
+        className="canvas-image"
+        src={element.src}
+        alt="Hochgeladenes Motiv"
+        draggable={false}
+        style={{
+          borderRadius: `${element.borderRadius}%`,
+          boxShadow: shadow > 0 ? `0 ${shadow * 0.28}px ${shadow * 0.7}px rgba(0, 0, 0, ${Math.min(0.42, shadow * 0.006)})` : 'none',
+        }}
+      />
+    )
   }
 
-  if (element.shape === 'spark') {
-    return <div className="shape-spark" style={{ color: element.color }}>✦</div>
-  }
-
-  return <div className={`shape shape--${element.shape}`} style={{ background: element.color }} />
+  return <ShapeGraphic element={element} />
 }
 
 type CanvasItemProps = {

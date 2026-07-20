@@ -7,7 +7,7 @@ export type ProjectSnapshot = {
     id: string
     name: string
     index: number
-    background: Background
+    background: Record<string, unknown> // background data WITHOUT data URLs: image is replaced with imageAssetId or hasImage
     elements: Array<Record<string, unknown>> // element data WITHOUT data URLs: for device elements replace `screenshot` with `screenshotAssetId` (matched by comparing src against uploads) or hasScreenshot boolean; for image elements replace `src` with `assetId`
   }>
   assets: Array<{ id: string; name: string }>
@@ -30,10 +30,14 @@ const DEFAULT_NEW_SLIDE_BACKGROUND: Background = { type: 'solid', color1: '#1111
 // Keys every element type may receive through `update_element`, plus keys specific to each type.
 const BASE_UPDATE_KEYS = new Set(['x', 'y', 'width', 'rotation', 'opacity'])
 const TYPE_UPDATE_KEYS: Record<CanvasElement['type'], Set<string>> = {
-  text: new Set(['text', 'color', 'fontFamily', 'fontSize', 'fontWeight', 'align', 'lineHeight', 'letterSpacing', 'italic']),
+  text: new Set([
+    'text', 'color', 'fontFamily', 'fontSize', 'fontWeight', 'align', 'lineHeight', 'letterSpacing', 'italic',
+    'underline', 'strikethrough', 'textTransform', 'backgroundColor', 'backgroundOpacity', 'padding', 'borderRadius',
+    'strokeColor', 'strokeWidth', 'shadow', 'shadowColor',
+  ]),
   device: new Set(['deviceStyle', 'screenshot', 'screenTheme', 'tiltX', 'tiltY', 'shadow']),
-  image: new Set(['src', 'borderRadius']),
-  shape: new Set(['shape', 'color']),
+  image: new Set(['src', 'borderRadius', 'shadow']),
+  shape: new Set(['shape', 'color', 'strokeColor', 'strokeWidth', 'shadow']),
 }
 
 const findAssetIdBySrc = (src: string | undefined, uploads: UploadAsset[]): string | undefined => {
@@ -63,6 +67,16 @@ const serializeElement = (element: CanvasElement, uploads: UploadAsset[]): Recor
   return { ...element }
 }
 
+const serializeBackground = (background: Background, uploads: UploadAsset[]): Record<string, unknown> => {
+  const { image, ...rest } = background
+  const imageAssetId = findAssetIdBySrc(image, uploads)
+  return {
+    ...rest,
+    ...(imageAssetId ? { imageAssetId } : {}),
+    hasImage: Boolean(image),
+  }
+}
+
 export function createAiController(io: {
   getSlides(): Slide[]
   setSlides(updater: (slides: Slide[]) => Slide[]): void
@@ -79,7 +93,7 @@ export function createAiController(io: {
         id: slide.id,
         name: slide.name,
         index,
-        background: slide.background,
+        background: serializeBackground(slide.background, uploads),
         elements: slide.elements.map((element) => serializeElement(element, uploads)),
       })),
       assets: uploads.map((asset) => ({ id: asset.id, name: asset.name })),

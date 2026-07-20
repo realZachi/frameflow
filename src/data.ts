@@ -25,6 +25,18 @@ const text = (
   align: 'left',
   lineHeight: 0.94,
   letterSpacing: -1.4,
+  italic: false,
+  underline: false,
+  strikethrough: false,
+  textTransform: 'none',
+  backgroundColor: '#ffffff',
+  backgroundOpacity: 0,
+  padding: 0,
+  borderRadius: 0,
+  strokeColor: '#111116',
+  strokeWidth: 0,
+  shadow: 0,
+  shadowColor: '#000000',
   ...options,
 })
 
@@ -69,6 +81,9 @@ const shape = (
   opacity: 1,
   shape: kind,
   color,
+  strokeColor: '#171713',
+  strokeWidth: 0,
+  shadow: 10,
 })
 
 export const makeTemplate = (template: TemplateId, name = 'Screen'): Slide => {
@@ -194,8 +209,15 @@ export const templateMeta: Array<{ id: TemplateId; name: string; eyebrow: string
 ]
 
 export const fontOptions = [
-  { name: 'Bricolage', value: 'Bricolage Grotesque Variable' },
-  { name: 'Instrument', value: 'Instrument Sans Variable' },
-  { name: 'Fraunces', value: 'Fraunces' },
-  { name: 'Modern Sans', value: 'Arial, sans-serif' },
+  { name: 'Bricolage', value: 'Bricolage Grotesque Variable', category: 'Display' },
+  { name: 'Syne', value: 'Syne Variable', category: 'Display' },
+  { name: 'Bebas Neue', value: 'Bebas Neue', category: 'Display' },
+  { name: 'Instrument Sans', value: 'Instrument Sans Variable', category: 'Sans' },
+  { name: 'Manrope', value: 'Manrope Variable', category: 'Sans' },
+  { name: 'Fraunces', value: 'Fraunces', category: 'Serif' },
+  { name: 'Playfair Display', value: 'Playfair Display', category: 'Serif' },
+  { name: 'DM Serif Display', value: 'DM Serif Display', category: 'Serif' },
+  { name: 'Space Mono', value: 'Space Mono', category: 'Mono' },
+  { name: 'Caveat', value: 'Caveat', category: 'Handschrift' },
+  { name: 'System Sans', value: 'Arial, sans-serif', category: 'Sans' },
 ]

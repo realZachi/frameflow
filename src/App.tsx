@@ -19,7 +19,7 @@ import { createAiController } from './ai/controller'
 import { AiGenerateModal } from './components/AiGenerateModal'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
-import type { Background, CanvasElement, DeviceElement, Slide, TemplateId, ToolId, UploadAsset } from './types'
+import type { Background, CanvasElement, DeviceElement, ShapeElement, Slide, TemplateId, TextElement, TextPreset, ToolId, UploadAsset } from './types'
 import { downloadBlob, fileToDataUrl, uid } from './utils'
 
 const STORAGE_KEY = 'frameflow-project-v4'
@@ -142,6 +142,7 @@ export default function App() {
     const element = slidesRef.current.flatMap((slide) => slide.elements).find((item) => item.id === id)
     if (element?.type === 'text') setActiveTool('text')
     if (element?.type === 'device') setActiveTool('device')
+    if (element?.type === 'shape') setActiveTool('elements')
     if (element?.type === 'image') setActiveTool('uploads')
   }
 
@@ -190,18 +191,46 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeydown)
   }, [deleteSelected, redo, undo])
 
-  const addText = (preset: 'title' | 'body' | 'label') => {
+  const addText = (preset: TextPreset) => {
     const configs = {
-      title: { text: 'Deine Headline', fontSize: 42, fontWeight: 760, width: 82, lineHeight: 0.98, letterSpacing: -1.2 },
-      body: { text: 'Eine kurze Erklärung, die den Mehrwert deiner App auf den Punkt bringt.', fontSize: 17, fontWeight: 520, width: 76, lineHeight: 1.25, letterSpacing: -0.2 },
-      label: { text: 'NEUES FEATURE', fontSize: 10, fontWeight: 760, width: 45, lineHeight: 1, letterSpacing: 1.4 },
+      title: { text: 'Deine Headline', y: 10, fontSize: 42, fontWeight: 760, width: 82, lineHeight: 0.98, letterSpacing: -1.2, fontFamily: 'Bricolage Grotesque Variable' },
+      subtitle: { text: 'Die klare zweite Zeile', y: 20, fontSize: 24, fontWeight: 650, width: 78, lineHeight: 1.05, letterSpacing: -0.5, fontFamily: 'Manrope Variable' },
+      body: { text: 'Eine kurze Erklärung, die den Mehrwert deiner App auf den Punkt bringt.', y: 24, fontSize: 17, fontWeight: 520, width: 76, lineHeight: 1.25, letterSpacing: -0.2, fontFamily: 'Instrument Sans Variable' },
+      label: { text: 'NEUES FEATURE', y: 12, fontSize: 10, fontWeight: 760, width: 45, lineHeight: 1, letterSpacing: 1.4, fontFamily: 'Instrument Sans Variable', textTransform: 'uppercase' as const, backgroundColor: '#d8ff55', backgroundOpacity: 1, padding: 6, borderRadius: 10, color: '#172015' },
+      quote: { text: '„Weniger Aufwand.\nMehr Wirkung.“', y: 20, fontSize: 27, fontWeight: 600, width: 80, lineHeight: 1.05, letterSpacing: -0.4, fontFamily: 'Playfair Display', italic: true },
+      stat: { text: '98%\nmehr Fokus', y: 18, fontSize: 38, fontWeight: 760, width: 68, lineHeight: 0.92, letterSpacing: -1, fontFamily: 'Syne Variable' },
     }[preset]
-    const element: CanvasElement = {
-      id: uid('text'), type: 'text', x: 9, y: preset === 'title' ? 10 : 24, rotation: 0, opacity: 1,
-      color: '#ffffff', fontFamily: preset === 'body' ? 'Instrument Sans Variable' : 'Bricolage Grotesque Variable', align: 'left', ...configs,
+    const element: TextElement = {
+      id: uid('text'), type: 'text', x: 9, rotation: 0, opacity: 1,
+      color: '#ffffff', align: 'left', italic: false, underline: false, strikethrough: false, textTransform: 'none',
+      backgroundColor: '#ffffff', backgroundOpacity: 0, padding: 0, borderRadius: 0,
+      strokeColor: '#111116', strokeWidth: 0, shadow: 0, shadowColor: '#000000',
+      ...configs,
     }
     commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...slide, elements: [...slide.elements, element] } : slide))
     setSelectedElementId(element.id)
+  }
+
+  const addShape = (shape: ShapeElement['shape']) => {
+    const wideShape = ['pill', 'line', 'arrow', 'wave'].includes(shape)
+    const width = shape === 'pill' ? 46 : wideShape ? 38 : 24
+    const element: ShapeElement = {
+      id: uid('shape'),
+      type: 'shape',
+      x: 50 - width / 2,
+      y: wideShape ? 38 : 34,
+      width,
+      rotation: 0,
+      opacity: 1,
+      shape,
+      color: '#d8ff55',
+      strokeColor: '#171713',
+      strokeWidth: ['line', 'arrow', 'wave'].includes(shape) ? 6 : shape === 'ring' ? 4 : 0,
+      shadow: 14,
+    }
+    commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...slide, elements: [...slide.elements, element] } : slide))
+    setSelectedElementId(element.id)
+    setActiveTool('elements')
   }
 
   const addDevice = (deviceStyle: DeviceElement['deviceStyle']) => {
@@ -216,7 +245,7 @@ export default function App() {
   }
 
   const addImage = (asset: UploadAsset) => {
-    const element: CanvasElement = { id: uid('image'), type: 'image', x: 15, y: 28, width: 70, rotation: 0, opacity: 1, src: asset.src, borderRadius: 4 }
+    const element: CanvasElement = { id: uid('image'), type: 'image', x: 15, y: 28, width: 70, rotation: 0, opacity: 1, src: asset.src, borderRadius: 4, shadow: 32 }
     commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...slide, elements: [...slide.elements, element] } : slide))
     setSelectedElementId(element.id)
   }
@@ -252,6 +281,25 @@ export default function App() {
     setDeviceImage(asset)
   }
 
+  const uploadBackgroundImage = async (file: File) => {
+    const src = await fileToDataUrl(file)
+    const asset = { id: uid('upload'), name: file.name, src }
+    setUploads((current) => [asset, ...current])
+    commit((current) => current.map((slide) => slide.id === activeSlideId ? {
+      ...slide,
+      background: {
+        ...slide.background,
+        type: 'image',
+        image: src,
+        imageFit: 'cover',
+        imagePosition: 'center',
+        overlayColor: '#111116',
+        overlayOpacity: 0.18,
+      },
+    } : slide))
+    setToast('Bild als Hintergrund eingesetzt')
+  }
+
   const applyTemplate = (template: TemplateId) => {
     const replacement = makeTemplate(template, activeSlide.name)
     commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...replacement, id: activeSlideId } : slide))
@@ -267,6 +315,19 @@ export default function App() {
   }
 
   const toggleLock = () => selectedElement && updateSelected({ locked: !selectedElement.locked })
+
+  const moveSelectedLayer = (direction: -1 | 1) => {
+    if (!selectedElementId) return
+    const index = activeSlide.elements.findIndex((element) => element.id === selectedElementId)
+    const target = index + direction
+    if (index < 0 || target < 0 || target >= activeSlide.elements.length) return
+    commit((current) => current.map((slide) => {
+      if (slide.id !== activeSlideId) return slide
+      const elements = [...slide.elements]
+      ;[elements[index], elements[target]] = [elements[target], elements[index]]
+      return { ...slide, elements }
+    }))
+  }
 
   const addSlide = () => {
     const slide: Slide = { id: uid('slide'), name: `Screen ${slides.length + 1}`, background: { type: 'solid', color1: '#f2eee5', color2: '#f2eee5', angle: 135 }, elements: [] }
@@ -318,7 +379,7 @@ export default function App() {
       await new Promise((resolve) => window.setTimeout(resolve, 120))
       const zip = new JSZip()
       const firstNode = document.getElementById(`artboard-${slides[0].id}`)
-      const fontEmbedCSS = firstNode ? await getFontEmbedCSS(firstNode) : undefined
+      const fontEmbedCSS = firstNode ? await getFontEmbedCSS(firstNode, { preferredFontFormat: 'woff2' }) : undefined
       for (let index = 0; index < slides.length; index += 1) {
         const slide = slides[index]
         const node = document.getElementById(`artboard-${slide.id}`)
@@ -419,10 +480,12 @@ export default function App() {
           onApplyTemplate={applyTemplate}
           onAddText={addText}
           onAddDevice={addDevice}
+          onAddShape={addShape}
           onUpdateSelected={updateSelected}
           onUpdateBackground={updateBackground}
           onUploadFiles={uploadFiles}
           onUploadToDevice={uploadToSelectedDevice}
+          onUploadBackground={uploadBackgroundImage}
           onAddImage={addImage}
           onSetDeviceImage={setDeviceImage}
         />
@@ -439,6 +502,7 @@ export default function App() {
           onDuplicateElement={duplicateSelected}
           onDeleteElement={deleteSelected}
           onToggleLock={toggleLock}
+          onMoveElementLayer={moveSelectedLayer}
           onAddSlide={addSlide}
           onDuplicateSlide={duplicateSlide}
           onDeleteSlide={deleteSlide}
