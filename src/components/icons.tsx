@@ -3,6 +3,7 @@ import {
   AlignCenter as AlignCenterIcon,
   AlignLeft as AlignLeftIcon,
   AlignRight as AlignRightIcon,
+  AlertCircleIcon,
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
   Blend as BlendIcon,
@@ -25,6 +26,7 @@ import {
   Palette as PaletteIcon,
   Plus as PlusIcon,
   Redo2 as Redo2Icon,
+  SaveIcon,
   Shapes as ShapesIcon,
   Share2 as Share2Icon,
   Sparkles as SparklesIcon,
@@ -47,6 +49,7 @@ const createIcon = (icon: IconSvgElement) => (props: IconProps) => (
 export const AlignCenter = createIcon(AlignCenterIcon)
 export const AlignLeft = createIcon(AlignLeftIcon)
 export const AlignRight = createIcon(AlignRightIcon)
+export const AlertCircle = createIcon(AlertCircleIcon)
 export const ArrowDown = createIcon(ArrowDownIcon)
 export const ArrowUp = createIcon(ArrowUpIcon)
 export const Blend = createIcon(BlendIcon)
@@ -69,6 +72,7 @@ export const MonitorSmartphone = createIcon(MonitorSmartphoneIcon)
 export const Palette = createIcon(PaletteIcon)
 export const Plus = createIcon(PlusIcon)
 export const Redo2 = createIcon(Redo2Icon)
+export const Save = createIcon(SaveIcon)
 export const Shapes = createIcon(ShapesIcon)
 export const Share2 = createIcon(Share2Icon)
 export const Sparkles = createIcon(SparklesIcon)

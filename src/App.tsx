@@ -2,15 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { getFontEmbedCSS, toBlob } from 'html-to-image'
 import JSZip from 'jszip'
 import {
+  AlertCircle,
   Check,
   ChevronDown,
   Cloud,
+  Copy,
   Download,
   Minus,
   Plus,
   Redo2,
+  Save,
   Share2,
   Sparkles,
+  Trash2,
   Undo2,
   X,
 } from './components/icons'
@@ -20,24 +24,86 @@ import type { AiToolActivity } from './ai/tools'
 import { AiGenerateModal } from './components/AiGenerateModal'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from './components/ui/alert-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from './components/ui/dropdown-menu'
 import { getDevicePlacement } from './mockups/catalog'
+import {
+  deleteProject,
+  loadLegacyProject,
+  loadProject,
+  loadProjectWorkspace,
+  removeLegacyProject,
+  saveProject,
+  setActiveProjectId,
+  type PersistedProject,
+  type ProjectSummary,
+} from './persistence'
 import type { Background, CanvasElement, DeviceElement, ShapeElement, Slide, TemplateId, TextElement, TextPreset, ToolId, UploadAsset } from './types'
 import { downloadBlob, fileToDataUrl, uid } from './utils'
 
-const STORAGE_KEY = 'frameflow-project-v5'
+const DEFAULT_PROJECT_NAME = 'Summer Launch'
 
-const loadInitialState = (): { slides: Slide[]; uploads: UploadAsset[] } => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved) as { slides?: Slide[]; uploads?: UploadAsset[] }
-      if (parsed.slides?.length) return { slides: parsed.slides, uploads: parsed.uploads ?? [] }
-    }
-  } catch {
-    // A fresh project is safer than blocking the editor on malformed local data.
-  }
-  return { slides: createInitialSlides(), uploads: [] }
+const loadInitialState = (): { projectName: string; slides: Slide[]; uploads: UploadAsset[] } => {
+  const legacy = loadLegacyProject()
+  if (legacy) return { projectName: DEFAULT_PROJECT_NAME, ...legacy }
+  return { projectName: DEFAULT_PROJECT_NAME, slides: createInitialSlides(), uploads: [] }
 }
+
+type SaveStatus = 'loading' | 'dirty' | 'saving' | 'saved' | 'error'
+
+const saveStatusLabels: Record<SaveStatus, string> = {
+  loading: 'Lokales Projekt wird geladen …',
+  dirty: 'Noch nicht gespeichert',
+  saving: 'Wird lokal gespeichert …',
+  saved: 'Lokal gespeichert',
+  error: 'Speichern fehlgeschlagen',
+}
+
+const sortProjectSummaries = (projects: ProjectSummary[]) => [...projects].sort((a, b) => b.savedAt - a.savedAt)
+
+const upsertProjectSummary = (projects: ProjectSummary[], project: PersistedProject) => sortProjectSummaries([
+  ...projects.filter((item) => item.id !== project.id),
+  {
+    id: project.id,
+    projectName: project.projectName,
+    createdAt: project.createdAt,
+    savedAt: project.savedAt,
+  },
+])
+
+const getUniqueProjectName = (projects: ProjectSummary[], desiredName: string) => {
+  const names = new Set(projects.map((project) => project.projectName.toLocaleLowerCase('de-DE')))
+  if (!names.has(desiredName.toLocaleLowerCase('de-DE'))) return desiredName
+  let suffix = 2
+  while (names.has(`${desiredName} ${suffix}`.toLocaleLowerCase('de-DE'))) suffix += 1
+  return `${desiredName} ${suffix}`
+}
+
+const formatProjectTime = (timestamp: number) => new Date(timestamp).toLocaleString('de-DE', {
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+})
 
 const freshElementIds = (elements: CanvasElement[]) => elements.map((element) => ({ ...element, id: uid(element.type) }))
 
@@ -90,7 +156,23 @@ export default function App() {
   const [activeSlideId, setActiveSlideId] = useState(initial.slides[0].id)
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId>('templates')
-  const [projectName, setProjectName] = useState('Summer Launch')
+  const [projectName, setProjectName] = useState(initial.projectName)
+  const projectNameRef = useRef(initial.projectName)
+  const [currentProjectId, setCurrentProjectId] = useState('current')
+  const currentProjectIdRef = useRef('current')
+  const currentProjectCreatedAtRef = useRef(0)
+  const [projects, setProjects] = useState<ProjectSummary[]>([])
+  const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false)
+  const [deletingProject, setDeletingProject] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('loading')
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
+  const [persistenceReady, setPersistenceReady] = useState(false)
+  const persistenceReadyRef = useRef(false)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const changeRevisionRef = useRef(0)
+  const saveAttemptRef = useRef(0)
+  const skipNextAutoSaveRef = useRef(false)
+  const projectTransitionRef = useRef(false)
   const [zoom, setZoom] = useState(0.9)
   const [exporting, setExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
@@ -103,6 +185,25 @@ export default function App() {
   const future = useRef<Slide[][]>([])
   const preAiSlideIdsRef = useRef<Set<string>>(new Set())
 
+  const replaceEditorProject = useCallback((project: PersistedProject) => {
+    currentProjectIdRef.current = project.id
+    currentProjectCreatedAtRef.current = project.createdAt
+    projectNameRef.current = project.projectName
+    slidesRef.current = project.slides
+    uploadsRef.current = project.uploads
+    setCurrentProjectId(project.id)
+    setProjectName(project.projectName)
+    setSlides(project.slides)
+    setUploads(project.uploads)
+    setActiveSlideId(project.slides[0].id)
+    setSelectedElementId(null)
+    setLastSavedAt(project.savedAt)
+    setAiActivity(null)
+    past.current = []
+    future.current = []
+    setHistoryState({ undo: false, redo: false })
+  }, [])
+
   useEffect(() => {
     slidesRef.current = slides
   }, [slides])
@@ -110,6 +211,54 @@ export default function App() {
   useEffect(() => {
     uploadsRef.current = uploads
   }, [uploads])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const hydrateProject = async () => {
+      try {
+        const workspace = await loadProjectWorkspace()
+        if (cancelled) return
+
+        if (workspace.activeProject) {
+          replaceEditorProject(workspace.activeProject)
+          setProjects(workspace.projects)
+          await setActiveProjectId(workspace.activeProject.id)
+        } else {
+          const now = Date.now()
+          const project: PersistedProject = {
+            id: uid('project'),
+            projectName: projectNameRef.current,
+            slides: slidesRef.current,
+            uploads: uploadsRef.current,
+            createdAt: now,
+            savedAt: now,
+          }
+          await saveProject(project)
+          await setActiveProjectId(project.id)
+          if (cancelled) return
+          replaceEditorProject(project)
+          setProjects(upsertProjectSummary([], project))
+        }
+
+        removeLegacyProject()
+        skipNextAutoSaveRef.current = true
+        setSaveStatus('saved')
+      } catch {
+        if (!cancelled) setSaveStatus('error')
+      } finally {
+        if (!cancelled) {
+          persistenceReadyRef.current = true
+          setPersistenceReady(true)
+        }
+      }
+    }
+
+    void hydrateProject()
+    return () => {
+      cancelled = true
+    }
+  }, [replaceEditorProject])
 
   const [aiController, setAiController] = useState<ReturnType<typeof createAiController> | null>(null)
 
@@ -125,16 +274,205 @@ export default function App() {
     }))
   }, [])
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ slides, uploads }))
-      } catch {
-        // Data URLs can exceed a browser's local storage quota; the live project still works.
+  const saveCurrentProject = useCallback(async (showConfirmation = false) => {
+    if (!persistenceReadyRef.current || projectTransitionRef.current) return false
+
+    const savedAt = Date.now()
+    const revision = changeRevisionRef.current
+    const attempt = ++saveAttemptRef.current
+    const snapshot = {
+      id: currentProjectIdRef.current,
+      projectName: projectNameRef.current.trim() || DEFAULT_PROJECT_NAME,
+      slides: slidesRef.current,
+      uploads: uploadsRef.current,
+      createdAt: currentProjectCreatedAtRef.current,
+      savedAt,
+    }
+
+    setSaveStatus('saving')
+    const saveRequest = saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => saveProject(snapshot))
+    saveQueueRef.current = saveRequest
+
+    try {
+      await saveRequest
+      removeLegacyProject()
+      if (attempt === saveAttemptRef.current && revision === changeRevisionRef.current) {
+        setSaveStatus('saved')
+        setLastSavedAt(savedAt)
       }
+      setProjects((current) => upsertProjectSummary(current, snapshot))
+      if (showConfirmation) setToast('Projekt lokal gespeichert')
+      return true
+    } catch {
+      if (attempt === saveAttemptRef.current && revision === changeRevisionRef.current) setSaveStatus('error')
+      if (showConfirmation) setToast('Lokales Speichern fehlgeschlagen')
+      return false
+    }
+  }, [])
+
+  const openProject = async (projectId: string) => {
+    if (projectId === currentProjectIdRef.current || projectTransitionRef.current) return
+    const saved = await saveCurrentProject()
+    if (!saved) {
+      setToast('Projektwechsel abgebrochen – Speichern fehlgeschlagen')
+      return
+    }
+
+    projectTransitionRef.current = true
+    try {
+      const project = await loadProject(projectId)
+      if (!project) throw new Error('Projekt nicht gefunden')
+      await setActiveProjectId(project.id)
+      skipNextAutoSaveRef.current = true
+      replaceEditorProject(project)
+      setSaveStatus('saved')
+      setToast(`„${project.projectName}“ geöffnet`)
+    } catch {
+      setSaveStatus('error')
+      setToast('Projekt konnte nicht geöffnet werden')
+    } finally {
+      projectTransitionRef.current = false
+    }
+  }
+
+  const createNewProject = async () => {
+    if (projectTransitionRef.current) return
+    const saved = await saveCurrentProject()
+    if (!saved) {
+      setToast('Neues Projekt konnte nicht angelegt werden')
+      return
+    }
+
+    projectTransitionRef.current = true
+    const now = Date.now()
+    const project: PersistedProject = {
+      id: uid('project'),
+      projectName: getUniqueProjectName(projects, 'Neues Projekt'),
+      slides: createInitialSlides(),
+      uploads: [],
+      createdAt: now,
+      savedAt: now,
+    }
+
+    try {
+      await saveProject(project)
+      await setActiveProjectId(project.id)
+      skipNextAutoSaveRef.current = true
+      replaceEditorProject(project)
+      setProjects((current) => upsertProjectSummary(current, project))
+      setSaveStatus('saved')
+      setToast('Neues Projekt angelegt')
+    } catch {
+      setSaveStatus('error')
+      setToast('Neues Projekt konnte nicht angelegt werden')
+    } finally {
+      projectTransitionRef.current = false
+    }
+  }
+
+  const duplicateCurrentProject = async () => {
+    if (projectTransitionRef.current) return
+    const saved = await saveCurrentProject()
+    if (!saved) {
+      setToast('Projekt konnte nicht dupliziert werden')
+      return
+    }
+
+    projectTransitionRef.current = true
+    const now = Date.now()
+    const project: PersistedProject = {
+      id: uid('project'),
+      projectName: getUniqueProjectName(projects, `${projectNameRef.current.trim() || DEFAULT_PROJECT_NAME} Kopie`),
+      slides: structuredClone(slidesRef.current),
+      uploads: structuredClone(uploadsRef.current),
+      createdAt: now,
+      savedAt: now,
+    }
+
+    try {
+      await saveProject(project)
+      await setActiveProjectId(project.id)
+      skipNextAutoSaveRef.current = true
+      replaceEditorProject(project)
+      setProjects((current) => upsertProjectSummary(current, project))
+      setSaveStatus('saved')
+      setToast('Projekt dupliziert')
+    } catch {
+      setSaveStatus('error')
+      setToast('Projekt konnte nicht dupliziert werden')
+    } finally {
+      projectTransitionRef.current = false
+    }
+  }
+
+  const deleteCurrentProject = async () => {
+    if (projects.length <= 1 || projectTransitionRef.current) return
+
+    projectTransitionRef.current = true
+    setDeletingProject(true)
+    try {
+      await saveQueueRef.current.catch(() => undefined)
+      const nextSummary = projects.find((project) => project.id !== currentProjectIdRef.current)
+      if (!nextSummary) throw new Error('Kein Ersatzprojekt gefunden')
+      const nextProject = await loadProject(nextSummary.id)
+      if (!nextProject) throw new Error('Ersatzprojekt nicht gefunden')
+      await deleteProject(currentProjectIdRef.current)
+      await setActiveProjectId(nextProject.id)
+      skipNextAutoSaveRef.current = true
+      replaceEditorProject(nextProject)
+      setProjects((current) => current.filter((project) => project.id !== currentProjectId))
+      setSaveStatus('saved')
+      setDeleteProjectDialogOpen(false)
+      setToast('Projekt lokal gelöscht')
+    } catch {
+      setSaveStatus('error')
+      setToast('Projekt konnte nicht gelöscht werden')
+    } finally {
+      projectTransitionRef.current = false
+      setDeletingProject(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!persistenceReady) return
+    if (skipNextAutoSaveRef.current) {
+      skipNextAutoSaveRef.current = false
+      return
+    }
+
+    changeRevisionRef.current += 1
+    setSaveStatus('dirty')
+    const timer = window.setTimeout(() => {
+      void saveCurrentProject()
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [slides, uploads])
+  }, [persistenceReady, projectName, saveCurrentProject, slides, uploads])
+
+  useEffect(() => {
+    const handleSaveShortcut = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 's') return
+      event.preventDefault()
+      void saveCurrentProject(true)
+    }
+
+    window.addEventListener('keydown', handleSaveShortcut)
+    return () => window.removeEventListener('keydown', handleSaveShortcut)
+  }, [saveCurrentProject])
+
+  useEffect(() => {
+    const flushPendingChanges = () => {
+      if (document.visibilityState === 'hidden') void saveCurrentProject()
+    }
+
+    document.addEventListener('visibilitychange', flushPendingChanges)
+    window.addEventListener('pagehide', flushPendingChanges)
+    return () => {
+      document.removeEventListener('visibilitychange', flushPendingChanges)
+      window.removeEventListener('pagehide', flushPendingChanges)
+    }
+  }, [saveCurrentProject])
 
   useEffect(() => {
     if (!toast) return
@@ -543,8 +881,92 @@ export default function App() {
       <header className="topbar">
         <div className="brand-lockup"><div className="brand-symbol"><span>F</span><i /></div><strong>Frameflow</strong><em>STUDIO</em></div>
         <div className="project-meta">
-          <span className="save-state"><Cloud size={13} /> Lokal gespeichert</span>
-          <label><input value={projectName} onChange={(event) => setProjectName(event.target.value)} aria-label="Projektname" /><ChevronDown size={13} /></label>
+          <span
+            className={`save-state save-state--${saveStatus}`}
+            title={lastSavedAt ? `Zuletzt gespeichert um ${new Date(lastSavedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}` : undefined}
+            aria-live="polite"
+          >
+            {saveStatus === 'error' ? <AlertCircle size={13} /> : <Cloud size={13} />}
+            {saveStatusLabels[saveStatus]}
+          </span>
+          <div className="project-name-control">
+            <input
+              value={projectName}
+              onChange={(event) => {
+                projectNameRef.current = event.target.value
+                setProjectName(event.target.value)
+              }}
+              aria-label="Projektname"
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger className="project-menu-trigger" aria-label="Projektmenü öffnen">
+                <ChevronDown size={13} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={18} className="project-menu-content w-80">
+                <DropdownMenuGroup className="project-menu-projects">
+                  <DropdownMenuLabel className="project-menu-label">
+                    <strong>Lokale Projekte</strong>
+                    <span>{projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'} in diesem Browser</span>
+                  </DropdownMenuLabel>
+                  <div className="project-menu-list">
+                    {projects.map((project) => (
+                      <DropdownMenuItem
+                        key={project.id}
+                        className="project-menu-project"
+                        data-active={project.id === currentProjectId}
+                        disabled={!persistenceReady || saveStatus === 'saving'}
+                        onClick={() => void openProject(project.id)}
+                      >
+                        <span className="project-menu-check">{project.id === currentProjectId && <Check size={14} />}</span>
+                        <span className="project-menu-project-copy">
+                          <strong>{project.projectName}</strong>
+                          <small>Gespeichert {formatProjectTime(project.savedAt)}</small>
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    className="project-menu-action"
+                    disabled={!persistenceReady || saveStatus === 'saving'}
+                    onClick={() => void createNewProject()}
+                  >
+                    <Plus size={15} />
+                    <span>Neues Projekt</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="project-menu-action"
+                    disabled={!persistenceReady || saveStatus === 'saving'}
+                    onClick={() => void duplicateCurrentProject()}
+                  >
+                    <Copy size={15} />
+                    <span>Projekt duplizieren</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="project-menu-action"
+                  disabled={!persistenceReady || saveStatus === 'saving'}
+                  onClick={() => void saveCurrentProject(true)}
+                >
+                  <Save size={15} />
+                  <span>Jetzt speichern</span>
+                  <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="project-menu-action"
+                  variant="destructive"
+                  disabled={!persistenceReady || projects.length <= 1 || saveStatus === 'saving'}
+                  onClick={() => setDeleteProjectDialogOpen(true)}
+                >
+                  <Trash2 size={15} />
+                  <span>Aktuelles Projekt löschen</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <div className="topbar-actions">
           <div className="history-actions"><button onClick={undo} disabled={!canUndo} title="Rückgängig (⌘Z)"><Undo2 size={17} /></button><button onClick={redo} disabled={!canRedo} title="Wiederholen (⇧⌘Z)"><Redo2 size={17} /></button></div>
@@ -604,6 +1026,28 @@ export default function App() {
       </div>
 
       {toast && <div className="toast"><span><Check size={14} /></span><strong>{toast}</strong><button onClick={() => setToast(null)}><X size={14} /></button></div>}
+      <AlertDialog
+        open={deleteProjectDialogOpen}
+        onOpenChange={(open) => {
+          if (!deletingProject) setDeleteProjectDialogOpen(open)
+        }}
+      >
+        <AlertDialogContent className="project-delete-dialog">
+          <AlertDialogHeader>
+            <AlertDialogMedia><Trash2 size={17} /></AlertDialogMedia>
+            <AlertDialogTitle>Projekt löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              „{projectName}“ samt Screens und Uploads wird dauerhaft aus diesem Browser gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="project-delete-cancel" disabled={deletingProject}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction className="project-delete-confirm" variant="destructive" disabled={deletingProject} onClick={() => void deleteCurrentProject()}>
+              {deletingProject ? 'Wird gelöscht …' : 'Projekt löschen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {aiController && (
         <AiGenerateModal
           open={aiOpen}
