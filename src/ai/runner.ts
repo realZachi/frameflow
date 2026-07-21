@@ -81,14 +81,18 @@ export async function runAiGeneration(options: {
 }): Promise<void> {
   const { description, screenshots, controller, signal, onEvent, onActivity } = options
 
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined
   if (!apiKey) {
-    onEvent({ type: 'error', message: 'Kein API-Key gefunden — setze VITE_GEMINI_API_KEY in .env.local und starte den Dev-Server neu.' })
+    onEvent({ type: 'error', message: 'Kein API-Key gefunden — setze VITE_ANTHROPIC_API_KEY in .env.local und starte den Dev-Server neu.' })
     return
   }
 
   try {
-    const google = createGoogle({ apiKey })
+    const anthropic = createAnthropic({
+      apiKey,
+      // Erlaubt den direkten Browser-Call (CORS); ohne diesen Header lehnt die Anthropic-API ab.
+      headers: { 'anthropic-dangerous-direct-browser-access': 'true' },
+    })
 
     const content: Array<
       | { type: 'text'; text: string }
@@ -100,10 +104,10 @@ export async function runAiGeneration(options: {
       content.push({ type: 'file', mediaType: extractMediaType(shot.dataUrl), data: shot.dataUrl })
     }
 
-    onEvent({ type: 'status', message: 'Verbinde mit Google Gemini…' })
+    onEvent({ type: 'status', message: 'Verbinde mit Anthropic Claude…' })
 
     const result = streamText({
-      model: google('gemini-3.1-pro-preview'),
+      model: anthropic('claude-sonnet-5'),
       instructions: buildInstructions(),
       messages: [{ role: 'user', content }],
       tools: createEditorTools(controller, { onActivity }),
