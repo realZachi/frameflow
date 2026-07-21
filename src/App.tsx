@@ -157,6 +157,7 @@ export default function App() {
   const [activeSlideId, setActiveSlideId] = useState(initial.slides[0].id)
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId>('templates')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [projectName, setProjectName] = useState(initial.projectName)
   const projectNameRef = useRef(initial.projectName)
   const [currentProjectId, setCurrentProjectId] = useState('current')
@@ -877,6 +878,15 @@ export default function App() {
   const canUndo = historyState.undo
   const canRedo = historyState.redo
 
+  const handleToolChange = (tool: ToolId) => {
+    if (tool === activeTool) {
+      setIsSidebarOpen((open) => !open)
+      return
+    }
+    setActiveTool(tool)
+    setIsSidebarOpen(true)
+  }
+
   return (
     <div className={`app-shell${selectedElement ? ' has-selection' : ''}`}>
       <header className="app-header">
@@ -993,8 +1003,8 @@ export default function App() {
         )}
       </header>
 
-      <div className="editor-shell">
-        <ToolRail activeTool={activeTool} onChange={setActiveTool} />
+      <div className={`editor-shell${isSidebarOpen ? '' : ' is-sidebar-collapsed'}`}>
+        <ToolRail activeTool={activeTool} isOpen={isSidebarOpen} onChange={handleToolChange} />
         <PropertiesPanel
           activeTool={activeTool}
           activeSlide={activeSlide}

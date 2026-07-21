@@ -28,17 +28,33 @@ const tools: Array<{ id: ToolId; label: string; icon: ReactNode }> = [
   { id: 'uploads', label: 'Uploads', icon: <Upload size={19} /> },
 ]
 
-export const ToolRail = ({ activeTool, onChange }: { activeTool: ToolId; onChange: (tool: ToolId) => void }) => (
+export const ToolRail = ({ activeTool, isOpen, onChange }: { activeTool: ToolId; isOpen: boolean; onChange: (tool: ToolId) => void }) => (
   <nav className="tool-rail" aria-label="Editor-Werkzeuge">
     <div className="rail-tools">
       {tools.map((tool) => (
-        <button key={tool.id} className={activeTool === tool.id ? 'is-active' : ''} onClick={() => onChange(tool.id)}>
+        <button
+          key={tool.id}
+          className={activeTool === tool.id ? 'is-active' : ''}
+          onClick={() => onChange(tool.id)}
+          aria-controls="properties-panel"
+          aria-expanded={isOpen && activeTool === tool.id}
+          aria-label={`${tool.label} ${isOpen && activeTool === tool.id ? 'schließen' : 'öffnen'}`}
+          title={tool.label}
+        >
           <span>{tool.icon}</span>
           <small>{tool.label}</small>
         </button>
       ))}
     </div>
-    <button className="rail-layers" onClick={() => onChange('templates')} title="Ebenen"><Layers3 size={18} /></button>
+    <button
+      className="rail-layers"
+      onClick={() => onChange('templates')}
+      title="Ebenen"
+      aria-controls="properties-panel"
+      aria-expanded={isOpen && activeTool === 'templates'}
+    >
+      <Layers3 size={18} />
+    </button>
   </nav>
 )
 
@@ -301,7 +317,7 @@ type PropertiesPanelProps = {
 }
 
 export const PropertiesPanel = ({ activeTool, activeSlide, uploads, onApplyTemplate, onAddText, onAddDevice, onAddShape, onUpdateBackground, onUploadFiles, onUploadBackground, onAddImage, onSetDeviceImage }: PropertiesPanelProps) => (
-  <aside className="properties-panel">
+  <aside className="properties-panel" id="properties-panel">
     <div className="panel-scroll">
       {activeTool === 'templates' && <TemplatesPanel onApplyTemplate={onApplyTemplate} />}
       {activeTool === 'elements' && <ElementsPanel onAddShape={onAddShape} />}
