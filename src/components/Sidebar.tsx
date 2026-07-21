@@ -1,28 +1,20 @@
 import { useRef, type ChangeEvent, type ReactNode } from 'react'
 import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
   Blend,
-  Bold,
-  Check,
   ChevronDown,
   ImagePlus,
-  Italic,
   Layers3,
   MonitorSmartphone,
   Palette,
   Plus,
   Shapes,
   Sparkles,
-  Strikethrough,
   Type,
-  Underline,
   Upload,
 } from './icons'
-import { fontOptions, templateMeta } from '../data'
+import { templateMeta } from '../data'
 import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
-import { deviceOptions, getDevicePlacement } from '../mockups/catalog'
+import { deviceOptions } from '../mockups/catalog'
 import { shapeCatalog } from '../shapes'
 import { getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { ShapeGraphic } from './ShapeGraphic'
@@ -97,89 +89,8 @@ const TemplatesPanel = ({ onApplyTemplate }: { onApplyTemplate: (id: TemplateId)
   </>
 )
 
-const TextInspector = ({ element, onUpdate }: { element?: Extract<CanvasElement, { type: 'text' }>; onUpdate: (patch: Partial<Extract<CanvasElement, { type: 'text' }>>) => void }) => {
-  if (!element) {
-    return <div className="empty-inspector"><Type size={24} /><strong>Text auswählen</strong><p>Klicke im Canvas auf eine Textebene, um Schrift, Farbe und Ausrichtung zu bearbeiten.</p></div>
-  }
-
-  const fontCategories = [...new Set(fontOptions.map((font) => font.category))]
-
-  return (
-    <>
-      <Section title="Typografie">
-        <FieldLabel>Schriftfamilie</FieldLabel>
-        <label className="select-field">
-          <select value={element.fontFamily} onChange={(event) => onUpdate({ fontFamily: event.target.value })}>
-            {fontCategories.map((category) => (
-              <optgroup key={category} label={category}>
-                {fontOptions.filter((font) => font.category === category).map((font) => <option key={font.value} value={font.value}>{font.name}</option>)}
-              </optgroup>
-            ))}
-          </select>
-          <ChevronDown size={15} />
-        </label>
-        <div className="two-fields">
-          <label className="number-field"><span>Größe</span><input type="number" min="6" max="120" value={element.fontSize} onChange={(event) => onUpdate({ fontSize: Number(event.target.value) })} /><small>px</small></label>
-          <label className="number-field"><span>Stärke</span><input type="number" min="100" max="900" step="50" value={element.fontWeight} onChange={(event) => onUpdate({ fontWeight: Number(event.target.value) })} /></label>
-        </div>
-        <FieldLabel>Ausrichtung</FieldLabel>
-        <div className="segmented-control segmented-control--three">
-          {(['left', 'center', 'right'] as const).map((align) => (
-            <button key={align} className={element.align === align ? 'is-active' : ''} onClick={() => onUpdate({ align })} aria-label={`${align} ausrichten`}>
-              {align === 'left' ? <AlignLeft size={16} /> : align === 'center' ? <AlignCenter size={16} /> : <AlignRight size={16} />}
-            </button>
-          ))}
-        </div>
-        <FieldLabel>Schriftschnitt</FieldLabel>
-        <div className="style-toggle-grid">
-          <button className={element.fontWeight >= 700 ? 'is-active' : ''} onClick={() => onUpdate({ fontWeight: element.fontWeight >= 700 ? 500 : 760 })} title="Fett"><Bold size={15} /></button>
-          <button className={element.italic ? 'is-active' : ''} onClick={() => onUpdate({ italic: !element.italic })} title="Kursiv"><Italic size={15} /></button>
-          <button className={element.underline ? 'is-active' : ''} onClick={() => onUpdate({ underline: !element.underline })} title="Unterstrichen"><Underline size={15} /></button>
-          <button className={element.strikethrough ? 'is-active' : ''} onClick={() => onUpdate({ strikethrough: !element.strikethrough })} title="Durchgestrichen"><Strikethrough size={15} /></button>
-        </div>
-        <FieldLabel>Schreibweise</FieldLabel>
-        <div className="choice-row choice-row--three">
-          <button className={(element.textTransform ?? 'none') === 'none' ? 'is-active' : ''} onClick={() => onUpdate({ textTransform: 'none' })}>Aa</button>
-          <button className={element.textTransform === 'uppercase' ? 'is-active' : ''} onClick={() => onUpdate({ textTransform: 'uppercase' })}>AA</button>
-          <button className={element.textTransform === 'lowercase' ? 'is-active' : ''} onClick={() => onUpdate({ textTransform: 'lowercase' })}>aa</button>
-        </div>
-        <div className="range-stack">
-          <FieldLabel value={element.lineHeight.toFixed(2)}>Zeilenhöhe</FieldLabel>
-          <input type="range" min="0.7" max="1.8" step="0.02" value={element.lineHeight} onChange={(event) => onUpdate({ lineHeight: Number(event.target.value) })} />
-          <FieldLabel value={`${element.letterSpacing.toFixed(1)} px`}>Laufweite</FieldLabel>
-          <input type="range" min="-4" max="8" step="0.1" value={element.letterSpacing} onChange={(event) => onUpdate({ letterSpacing: Number(event.target.value) })} />
-        </div>
-      </Section>
-      <Section title="Farbe & Textfläche">
-        <ColorField value={element.color} onChange={(color) => onUpdate({ color })} label="Text" />
-        <ColorField value={element.backgroundColor ?? '#ffffff'} onChange={(backgroundColor) => onUpdate({ backgroundColor })} label="Hintergrund" />
-        <div className="range-stack">
-          <FieldLabel value={`${Math.round((element.backgroundOpacity ?? 0) * 100)}%`}>Hintergrund-Deckkraft</FieldLabel>
-          <input type="range" min="0" max="1" step="0.01" value={element.backgroundOpacity ?? 0} onChange={(event) => onUpdate({ backgroundOpacity: Number(event.target.value) })} />
-          <FieldLabel value={`${element.padding ?? 0} px`}>Innenabstand</FieldLabel>
-          <input type="range" min="0" max="24" step="1" value={element.padding ?? 0} onChange={(event) => onUpdate({ padding: Number(event.target.value) })} />
-          <FieldLabel value={`${element.borderRadius ?? 0} px`}>Ecken</FieldLabel>
-          <input type="range" min="0" max="40" step="1" value={element.borderRadius ?? 0} onChange={(event) => onUpdate({ borderRadius: Number(event.target.value) })} />
-        </div>
-      </Section>
-      <Section title="Kontur & Schatten">
-        <ColorField value={element.strokeColor ?? '#111116'} onChange={(strokeColor) => onUpdate({ strokeColor })} label="Kontur" />
-        <div className="range-stack">
-          <FieldLabel value={`${element.strokeWidth ?? 0} px`}>Konturstärke</FieldLabel>
-          <input type="range" min="0" max="3" step="0.25" value={element.strokeWidth ?? 0} onChange={(event) => onUpdate({ strokeWidth: Number(event.target.value) })} />
-          <FieldLabel value={`${element.shadow ?? 0}%`}>Textschatten</FieldLabel>
-          <input type="range" min="0" max="100" step="1" value={element.shadow ?? 0} onChange={(event) => onUpdate({ shadow: Number(event.target.value) })} />
-        </div>
-        <ColorField value={element.shadowColor ?? '#000000'} onChange={(shadowColor) => onUpdate({ shadowColor })} label="Schatten" />
-      </Section>
-    </>
-  )
-}
-
-const ElementsPanel = ({ element, onAddShape, onUpdate }: {
-  element?: ShapeElement
+const ElementsPanel = ({ onAddShape }: {
   onAddShape: (shape: ShapeElement['shape']) => void
-  onUpdate: (patch: Partial<ShapeElement>) => void
 }) => (
   <>
     <div className="panel-heading"><div><span>VEKTOREN</span><h2>Elemente</h2></div><p>Formen, Akzente, Pfeile und Linien für klarere Stories.</p></div>
@@ -215,80 +126,29 @@ const ElementsPanel = ({ element, onAddShape, onUpdate }: {
         </div>
       ))}
     </div>
-    {element ? (
-      <Section title="Ausgewähltes Element">
-        <ColorField value={element.color} onChange={(color) => onUpdate({ color })} label="Füllung / Linie" />
-        <ColorField value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} label="Kontur" />
-        <div className="range-stack">
-          <FieldLabel value={`${element.strokeWidth ?? 0}`}>Konturstärke</FieldLabel>
-          <input type="range" min="0" max="12" step="1" value={element.strokeWidth ?? 0} onChange={(event) => onUpdate({ strokeWidth: Number(event.target.value) })} />
-          <FieldLabel value={`${element.shadow ?? 0}%`}>Schatten</FieldLabel>
-          <input type="range" min="0" max="100" step="1" value={element.shadow ?? 0} onChange={(event) => onUpdate({ shadow: Number(event.target.value) })} />
-          <FieldLabel value={`${Math.round(element.opacity * 100)}%`}>Deckkraft</FieldLabel>
-          <input type="range" min="0.05" max="1" step="0.01" value={element.opacity} onChange={(event) => onUpdate({ opacity: Number(event.target.value) })} />
-        </div>
-      </Section>
-    ) : <p className="panel-hint">Klicke auf ein Element, um es zum aktiven Screen hinzuzufügen.</p>}
+    <p className="panel-hint">Klicke auf eine Form, um sie zum aktiven Screen hinzuzufügen.</p>
   </>
 )
 
-const DevicePanel = ({ element, onAddDevice, onUpdate, onUploadToDevice }: {
-  element?: Extract<CanvasElement, { type: 'device' }>
+const DevicePanel = ({ onAddDevice }: {
   onAddDevice: (style: Extract<CanvasElement, { type: 'device' }>['deviceStyle']) => void
-  onUpdate: (patch: Partial<Extract<CanvasElement, { type: 'device' }>>) => void
-  onUploadToDevice: (file: File) => void
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const isPhotoMockup = element ? deviceOptions.find((device) => device.id === element.deviceStyle)?.kind === 'photo' : false
-  return (
+}) => (
     <>
       <div className="panel-heading"><div><span>GERÄTE</span><h2>Mockups</h2></div><p>Realistische Rahmen mit sauberer Screenshot-Maske.</p></div>
       <div className="device-grid">
         {deviceOptions.map((device) => (
           <button
             key={device.id}
-            className={element?.deviceStyle === device.id ? 'is-selected' : ''}
-            onClick={() => element
-              ? onUpdate({ deviceStyle: device.id, ...getDevicePlacement(device.id) })
-              : onAddDevice(device.id)}
+            onClick={() => onAddDevice(device.id)}
           >
             <span className="device-swatch" style={{ backgroundImage: `url(${device.preview})` }}><i /></span>
             <small>{device.label}</small>
-            {element?.deviceStyle === device.id && <Check size={13} />}
           </button>
         ))}
       </div>
-      {element ? (
-        <>
-          <Section title="Screenshot">
-            <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => event.target.files?.[0] && onUploadToDevice(event.target.files[0])} />
-            <button className="upload-drop" onClick={() => inputRef.current?.click()}>
-              {element.screenshot ? <img src={element.screenshot} alt="Aktueller Screenshot" /> : <ImagePlus size={20} />}
-              <span><strong>{element.screenshot ? 'Screenshot ersetzen' : 'Screenshot einsetzen'}</strong><small>PNG, JPG oder WebP</small></span>
-            </button>
-          </Section>
-          {isPhotoMockup ? (
-            <div className="photo-perspective-note">
-              <Sparkles size={16} />
-              <span><strong>Echte PSD-Perspektive</strong><small>Neigung, Licht, Schatten und Hand stammen direkt aus dem Smart Mockup. Drehen und skalieren kannst du es weiterhin im Canvas.</small></span>
-            </div>
-          ) : (
-            <Section title="Perspektive">
-              <div className="range-stack">
-                <FieldLabel value={`${element.tiltY}°`}>Seitliche Neigung</FieldLabel>
-                <input type="range" min="-18" max="18" value={element.tiltY} onChange={(event) => onUpdate({ tiltY: Number(event.target.value) })} />
-                <FieldLabel value={`${element.tiltX}°`}>Vertikale Neigung</FieldLabel>
-                <input type="range" min="-12" max="12" value={element.tiltX} onChange={(event) => onUpdate({ tiltX: Number(event.target.value) })} />
-                <FieldLabel value={`${element.shadow}%`}>Schatten</FieldLabel>
-                <input type="range" min="0" max="100" value={element.shadow} onChange={(event) => onUpdate({ shadow: Number(event.target.value) })} />
-              </div>
-            </Section>
-          )}
-        </>
-      ) : <p className="panel-hint">Wähle ein Mockup, um es zum aktiven Screen hinzuzufügen.</p>}
+      <p className="panel-hint">Wähle ein Mockup, um es zum aktiven Screen hinzuzufügen.</p>
     </>
   )
-}
 
 const backgroundPatterns: Array<{ id: BackgroundPattern; label: string }> = [
   { id: 'none', label: 'Ohne' },
@@ -398,13 +258,11 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
   )
 }
 
-const UploadsPanel = ({ uploads, element, onUpload, onAddImage, onSetDeviceImage, onUpdate }: {
+const UploadsPanel = ({ uploads, onUpload, onAddImage, onSetDeviceImage }: {
   uploads: UploadAsset[]
-  element?: Extract<CanvasElement, { type: 'image' }>
   onUpload: (files: FileList) => void
   onAddImage: (asset: UploadAsset) => void
   onSetDeviceImage: (asset: UploadAsset) => void
-  onUpdate: (patch: Partial<Extract<CanvasElement, { type: 'image' }>>) => void
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const handleFiles = (event: ChangeEvent<HTMLInputElement>) => event.target.files && onUpload(event.target.files)
@@ -413,18 +271,6 @@ const UploadsPanel = ({ uploads, element, onUpload, onAddImage, onSetDeviceImage
       <div className="panel-heading"><div><span>MEDIEN</span><h2>Uploads</h2></div><p>App-Screenshots und Motive bleiben lokal in deinem Browser.</p></div>
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={handleFiles} />
       <button className="large-upload" onClick={() => inputRef.current?.click()}><span><Upload size={20} /></span><strong>Dateien hochladen</strong><small>PNG, JPG oder WebP · mehrere möglich</small></button>
-      {element && (
-        <Section title="Ausgewähltes Bild">
-          <div className="range-stack">
-            <FieldLabel value={`${element.borderRadius}%`}>Ecken</FieldLabel>
-            <input type="range" min="0" max="50" step="1" value={element.borderRadius} onChange={(event) => onUpdate({ borderRadius: Number(event.target.value) })} />
-            <FieldLabel value={`${element.shadow ?? 32}%`}>Schatten</FieldLabel>
-            <input type="range" min="0" max="100" step="1" value={element.shadow ?? 32} onChange={(event) => onUpdate({ shadow: Number(event.target.value) })} />
-            <FieldLabel value={`${Math.round(element.opacity * 100)}%`}>Deckkraft</FieldLabel>
-            <input type="range" min="0.05" max="1" step="0.01" value={element.opacity} onChange={(event) => onUpdate({ opacity: Number(event.target.value) })} />
-          </div>
-        </Section>
-      )}
       {uploads.length ? (
         <div className="upload-list">
           {uploads.map((asset) => (
@@ -442,26 +288,23 @@ const UploadsPanel = ({ uploads, element, onUpload, onAddImage, onSetDeviceImage
 type PropertiesPanelProps = {
   activeTool: ToolId
   activeSlide: Slide
-  selectedElement?: CanvasElement
   uploads: UploadAsset[]
   onApplyTemplate: (id: TemplateId) => void
   onAddText: (preset: TextPreset) => void
   onAddDevice: (style: Extract<CanvasElement, { type: 'device' }>['deviceStyle']) => void
   onAddShape: (shape: ShapeElement['shape']) => void
-  onUpdateSelected: (patch: Partial<CanvasElement>) => void
   onUpdateBackground: (patch: Partial<Background>) => void
   onUploadFiles: (files: FileList) => void
-  onUploadToDevice: (file: File) => void
   onUploadBackground: (file: File) => void
   onAddImage: (asset: UploadAsset) => void
   onSetDeviceImage: (asset: UploadAsset) => void
 }
 
-export const PropertiesPanel = ({ activeTool, activeSlide, selectedElement, uploads, onApplyTemplate, onAddText, onAddDevice, onAddShape, onUpdateSelected, onUpdateBackground, onUploadFiles, onUploadToDevice, onUploadBackground, onAddImage, onSetDeviceImage }: PropertiesPanelProps) => (
+export const PropertiesPanel = ({ activeTool, activeSlide, uploads, onApplyTemplate, onAddText, onAddDevice, onAddShape, onUpdateBackground, onUploadFiles, onUploadBackground, onAddImage, onSetDeviceImage }: PropertiesPanelProps) => (
   <aside className="properties-panel">
     <div className="panel-scroll">
       {activeTool === 'templates' && <TemplatesPanel onApplyTemplate={onApplyTemplate} />}
-      {activeTool === 'elements' && <ElementsPanel element={selectedElement?.type === 'shape' ? selectedElement : undefined} onAddShape={onAddShape} onUpdate={(patch) => onUpdateSelected(patch as Partial<CanvasElement>)} />}
+      {activeTool === 'elements' && <ElementsPanel onAddShape={onAddShape} />}
       {activeTool === 'text' && (
         <>
           <div className="panel-heading"><div><span>TYPE</span><h2>Text</h2></div><p>Ausdrucksstarke Hierarchien, Labels und Zitate für App-Store-Screens.</p></div>
@@ -473,12 +316,11 @@ export const PropertiesPanel = ({ activeTool, activeSlide, selectedElement, uplo
             <button onClick={() => onAddText('quote')}><strong className="preset-quote">“</strong><span><b>Zitat</b><small>Editorial & menschlich</small></span><Plus size={15} /></button>
             <button onClick={() => onAddText('stat')}><strong className="preset-stat">98</strong><span><b>Kennzahl</b><small>Zahl als Blickfang</small></span><Plus size={15} /></button>
           </div>
-          <TextInspector element={selectedElement?.type === 'text' ? selectedElement : undefined} onUpdate={(patch) => onUpdateSelected(patch as Partial<CanvasElement>)} />
         </>
       )}
-      {activeTool === 'device' && <DevicePanel element={selectedElement?.type === 'device' ? selectedElement : undefined} onAddDevice={onAddDevice} onUpdate={(patch) => onUpdateSelected(patch as Partial<CanvasElement>)} onUploadToDevice={onUploadToDevice} />}
+      {activeTool === 'device' && <DevicePanel onAddDevice={onAddDevice} />}
       {activeTool === 'background' && <BackgroundPanel background={activeSlide.background} uploads={uploads} onUpdate={onUpdateBackground} onUploadBackground={onUploadBackground} />}
-      {activeTool === 'uploads' && <UploadsPanel uploads={uploads} element={selectedElement?.type === 'image' ? selectedElement : undefined} onUpload={onUploadFiles} onAddImage={onAddImage} onSetDeviceImage={onSetDeviceImage} onUpdate={(patch) => onUpdateSelected(patch as Partial<CanvasElement>)} />}
+      {activeTool === 'uploads' && <UploadsPanel uploads={uploads} onUpload={onUploadFiles} onAddImage={onAddImage} onSetDeviceImage={onSetDeviceImage} />}
     </div>
     <div className="panel-footer"><span><i /> Auto-save</span><small>Alles bleibt lokal</small></div>
   </aside>

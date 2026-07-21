@@ -22,6 +22,7 @@ import { createInitialSlides, makeTemplate } from './data'
 import { createAiController } from './ai/controller'
 import type { AiToolActivity } from './ai/tools'
 import { AiGenerateModal } from './components/AiGenerateModal'
+import { ElementToolbar } from './components/ElementToolbar'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
 import {
@@ -877,8 +878,9 @@ export default function App() {
   const canRedo = historyState.redo
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
+    <div className={`app-shell${selectedElement ? ' has-selection' : ''}`}>
+      <header className="app-header">
+        <div className="topbar">
         <div className="brand-lockup"><div className="brand-symbol"><span>F</span><i /></div><strong>Frameflow</strong><em>STUDIO</em></div>
         <div className="project-meta">
           <span
@@ -976,6 +978,19 @@ export default function App() {
             {exporting ? <><span className="export-spinner" /><b>{exportProgress}%</b></> : <><Download size={17} /><b>Alle als ZIP</b></>}
           </button>
         </div>
+        </div>
+        {selectedElement && (
+          <ElementToolbar
+            key={selectedElement.id}
+            element={selectedElement}
+            onUpdate={updateSelected}
+            onUploadToDevice={uploadToSelectedDevice}
+            onDuplicate={duplicateSelected}
+            onToggleLock={toggleLock}
+            onMoveLayer={moveSelectedLayer}
+            onDelete={deleteSelected}
+          />
+        )}
       </header>
 
       <div className="editor-shell">
@@ -983,16 +998,13 @@ export default function App() {
         <PropertiesPanel
           activeTool={activeTool}
           activeSlide={activeSlide}
-          selectedElement={selectedElement}
           uploads={uploads}
           onApplyTemplate={applyTemplate}
           onAddText={addText}
           onAddDevice={addDevice}
           onAddShape={addShape}
-          onUpdateSelected={updateSelected}
           onUpdateBackground={updateBackground}
           onUploadFiles={uploadFiles}
-          onUploadToDevice={uploadToSelectedDevice}
           onUploadBackground={uploadBackgroundImage}
           onAddImage={addImage}
           onSetDeviceImage={setDeviceImage}
@@ -1009,10 +1021,6 @@ export default function App() {
           onUpdateElement={updateElementLive}
           onCommitText={commitElementText}
           onCheckpoint={checkpoint}
-          onDuplicateElement={duplicateSelected}
-          onDeleteElement={deleteSelected}
-          onToggleLock={toggleLock}
-          onMoveElementLayer={moveSelectedLayer}
           onAddSlide={addSlide}
           onDuplicateSlide={duplicateSlide}
           onDeleteSlide={deleteSlide}

@@ -1,5 +1,5 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Lock, LockOpen, Plus, Trash2 } from './icons'
+import { ChevronLeft, ChevronRight, Copy, Plus, Trash2 } from './icons'
 import type { CanvasElement, Slide } from '../types'
 import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { CanvasItem } from './CanvasElementView'
@@ -31,10 +31,6 @@ type Props = {
   onUpdateElement: (slideId: string, id: string, patch: Partial<CanvasElement>) => void
   onCommitText: (slideId: string, id: string, patch: { text: string; html?: string }) => void
   onCheckpoint: () => void
-  onDuplicateElement: () => void
-  onDeleteElement: () => void
-  onToggleLock: () => void
-  onMoveElementLayer: (direction: -1 | 1) => void
   onAddSlide: () => void
   onDuplicateSlide: (id: string) => void
   onDeleteSlide: (id: string) => void
@@ -53,10 +49,6 @@ export const EditorCanvas = ({
   onUpdateElement,
   onCommitText,
   onCheckpoint,
-  onDuplicateElement,
-  onDeleteElement,
-  onToggleLock,
-  onMoveElementLayer,
   onAddSlide,
   onDuplicateSlide,
   onDeleteSlide,
@@ -126,8 +118,6 @@ export const EditorCanvas = ({
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
   }
 
-  const selectedElement = slides.flatMap((slide) => slide.elements).find((element) => element.id === selectedElementId)
-
   return (
     <main
       className={`canvas-stage${isInteracting ? ' is-interacting' : ''}`}
@@ -136,18 +126,6 @@ export const EditorCanvas = ({
       onPointerCancel={end}
     >
       <div className="stage-noise" />
-      {selectedElement && !exporting && (
-        <div className="element-floater" role="toolbar" aria-label="Ausgewählte Ebene">
-          <button onClick={onDuplicateElement} title="Duplizieren"><Copy size={15} /></button>
-          <button onClick={onToggleLock} title={selectedElement.locked ? 'Entsperren' : 'Sperren'}>
-            {selectedElement.locked ? <LockOpen size={15} /> : <Lock size={15} />}
-          </button>
-          <button onClick={() => onMoveElementLayer(-1)} title="Eine Ebene nach hinten"><ArrowDown size={15} /></button>
-          <button onClick={() => onMoveElementLayer(1)} title="Eine Ebene nach vorne"><ArrowUp size={15} /></button>
-          <span />
-          <button onClick={onDeleteElement} title="Löschen" className="danger"><Trash2 size={15} /></button>
-        </div>
-      )}
       <div className="artboards" style={{ '--zoom': zoom } as React.CSSProperties}>
         {slides.map((slide, index) => {
           const isActive = slide.id === activeSlideId
