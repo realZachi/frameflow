@@ -126,8 +126,6 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .editor-shell { height: calc(100% - 62px); display: grid; grid-template-columns: 82px 304px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); position: relative; }
 
 .tool-rail { background: #20201c; color: #a3a39a; border-right: 1px solid #34342e; display: flex; flex-direction: column; align-items: stretch; position: relative; z-index: 120; }
-.rail-mark { height: 57px; display: grid; place-items: center; border-bottom: 1px solid #34342e; }
-.rail-mark > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px 6px 6px 2px; background: var(--acid); color: #1b1b17; font-family: 'Bricolage Grotesque Variable'; font-weight: 850; font-size: 11px; transform: rotate(-3deg); }
 .rail-tools { display: flex; flex-direction: column; padding: 9px 7px; gap: 3px; overflow-y: auto; scrollbar-width: none; }
 .rail-tools button { height: 60px; border: 0; border-radius: 8px; background: transparent; color: #929289; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; position: relative; }
 .rail-tools button span { height: 24px; display: grid; place-items: center; }
@@ -653,16 +651,6 @@ select:focus-visible {
   background: var(--sidebar);
   color: var(--sidebar-foreground);
   border-color: var(--sidebar-border);
-}
-
-.rail-mark { border-color: var(--sidebar-border); }
-
-.rail-mark > span {
-  background: var(--sidebar-primary);
-  color: var(--sidebar-primary-foreground);
-  font-family: 'Geist Variable', sans-serif;
-  border-radius: var(--radius-sm);
-  transform: none;
 }
 
 .rail-tools button { color: var(--muted-foreground); }

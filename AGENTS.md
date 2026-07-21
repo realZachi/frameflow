@@ -28,6 +28,18 @@ Before opening a pull request, run `bun run lint && bun run build`.
 
 Use TypeScript with two-space indentation, single quotes, and no semicolons, matching the existing code. Prefer functional React components and discriminated unions from `src/types.ts`. Name components and exported types in PascalCase, functions and variables in camelCase, and CSS classes in kebab-case. Keep editor mutations immutable so undo/redo snapshots remain reliable. Register reusable mockups in the catalog instead of branching on assets throughout the UI.
 
+## Mandatory shadcn UI System
+
+shadcn/ui is mandatory for all application and editor UI. The configuration in `components.json` and preset `bJiC` are the source of truth: Nova base, neutral colors, Geist, Base UI, and Hugeicons. Do not introduce another component library, icon library, parallel token set, or independent visual language.
+
+- Before changing UI, inspect `components.json` and reuse an existing component from `src/components/ui/` whenever one fits.
+- Add or update components only through Bun, for example `bunx --bun shadcn@latest add button`. Do not copy shadcn component source manually.
+- Keep the project synchronized with the required preset using `bunx --bun shadcn@latest apply --preset bJiC`. Never initialize or apply a different preset without explicit user approval.
+- Use the generated shadcn semantic tokens (`background`, `foreground`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `card`, `popover`, and sidebar tokens) for editor chrome. Do not add hard-coded UI colors when a theme token exists.
+- Use the preset's spacing, radius, typography, focus, disabled, hover, and motion conventions. New custom controls must be composed from shadcn/Base UI primitives and styled with the same tokens.
+- Hugeicons is the required icon set. Reuse the wrappers in `src/components/icons.tsx`; do not add Lucide or another icon package.
+- User-authored artboard content and exported App Store screens are exempt from the neutral UI palette because their colors and fonts are part of the user's design. The surrounding editor chrome is not exempt.
+
 ## AI Screenshot Generation
 
 The "Mit AI generieren" button in the topbar opens `AiGenerateModal`, where the user describes their app and uploads raw screenshots. An agent loop then designs App Store screens directly on the canvas.
@@ -41,10 +53,6 @@ The "Mit AI generieren" button in the topbar opens `AiGenerateModal`, where the 
 - **Prompt changes**: design-system rules and coordinate semantics live in `src/ai/prompt.ts`; keep them in sync with actual canvas behavior (percent coordinates, 1290 × 2796 artboard, the fontSize trap above, font weights actually loaded in `src/main.tsx`), and keep the "Verify your work" section's repair-round cap in sync with `render_slide_preview`'s actual behavior.
 - **Streaming UI**: `runner.ts` maps stream parts to `AiRunEvent`s consumed by the modal's log; it never rejects — errors and aborts arrive as events.
 - **Live AI cursor**: each tool in `tools.ts` also emits an `AiToolActivity` (tool name, slide/element id, percent-of-canvas x/y) through an optional `onActivity` callback, threaded via `runAiGeneration` in `runner.ts` into `App.tsx` state and rendered as `AiCursorOverlay` inside the targeted `#artboard-{slideId}`. The overlay carries `data-ai-overlay`, which the `filter` option on both `preview.ts`'s `toJpeg` and `App.tsx`'s export `toBlob` calls excludes, so the cursor never leaks into AI previews or exported PNGs. While a run is active or has just finished, `AiGenerateModal` docks to the bottom-right (`ai-modal-overlay--live`) instead of covering the canvas, so the live edits and cursor stay visible.
-
-## Testing Guidelines
-
-There is no automated test framework yet. Every UI change must be manually checked in the browser: add/select an element, edit its properties, exercise undo/redo, and export a ZIP. Confirm exported PNGs remain `1290 × 2796`. Changes to `src/ai/` additionally require one manual generation run against the real Moonshot API (needs `MOONSHOT_API_KEY` in `.env.local`) — verify tool calls appear in the modal log, slides are appended, and a single undo reverts the whole run. If adding automated tests, use colocated `*.test.ts` or `*.test.tsx` files and add the corresponding Bun script in the same change.
 
 ## Commit & Pull Request Guidelines
 

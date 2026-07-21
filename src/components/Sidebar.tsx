@@ -38,7 +38,6 @@ const tools: Array<{ id: ToolId; label: string; icon: ReactNode }> = [
 
 export const ToolRail = ({ activeTool, onChange }: { activeTool: ToolId; onChange: (tool: ToolId) => void }) => (
   <nav className="tool-rail" aria-label="Editor-Werkzeuge">
-    <div className="rail-mark"><span>F</span></div>
     <div className="rail-tools">
       {tools.map((tool) => (
         <button key={tool.id} className={activeTool === tool.id ? 'is-active' : ''} onClick={() => onChange(tool.id)}>
