@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { createInitialSlides, makeTemplate } from './data'
 import { createAiController } from './ai/controller'
+import type { AiToolActivity } from './ai/tools'
 import { AiGenerateModal } from './components/AiGenerateModal'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
@@ -40,6 +41,46 @@ const loadInitialState = (): { slides: Slide[]; uploads: UploadAsset[] } => {
 
 const freshElementIds = (elements: CanvasElement[]) => elements.map((element) => ({ ...element, id: uid(element.type) }))
 
+// Eases the stage scroll by hand: native smooth scrolling and requestAnimationFrame both
+// stall while the document is hidden (and smooth scrolling misbehaves with the CSS-zoomed
+// artboards), so animate when visible and jump instantly otherwise.
+let stageScrollAnimation = 0
+
+const animateStageScroll = (stage: HTMLElement, targetLeft: number) => {
+  cancelAnimationFrame(stageScrollAnimation)
+  const from = stage.scrollLeft
+  const delta = targetLeft - from
+  if (Math.abs(delta) < 1) return
+  if (document.visibilityState === 'hidden') {
+    stage.scrollLeft = targetLeft
+    return
+  }
+  const duration = 550
+  const start = performance.now()
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / duration)
+    stage.scrollLeft = from + delta * (1 - Math.pow(1 - t, 3))
+    if (t < 1) stageScrollAnimation = requestAnimationFrame(step)
+  }
+  stageScrollAnimation = requestAnimationFrame(step)
+}
+
+// A freshly added slide has no artboard DOM node yet when its first AI activity arrives,
+// so retry briefly until React has rendered it before giving up on the scroll.
+const scrollStageToArtboard = (slideId: string, attempt = 0) => {
+  const node = document.getElementById(`artboard-${slideId}`)
+  if (!node) {
+    if (attempt < 10) window.setTimeout(() => scrollStageToArtboard(slideId, attempt + 1), 32)
+    return
+  }
+  const stage = node.closest('.canvas-stage')
+  if (!(stage instanceof HTMLElement)) return
+  const nodeRect = node.getBoundingClientRect()
+  const stageRect = stage.getBoundingClientRect()
+  const delta = nodeRect.left + nodeRect.width / 2 - (stageRect.left + stageRect.width / 2)
+  animateStageScroll(stage, stage.scrollLeft + delta)
+}
+
 export default function App() {
   const [initial] = useState(loadInitialState)
   const [slides, setSlides] = useState<Slide[]>(initial.slides)
@@ -56,6 +97,8 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [historyState, setHistoryState] = useState({ undo: false, redo: false })
   const [aiOpen, setAiOpen] = useState(false)
+  const [aiActivity, setAiActivity] = useState<(AiToolActivity & { seq: number }) | null>(null)
+  const aiActivitySeqRef = useRef(0)
   const past = useRef<Slide[][]>([])
   const future = useRef<Slide[][]>([])
   const preAiSlideIdsRef = useRef<Set<string>>(new Set())
@@ -98,6 +141,36 @@ export default function App() {
     const timer = window.setTimeout(() => setToast(null), 3200)
     return () => window.clearTimeout(timer)
   }, [toast])
+
+  const aiFollowedSlideRef = useRef<string | null>(null)
+
+  const handleAiActivity = useCallback((activity: AiToolActivity | null) => {
+    if (!activity) {
+      setAiActivity(null)
+      aiFollowedSlideRef.current = null
+      return
+    }
+    aiActivitySeqRef.current += 1
+    const seq = aiActivitySeqRef.current
+    if (activity.slideId && activity.slideId !== aiFollowedSlideRef.current) {
+      aiFollowedSlideRef.current = activity.slideId
+      scrollStageToArtboard(activity.slideId)
+    }
+    setAiActivity((prev) => ({
+      tool: activity.tool,
+      slideId: activity.slideId ?? prev?.slideId,
+      elementId: activity.elementId,
+      x: activity.x ?? prev?.x ?? 50,
+      y: activity.y ?? prev?.y ?? 30,
+      seq,
+    }))
+  }, [])
+
+  useEffect(() => {
+    if (!aiActivity) return
+    const t = window.setTimeout(() => setAiActivity(null), 6000)
+    return () => window.clearTimeout(t)
+  }, [aiActivity])
 
   const activeSlide = slides.find((slide) => slide.id === activeSlideId) ?? slides[0]
   const selectedElement = activeSlide?.elements.find((element) => element.id === selectedElementId)
@@ -402,6 +475,7 @@ export default function App() {
           backgroundColor: slide.background.color1,
           fontEmbedCSS,
           preferredFontFormat: 'woff2',
+          filter: (candidate) => !(candidate instanceof HTMLElement && candidate.dataset.aiOverlay),
         })
         if (!blob) throw new Error(`Screen ${index + 1} konnte nicht gerendert werden`)
         const safeName = slide.name.replace(/[^a-z0-9äöüß_-]+/gi, '-').replace(/^-|-$/g, '') || `Screen-${index + 1}`
@@ -453,6 +527,7 @@ export default function App() {
 
   const handleAiFinished = (slidesCreated: number) => {
     setToast(`${slidesCreated} Screens mit AI erstellt`)
+    setAiActivity(null)
     const firstNewSlide = slidesRef.current.find((slide) => !preAiSlideIdsRef.current.has(slide.id))
     if (firstNewSlide) {
       setActiveSlideId(firstNewSlide.id)
@@ -506,6 +581,7 @@ export default function App() {
           selectedElementId={selectedElementId}
           exporting={exporting}
           zoom={zoom}
+          aiActivity={aiActivity}
           onSetActiveSlide={setActiveSlideId}
           onSelectElement={selectElement}
           onUpdateElement={updateElementLive}
@@ -535,6 +611,7 @@ export default function App() {
           controller={aiController}
           onPrepareRun={prepareAiRun}
           onFinished={handleAiFinished}
+          onActivity={handleAiActivity}
         />
       )}
       <div className="mobile-blocker"><div className="brand-symbol"><span>F</span><i /></div><h1>Mehr Platz für gute Ideen.</h1><p>Frameflow ist ein Desktop-Studio. Öffne den Editor auf einem größeren Bildschirm, um Screens präzise zu gestalten.</p></div>

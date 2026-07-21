@@ -100,6 +100,10 @@ const getElement = (controller: AiEditorController, slideId: string, elementId: 
   return slide.elements.find((element) => element.id === elementId)
 }
 
+// Snapshot elements are `Record<string, unknown>` (data URLs are stripped out for the model), so
+// numeric fields like x/y/width need a safe read before they can be used in cursor-position math.
+const numField = (value: unknown): number => (typeof value === 'number' ? value : 0)
+
 const buildElementTypes = (controller: AiEditorController, slideId: string): Record<string, string> => {
   const slide = getSlide(controller, slideId)
   if (!slide) return {}
@@ -128,7 +132,23 @@ const withMeasurement = async (
 
 const MEASUREMENT_NOTE = "The result includes the element's actually rendered bounding box and any slide layout warnings — address warnings before moving on."
 
-export function createEditorTools(controller: AiEditorController) {
+export type AiToolActivity = {
+  tool: string
+  slideId?: string
+  elementId?: string
+  x?: number
+  y?: number
+}
+
+export function createEditorTools(controller: AiEditorController, options?: { onActivity?: (activity: AiToolActivity) => void }) {
+  const emit = (activity: AiToolActivity) => {
+    try {
+      options?.onActivity?.(activity)
+    } catch {
+      // observers must never break a tool
+    }
+  }
+
   const get_canvas_state = tool({
     description:
       'Get the current state of the project: every slide (with id, name, background, elements) and every uploaded screenshot asset (with id, name). Always call this first, and again whenever you need up-to-date ids.',
@@ -163,6 +183,7 @@ export function createEditorTools(controller: AiEditorController) {
         ...(background.patternScale !== undefined ? { patternScale: clampPatternScale(background.patternScale) } : {}),
       } : undefined
       const slideId = controller.addSlide({ name, background: normalizedBackground })
+      emit({ tool: 'add_slide', slideId, x: 50, y: 16 })
       return { ok: true, slideId }
     },
   })
@@ -175,6 +196,7 @@ export function createEditorTools(controller: AiEditorController) {
     }),
     execute: async ({ slideId, name }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      emit({ tool: 'rename_slide', slideId, x: 50, y: 6 })
       controller.renameSlide(slideId, name)
       return { ok: true }
     },
@@ -207,6 +229,7 @@ export function createEditorTools(controller: AiEditorController) {
         image = controller.getAssetSrc(imageAssetId)
         if (!image) return notFound(assetNotFoundMessage(imageAssetId))
       }
+      emit({ tool: 'set_slide_background', slideId, x: 50, y: 50 })
       controller.setSlideBackground(slideId, {
         type,
         color1,
@@ -234,6 +257,7 @@ export function createEditorTools(controller: AiEditorController) {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
       const ok = controller.deleteSlide(slideId)
       if (!ok) return notFound('Cannot delete the last remaining slide in the project.')
+      emit({ tool: 'delete_slide', slideId })
       return { ok: true }
     },
   })
@@ -305,6 +329,7 @@ export function createEditorTools(controller: AiEditorController) {
         shadow: clampShadow(shadow ?? 0),
         shadowColor: shadowColor ?? '#000000',
       }
+      emit({ tool: 'add_text', slideId, x: clamp(clampX(x) + clampWidth(width) / 2, 2, 98), y: clamp(clampY(y) + 4, 2, 96) })
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
@@ -350,6 +375,7 @@ export function createEditorTools(controller: AiEditorController) {
         shadow: clampShadow(shadow ?? 55),
         ...(screenshot ? { screenshot } : {}),
       }
+      emit({ tool: 'add_device', slideId, x: clamp(clampX(x) + clampWidth(width) / 2, 2, 98), y: clamp(clampY(y) + 4, 2, 96) })
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
@@ -387,6 +413,7 @@ export function createEditorTools(controller: AiEditorController) {
         strokeWidth: clampShapeStroke(strokeWidth ?? (['line', 'arrow', 'wave'].includes(shape) ? 6 : shape === 'ring' ? 4 : 0)),
         shadow: clampShadow(shadow ?? 10),
       }
+      emit({ tool: 'add_shape', slideId, x: clamp(clampX(x) + clampWidth(width) / 2, 2, 98), y: clamp(clampY(y) + 4, 2, 96) })
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
@@ -422,6 +449,7 @@ export function createEditorTools(controller: AiEditorController) {
         borderRadius: clampBorderRadius(borderRadius ?? 4),
         shadow: clampShadow(shadow ?? 32),
       }
+      emit({ tool: 'add_image', slideId, x: clamp(clampX(x) + clampWidth(width) / 2, 2, 98), y: clamp(clampY(y) + 4, 2, 96) })
       const elementId = controller.addElement(slideId, element)
       if (!elementId) return notFound(slideNotFoundMessage(slideId))
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
@@ -443,6 +471,13 @@ export function createEditorTools(controller: AiEditorController) {
       if (element.type !== 'device') return notFound(`Element ${elementId} on slide ${slideId} is not a device element.`)
       const src = controller.getAssetSrc(assetId)
       if (!src) return notFound(assetNotFoundMessage(assetId))
+      emit({
+        tool: 'set_device_screenshot',
+        slideId,
+        elementId,
+        x: clamp(numField(element.x) + numField(element.width) / 2, 2, 98),
+        y: clamp(numField(element.y) + 4, 2, 96),
+      })
       controller.updateElement(slideId, elementId, { screenshot: src })
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
       return { ok: true, elementId, box, slideWarnings }
@@ -534,6 +569,16 @@ export function createEditorTools(controller: AiEditorController) {
       if (fields.borderRadius !== undefined) patch.borderRadius = existing.type === 'text' ? clamp(fields.borderRadius, 0, 40) : clampBorderRadius(fields.borderRadius)
       if (fields.shape !== undefined) patch.shape = fields.shape
 
+      const patchedX = typeof patch.x === 'number' ? patch.x : undefined
+      const patchedY = typeof patch.y === 'number' ? patch.y : undefined
+      const patchedWidth = typeof patch.width === 'number' ? patch.width : undefined
+      emit({
+        tool: 'update_element',
+        slideId,
+        elementId,
+        x: clamp((patchedX ?? numField(existing.x)) + (patchedWidth ?? numField(existing.width)) / 2, 2, 98),
+        y: clamp((patchedY ?? numField(existing.y)) + 4, 2, 96),
+      })
       controller.updateElement(slideId, elementId, patch)
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)
       return { ok: true, elementId, box, slideWarnings, ...(unmatchedHighlights.length > 0 ? { unmatchedHighlights } : {}) }
@@ -548,6 +593,18 @@ export function createEditorTools(controller: AiEditorController) {
     }),
     execute: async ({ slideId, elementId }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      const existing = getElement(controller, slideId, elementId)
+      if (existing) {
+        emit({
+          tool: 'delete_element',
+          slideId,
+          elementId,
+          x: clamp(numField(existing.x) + numField(existing.width) / 2, 2, 98),
+          y: clamp(numField(existing.y) + 4, 2, 96),
+        })
+      } else {
+        emit({ tool: 'delete_element', slideId })
+      }
       const ok = controller.deleteElement(slideId, elementId)
       if (!ok) return notFound(elementNotFoundMessage(elementId, slideId))
       return { ok: true }
@@ -560,6 +617,7 @@ export function createEditorTools(controller: AiEditorController) {
     inputSchema: z.object({ slideId: z.string() }),
     execute: async ({ slideId }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      emit({ tool: 'inspect_slide', slideId })
       const elementTypes = buildElementTypes(controller, slideId)
       const measurement = await measureSlide(slideId, elementTypes)
       if (!measurement) return notFound(slideNotFoundMessage(slideId))
@@ -577,6 +635,7 @@ export function createEditorTools(controller: AiEditorController) {
       { ok: true; warnings: string[]; image: string; mediaType: 'image/jpeg' } | { ok: false; error: string }
     > => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
+      emit({ tool: 'render_slide_preview', slideId })
       const elementTypes = buildElementTypes(controller, slideId)
       const [capture, measurement] = await Promise.all([captureSlidePreview(slideId), measureSlide(slideId, elementTypes)])
       if (!capture) return { ok: false, error: `Failed to render a preview for slide ${slideId}.` }

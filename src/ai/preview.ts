@@ -28,6 +28,7 @@ export async function captureSlidePreview(slideId: string): Promise<{ base64: st
       pixelRatio: 1,
       quality: 0.8,
       fontEmbedCSS,
+      filter: (candidate) => !(candidate instanceof HTMLElement && candidate.dataset.aiOverlay),
     })
     return { base64: dataUrl.replace(/^data:image\/jpeg;base64,/, ''), mediaType: 'image/jpeg' }
   } catch (error) {

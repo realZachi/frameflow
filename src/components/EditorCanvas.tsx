@@ -3,6 +3,9 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Lock, LockOpen, Pl
 import type { CanvasElement, Slide } from '../types'
 import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { CanvasItem } from './CanvasElementView'
+import { AiCursorOverlay } from './AiCursorOverlay'
+
+type AiActivity = { tool: string; slideId?: string; x?: number; y?: number; seq: number }
 
 type Interaction = {
   type: 'drag' | 'resize' | 'rotate'
@@ -22,6 +25,7 @@ type Props = {
   selectedElementId: string | null
   exporting: boolean
   zoom: number
+  aiActivity?: AiActivity | null
   onSetActiveSlide: (id: string) => void
   onSelectElement: (id: string | null, slideId?: string) => void
   onUpdateElement: (slideId: string, id: string, patch: Partial<CanvasElement>) => void
@@ -43,6 +47,7 @@ export const EditorCanvas = ({
   selectedElementId,
   exporting,
   zoom,
+  aiActivity,
   onSetActiveSlide,
   onSelectElement,
   onUpdateElement,
@@ -146,10 +151,11 @@ export const EditorCanvas = ({
       <div className="artboards" style={{ '--zoom': zoom } as React.CSSProperties}>
         {slides.map((slide, index) => {
           const isActive = slide.id === activeSlideId
+          const isAiTarget = aiActivity?.slideId === slide.id
           const backgroundStyle = { ...getBackgroundStyle(slide.background), ...getBackgroundPatternStyle(slide.background) }
           const pattern = slide.background.pattern ?? 'none'
           return (
-            <section className={`artboard-wrap${isActive ? ' is-active' : ''}`} key={slide.id}>
+            <section className={`artboard-wrap${isActive ? ' is-active' : ''}${isAiTarget ? ' is-ai-target' : ''}`} key={slide.id}>
               <div className="artboard-actions">
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <strong>{slide.name}</strong>
@@ -183,6 +189,7 @@ export const EditorCanvas = ({
                     onCommitText={(patch) => onCommitText(slide.id, element.id, patch)}
                   />
                 ))}
+                {aiActivity && aiActivity.slideId === slide.id && !exporting && <AiCursorOverlay activity={aiActivity} />}
               </div>
               <div className="artboard-size">1290 × 2796 px</div>
             </section>

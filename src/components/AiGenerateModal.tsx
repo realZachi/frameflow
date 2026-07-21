@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Sparkles, Upload, X } from 'lucide-react'
 import type { AiEditorController } from '../ai/controller'
-import { runAiGeneration, type AiRunEvent } from '../ai/runner'
+import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
 import { fileToDataUrl, uid } from '../utils'
 
 type ScreenshotDraft = { id: string; file: File; name: string; dataUrl: string }
@@ -14,9 +14,10 @@ export type AiGenerateModalProps = {
   controller: AiEditorController
   onPrepareRun: (files: Array<{ name: string; dataUrl: string }>) => Array<{ assetId: string; name: string; dataUrl: string }>
   onFinished: (slidesCreated: number) => void
+  onActivity?: (activity: AiToolActivity | null) => void
 }
 
-export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFinished }: AiGenerateModalProps) => {
+export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
   const [description, setDescription] = useState('')
   const [screenshots, setScreenshots] = useState<ScreenshotDraft[]>([])
   const [phase, setPhase] = useState<RunPhase>('idle')
@@ -26,12 +27,15 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
   const [doneInfo, setDoneInfo] = useState<{ summary: string; slidesCreated: number } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const logEndRef = useRef<HTMLDivElement>(null)
+  const logRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const cancelledRef = useRef(false)
 
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ block: 'end' })
+    // Scroll only the log container itself — scrollIntoView would cancel the canvas
+    // stage's smooth follow-scroll while the AI is working.
+    const node = logRef.current
+    if (node) node.scrollTop = node.scrollHeight
   }, [log, assistantText])
 
   const requestClose = () => {
@@ -77,10 +81,12 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
     else if (event.type === 'done') {
       setDoneInfo({ summary: event.summary, slidesCreated: event.slidesCreated })
       setPhase('done')
+      onActivity?.(null)
       onFinished(event.slidesCreated)
     } else if (event.type === 'error') {
       setErrorMessage(event.message)
       setPhase('error')
+      onActivity?.(null)
     }
   }
 
@@ -101,6 +107,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
       controller,
       signal: abortController.signal,
       onEvent: handleEvent,
+      onActivity,
     })
   }
 
@@ -108,6 +115,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
     cancelledRef.current = true
     abortControllerRef.current?.abort()
     setPhase('idle')
+    onActivity?.(null)
   }
 
   const handleRetry = () => {
@@ -117,7 +125,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
 
   return (
     <div
-      className="ai-modal-overlay"
+      className={`ai-modal-overlay${phase !== 'idle' ? ' ai-modal-overlay--live' : ''}`}
       onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose() }}
     >
       <div className="ai-modal-card" role="dialog" aria-modal="true" aria-label="Mit AI generieren">
@@ -161,12 +169,11 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
 
           {phase === 'running' && (
             <div className="ai-modal-run">
-              <div className="ai-modal-log">
+              <div className="ai-modal-log" ref={logRef}>
                 {log.map((entry, index) => (
                   <div className={`ai-modal-log-entry ai-modal-log-entry--${entry.kind}`} key={index}>{entry.text}</div>
                 ))}
                 <div className="ai-modal-log-entry ai-modal-log-entry--spinner"><span className="ai-modal-spinner" />Generiere …</div>
-                <div ref={logEndRef} />
               </div>
               {assistantText && <p className="ai-modal-assistant-text">{assistantText}</p>}
             </div>

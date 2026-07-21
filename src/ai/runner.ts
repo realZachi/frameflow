@@ -1,8 +1,11 @@
 import { APICallError, isStepCount, streamText } from 'ai'
-import { createGoogle } from '@ai-sdk/google'
+import { createAnthropic } from '@ai-sdk/anthropic'
 import { buildInstructions, buildUserMessage } from './prompt'
 import { createEditorTools } from './tools'
 import type { AiEditorController } from './controller'
+import type { AiToolActivity } from './tools'
+
+export type { AiToolActivity } from './tools'
 
 export type AiRunEvent =
   | { type: 'status'; message: string }
@@ -57,7 +60,7 @@ const extractMediaType = (dataUrl: string): string => {
 const describeError = (error: unknown): string => {
   if (APICallError.isInstance(error)) {
     if (error.statusCode === 400 || error.statusCode === 401 || error.statusCode === 403) {
-      return `Gemini-API-Fehler (${error.statusCode}) — prüfe den VITE_GEMINI_API_KEY in .env.local. ${error.message}`
+      return `Anthropic-API-Fehler (${error.statusCode}) — prüfe den VITE_ANTHROPIC_API_KEY in .env.local. ${error.message}`
     }
     return error.message
   }
@@ -74,8 +77,9 @@ export async function runAiGeneration(options: {
   controller: AiEditorController
   signal?: AbortSignal
   onEvent: (event: AiRunEvent) => void
+  onActivity?: (activity: AiToolActivity) => void
 }): Promise<void> {
-  const { description, screenshots, controller, signal, onEvent } = options
+  const { description, screenshots, controller, signal, onEvent, onActivity } = options
 
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined
   if (!apiKey) {
@@ -102,7 +106,7 @@ export async function runAiGeneration(options: {
       model: google('gemini-3.1-pro-preview'),
       instructions: buildInstructions(),
       messages: [{ role: 'user', content }],
-      tools: createEditorTools(controller),
+      tools: createEditorTools(controller, { onActivity }),
       stopWhen: isStepCount(64),
       abortSignal: signal,
     })
