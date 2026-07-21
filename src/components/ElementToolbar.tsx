@@ -9,7 +9,6 @@ import {
   ArrowDown,
   ArrowUp,
   Bold,
-  ChevronDown,
   Copy,
   ImagePlus,
   Italic,
@@ -17,6 +16,7 @@ import {
   LockOpen,
   MonitorSmartphone,
   Shapes,
+  SlidersHorizontal,
   Strikethrough,
   Trash2,
   Type,
@@ -105,8 +105,8 @@ const AdvancedSlider = ({ label, value, min, max, step = 1, displayValue, onChan
 
 const MoreSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>) => (
   <Popover>
-    <PopoverTrigger render={<Button variant="outline" size="sm" className="toolbar-more" />}>
-      Mehr <ChevronDown size={13} />
+    <PopoverTrigger render={<Button variant="outline" size="icon-sm" className="toolbar-more" title="Weitere Einstellungen" aria-label="Weitere Einstellungen" />}>
+      <SlidersHorizontal size={15} />
     </PopoverTrigger>
     <PopoverContent align="end" sideOffset={9} className="element-settings-popover">
       <PopoverHeader>
