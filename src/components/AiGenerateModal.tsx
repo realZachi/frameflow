@@ -23,6 +23,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
   const [phase, setPhase] = useState<RunPhase>('idle')
   const [log, setLog] = useState<LogEntry[]>([])
   const [assistantText, setAssistantText] = useState('')
+  const [reasoningTail, setReasoningTail] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [doneInfo, setDoneInfo] = useState<{ summary: string; slidesCreated: number } | null>(null)
 
@@ -76,8 +77,15 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
   const handleEvent = (event: AiRunEvent) => {
     if (cancelledRef.current) return
     if (event.type === 'status') setLog((current) => [...current, { kind: 'status', text: event.message }])
-    else if (event.type === 'tool') setLog((current) => [...current, { kind: 'tool', text: `${event.name} — ${event.detail}` }])
-    else if (event.type === 'text') setAssistantText((current) => current + event.delta)
+    else if (event.type === 'tool') {
+      setLog((current) => [...current, { kind: 'tool', text: `${event.name} — ${event.detail}` }])
+      setReasoningTail('')
+    } else if (event.type === 'text') {
+      setAssistantText((current) => current + event.delta)
+      setReasoningTail('')
+    } else if (event.type === 'reasoning') {
+      setReasoningTail((current) => (current + event.delta).slice(-160))
+    }
     else if (event.type === 'done') {
       setDoneInfo({ summary: event.summary, slidesCreated: event.slidesCreated })
       setPhase('done')
@@ -98,6 +106,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
     cancelledRef.current = false
     setLog([])
     setAssistantText('')
+    setReasoningTail('')
     setErrorMessage(null)
     setDoneInfo(null)
     setPhase('running')
@@ -173,7 +182,10 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
                 {log.map((entry, index) => (
                   <div className={`ai-modal-log-entry ai-modal-log-entry--${entry.kind}`} key={index}>{entry.text}</div>
                 ))}
-                <div className="ai-modal-log-entry ai-modal-log-entry--spinner"><span className="ai-modal-spinner" />Generiere …</div>
+                <div className="ai-modal-log-entry ai-modal-log-entry--spinner">
+                  <span className="ai-modal-spinner" />
+                  {reasoningTail ? `Denkt nach … ${reasoningTail}` : 'Generiere …'}
+                </div>
               </div>
               {assistantText && <p className="ai-modal-assistant-text">{assistantText}</p>}
             </div>

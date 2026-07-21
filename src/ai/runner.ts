@@ -1,5 +1,5 @@
 import { APICallError, isStepCount, streamText } from 'ai'
-import { createAnthropic } from '@ai-sdk/anthropic'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { buildInstructions, buildUserMessage } from './prompt'
 import { createEditorTools } from './tools'
 import type { AiEditorController } from './controller'
@@ -11,6 +11,7 @@ export type AiRunEvent =
   | { type: 'status'; message: string }
   | { type: 'tool'; name: string; detail: string }
   | { type: 'text'; delta: string }
+  | { type: 'reasoning'; delta: string }
   | { type: 'done'; summary: string; slidesCreated: number }
   | { type: 'error'; message: string }
 
@@ -60,7 +61,7 @@ const extractMediaType = (dataUrl: string): string => {
 const describeError = (error: unknown): string => {
   if (APICallError.isInstance(error)) {
     if (error.statusCode === 400 || error.statusCode === 401 || error.statusCode === 403) {
-      return `Anthropic-API-Fehler (${error.statusCode}) — prüfe den VITE_ANTHROPIC_API_KEY in .env.local. ${error.message}`
+      return `Moonshot-API-Fehler (${error.statusCode}) — prüfe den MOONSHOT_API_KEY in .env.local und starte den Dev-Server neu. ${error.message}`
     }
     return error.message
   }
@@ -81,17 +82,13 @@ export async function runAiGeneration(options: {
 }): Promise<void> {
   const { description, screenshots, controller, signal, onEvent, onActivity } = options
 
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined
-  if (!apiKey) {
-    onEvent({ type: 'error', message: 'Kein API-Key gefunden — setze VITE_ANTHROPIC_API_KEY in .env.local und starte den Dev-Server neu.' })
-    return
-  }
-
   try {
-    const anthropic = createAnthropic({
-      apiKey,
-      // Erlaubt den direkten Browser-Call (CORS); ohne diesen Header lehnt die Anthropic-API ab.
-      headers: { 'anthropic-dangerous-direct-browser-access': 'true' },
+    // Der Key wird nicht im Browser gehalten: der Vite-Dev-Server proxied
+    // /api/moonshot → api.moonshot.ai und setzt den Authorization-Header
+    // aus MOONSHOT_API_KEY (siehe vite.config.ts).
+    const moonshot = createOpenAICompatible({
+      name: 'moonshot',
+      baseURL: `${window.location.origin}/api/moonshot/v1`,
     })
 
     const content: Array<
@@ -104,10 +101,10 @@ export async function runAiGeneration(options: {
       content.push({ type: 'file', mediaType: extractMediaType(shot.dataUrl), data: shot.dataUrl })
     }
 
-    onEvent({ type: 'status', message: 'Verbinde mit Anthropic Claude…' })
+    onEvent({ type: 'status', message: 'Verbinde mit Moonshot AI…' })
 
     const result = streamText({
-      model: anthropic('claude-sonnet-5'),
+      model: moonshot('kimi-k3'),
       instructions: buildInstructions(),
       messages: [{ role: 'user', content }],
       tools: createEditorTools(controller, { onActivity }),
@@ -125,6 +122,12 @@ export async function runAiGeneration(options: {
         case 'text-delta': {
           accumulatedText += part.text
           onEvent({ type: 'text', delta: part.text })
+          break
+        }
+        case 'reasoning-delta': {
+          // kimi-k3 ist ein Reasoning-Modell: ohne diese Deltas wirkt der Lauf
+          // minutenlang eingefroren, obwohl das Modell arbeitet.
+          onEvent({ type: 'reasoning', delta: part.text })
           break
         }
         case 'tool-call': {

@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.17",
+    "@ai-sdk/openai-compatible": "^3.0.14",
     "@fontsource-variable/bricolage-grotesque": "latest",
     "@fontsource-variable/instrument-sans": "latest",
     "@fontsource-variable/manrope": "^5.3.0",
