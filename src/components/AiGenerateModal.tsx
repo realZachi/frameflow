@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Sparkles, Upload, X } from 'lucide-react'
+import { Sparkles, Upload, X } from './icons'
 import type { AiEditorController } from '../ai/controller'
 import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
 import { fileToDataUrl, uid } from '../utils'

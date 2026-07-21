@@ -19,7 +19,7 @@ import {
   Type,
   Underline,
   Upload,
-} from 'lucide-react'
+} from './icons'
 import { fontOptions, templateMeta } from '../data'
 import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
 import { deviceOptions, getDevicePlacement } from '../mockups/catalog'

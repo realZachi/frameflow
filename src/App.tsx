@@ -13,7 +13,7 @@ import {
   Sparkles,
   Undo2,
   X,
-} from 'lucide-react'
+} from './components/icons'
 import { createInitialSlides, makeTemplate } from './data'
 import { createAiController } from './ai/controller'
 import type { AiToolActivity } from './ai/tools'

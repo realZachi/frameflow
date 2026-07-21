@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { Bold, Italic, LockKeyhole, Underline } from 'lucide-react'
+import { Bold, Italic, LockKeyhole, Underline } from './icons'
 import type { CanvasElement } from '../types'
 import { photoMockups, type PhotoMockupDefinition } from '../mockups/catalog'
 import { hexToRgba, richTextHasFormatting, richTextToPlain, sanitizeRichText } from '../utils'
