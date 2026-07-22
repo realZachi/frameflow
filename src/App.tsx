@@ -12,7 +12,6 @@ import {
   Plus,
   Redo2,
   Save,
-  Share2,
   Sparkles,
   Trash2,
   Undo2,
@@ -25,6 +24,7 @@ import { AiGenerateModal } from './components/AiGenerateModal'
 import { ElementToolbar } from './components/ElementToolbar'
 import { EditorCanvas } from './components/EditorCanvas'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
+import { Button } from './components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -155,7 +155,9 @@ export default function App() {
   const [uploads, setUploads] = useState<UploadAsset[]>(initial.uploads)
   const uploadsRef = useRef(uploads)
   const [activeSlideId, setActiveSlideId] = useState(initial.slides[0].id)
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
+  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([])
+  const selectedElementId = selectedElementIds.at(-1) ?? null
+  const setSelectedElementId = useCallback((id: string | null) => setSelectedElementIds(id ? [id] : []), [])
   const [activeTool, setActiveTool] = useState<ToolId>('templates')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [projectName, setProjectName] = useState(initial.projectName)
@@ -532,15 +534,23 @@ export default function App() {
     setHistoryState({ undo: true, redo: false })
   }, [])
 
-  const updateElementLive = useCallback((slideId: string, elementId: string, patch: Partial<CanvasElement>) => {
+  const updateElementsLive = useCallback((slideId: string, updates: Array<{ id: string; patch: Partial<CanvasElement> }>) => {
+    const updatesById = new Map(updates.map((update) => [update.id, update.patch]))
     setSlides((current) => {
       const next = current.map((slide) => slide.id === slideId
-        ? { ...slide, elements: slide.elements.map((element) => element.id === elementId ? ({ ...element, ...patch } as CanvasElement) : element) }
+        ? { ...slide, elements: slide.elements.map((element) => {
+          const patch = updatesById.get(element.id)
+          return patch ? ({ ...element, ...patch } as CanvasElement) : element
+        }) }
         : slide)
       slidesRef.current = next
       return next
     })
   }, [])
+
+  const updateElementLive = useCallback((slideId: string, elementId: string, patch: Partial<CanvasElement>) => {
+    updateElementsLive(slideId, [{ id: elementId, patch }])
+  }, [updateElementsLive])
 
   const updateSelected = (patch: Partial<CanvasElement>) => {
     if (!selectedElementId) return
@@ -555,10 +565,16 @@ export default function App() {
       : slide))
   }, [commit])
 
-  const selectElement = (id: string | null, slideId?: string) => {
+  const selectElement = (id: string | null, slideId?: string, additive = false) => {
     if (slideId) setActiveSlideId(slideId)
-    setSelectedElementId(id)
-    if (!id) return
+    if (!id) {
+      setSelectedElementIds([])
+      return
+    }
+    setSelectedElementIds((current) => {
+      if (!additive || (slideId && slideId !== activeSlideId)) return current.includes(id) && !additive ? current : [id]
+      return current.includes(id) ? current.filter((elementId) => elementId !== id) : [...current, id]
+    })
     const element = slidesRef.current.flatMap((slide) => slide.elements).find((item) => item.id === id)
     if (element?.type === 'text') setActiveTool('text')
     if (element?.type === 'device') setActiveTool('device')
@@ -589,12 +605,13 @@ export default function App() {
   }, [])
 
   const deleteSelected = useCallback(() => {
-    if (!selectedElementId) return
+    if (selectedElementIds.length === 0) return
+    const selectedIds = new Set(selectedElementIds)
     commit((current) => current.map((slide) => slide.id === activeSlideId
-      ? { ...slide, elements: slide.elements.filter((element) => element.id !== selectedElementId) }
+      ? { ...slide, elements: slide.elements.filter((element) => !selectedIds.has(element.id)) }
       : slide))
     setSelectedElementId(null)
-  }, [activeSlideId, commit, selectedElementId])
+  }, [activeSlideId, commit, selectedElementIds, setSelectedElementId])
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -607,10 +624,29 @@ export default function App() {
         else undo()
       }
       if (event.key === 'Delete' || event.key === 'Backspace') deleteSelected()
+      if (selectedElementIds.length > 0 && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault()
+        const step = event.shiftKey ? 10 : 1
+        const dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0
+        const dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0
+        const xDelta = dx / 330 * 100
+        const yDelta = dy / (330 * 2796 / 1290) * 100
+        const selectedIds = new Set(selectedElementIds)
+        const movableElements = activeSlide.elements.filter((element) => selectedIds.has(element.id) && !element.locked)
+        if (movableElements.length === 0) return
+        if (!event.repeat) checkpoint()
+        updateElementsLive(activeSlideId, movableElements.map((element) => ({
+          id: element.id,
+          patch: {
+            x: Math.max(-35, Math.min(97, element.x + xDelta)),
+            y: Math.max(-35, Math.min(97, element.y + yDelta)),
+          },
+        })))
+      }
     }
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
-  }, [deleteSelected, redo, undo])
+  }, [activeSlide.elements, activeSlideId, checkpoint, deleteSelected, redo, selectedElementIds, undo, updateElementsLive])
 
   const addText = (preset: TextPreset) => {
     const configs = {
@@ -834,15 +870,6 @@ export default function App() {
     }
   }
 
-  const shareProject = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      setToast('Projektlink kopiert')
-    } catch {
-      setToast('Link konnte nicht kopiert werden')
-    }
-  }
-
   const prepareAiRun = (files: Array<{ name: string; dataUrl: string }>) => {
     checkpoint()
     setSelectedElementId(null)
@@ -888,7 +915,7 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell${selectedElement ? ' has-selection' : ''}`}>
+    <div className={`app-shell${selectedElement ? ' has-selection' : ''}`} data-sidebar-open={isSidebarOpen}>
       <header className="app-header">
         <div className="topbar">
         <div className="brand-lockup"><div className="brand-symbol"><span>F</span><i /></div><strong>Frameflow</strong><em>STUDIO</em></div>
@@ -982,16 +1009,23 @@ export default function App() {
         </div>
         <div className="topbar-actions">
           <div className="history-actions"><button onClick={undo} disabled={!canUndo} title="Rückgängig (⌘Z)"><Undo2 size={17} /></button><button onClick={redo} disabled={!canRedo} title="Wiederholen (⇧⌘Z)"><Redo2 size={17} /></button></div>
-          <button className="ai-generate-button" onClick={() => setAiOpen(true)} disabled={exporting || !aiController}><Sparkles size={15} /> Mit AI generieren</button>
-          <button className="share-button" onClick={shareProject}><Share2 size={16} /> Teilen</button>
+          <Button
+            className="ai-generate-button"
+            variant="secondary"
+            size="default"
+            onClick={() => setAiOpen(true)}
+            disabled={exporting || !aiController}
+          >
+            <span className="ai-generate-button-mark" aria-hidden="true"><Sparkles size={14} /></span>
+            <span>AI erstellen</span>
+          </Button>
           <button className="export-button" onClick={exportAll} disabled={exporting}>
             {exporting ? <><span className="export-spinner" /><b>{exportProgress}%</b></> : <><Download size={17} /><b>Alle als ZIP</b></>}
           </button>
         </div>
         </div>
-        {selectedElement && (
+        {selectedElement && selectedElementIds.length === 1 && (
           <ElementToolbar
-            key={selectedElement.id}
             element={selectedElement}
             onUpdate={updateSelected}
             onUploadToDevice={uploadToSelectedDevice}
@@ -1022,13 +1056,13 @@ export default function App() {
         <EditorCanvas
           slides={slides}
           activeSlideId={activeSlideId}
-          selectedElementId={selectedElementId}
+          selectedElementIds={selectedElementIds}
           exporting={exporting}
           zoom={zoom}
           aiActivity={aiActivity}
           onSetActiveSlide={setActiveSlideId}
           onSelectElement={selectElement}
-          onUpdateElement={updateElementLive}
+          onUpdateElements={updateElementsLive}
           onCommitText={commitElementText}
           onCheckpoint={checkpoint}
           onAddSlide={addSlide}

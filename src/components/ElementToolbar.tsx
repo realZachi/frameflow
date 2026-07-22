@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { fontOptions } from '../data'
 import { deviceOptions, getDevicePlacement } from '../mockups/catalog'
 import type { CanvasElement } from '../types'
@@ -269,6 +269,7 @@ const MoreSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>
 )
 
 const TextControls = ({ element, onUpdate }: { element: Extract<CanvasElement, { type: 'text' }>; onUpdate: Props['onUpdate'] }) => {
+  const isBold = element.fontWeight >= 700
   const fontCategories = [...new Set(fontOptions.map((font) => font.category))]
   const weightLabel = element.fontWeight < 350
     ? 'Leicht'
@@ -336,10 +337,10 @@ const TextControls = ({ element, onUpdate }: { element: Extract<CanvasElement, {
         <Button variant={element.align === 'right' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'right' })} aria-label="Rechtsbündig"><AlignRight /></Button>
       </div>
       <div className="toolbar-button-group" aria-label="Schriftschnitt">
-        <Button variant={element.fontWeight >= 700 ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ fontWeight: element.fontWeight >= 700 ? 450 : 750 })} aria-label="Fett" aria-pressed={element.fontWeight >= 700}><Bold /></Button>
-        <Button variant={element.italic ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ italic: !element.italic })} aria-label="Kursiv" aria-pressed={element.italic}><Italic /></Button>
-        <Button variant={element.underline ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ underline: !element.underline })} aria-label="Unterstrichen" aria-pressed={element.underline}><Underline /></Button>
-        <Button variant={element.strikethrough ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ strikethrough: !element.strikethrough })} aria-label="Durchgestrichen" aria-pressed={element.strikethrough}><Strikethrough /></Button>
+        <Button className="toolbar-format-button" variant={isBold ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ fontWeight: isBold ? 450 : 750 })} aria-label="Fett" aria-pressed={isBold}><Bold /></Button>
+        <Button className="toolbar-format-button" variant={element.italic ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ italic: !element.italic })} aria-label="Kursiv" aria-pressed={element.italic}><Italic /></Button>
+        <Button className="toolbar-format-button" variant={element.underline ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ underline: !element.underline })} aria-label="Unterstrichen" aria-pressed={element.underline}><Underline /></Button>
+        <Button className="toolbar-format-button" variant={element.strikethrough ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ strikethrough: !element.strikethrough })} aria-label="Durchgestrichen" aria-pressed={element.strikethrough}><Strikethrough /></Button>
       </div>
     </>
   )
@@ -375,14 +376,28 @@ const DeviceControls = ({ element, onUpdate, onUpload }: {
 }
 
 export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicate, onToggleLock, onMoveLayer, onDelete }: Props) => {
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const controlsRef = useRef<HTMLDivElement>(null)
+  const actionsRef = useRef<HTMLDivElement>(null)
   const meta = elementMeta[element.type]
+
+  useLayoutEffect(() => {
+    const toolbar = toolbarRef.current
+    const controls = controlsRef.current
+    const actions = actionsRef.current
+    if (!toolbar || !controls || !actions) return
+
+    const contentWidth = 48 + controls.scrollWidth + actions.scrollWidth + 2
+    toolbar.style.width = `${Math.ceil(contentWidth)}px`
+  }, [element])
+
   return (
-    <div className="context-toolbar" role="toolbar" aria-label={`${meta.label} bearbeiten`}>
+    <div ref={toolbarRef} className="context-toolbar" role="toolbar" aria-label={`${meta.label} bearbeiten`}>
       <div className="context-toolbar-identity">
         <span>{meta.icon}</span>
         <div><strong>{meta.label}</strong><small>Ausgewählt</small></div>
       </div>
-      <div className="context-toolbar-controls">
+      <div ref={controlsRef} className="context-toolbar-controls">
         {element.type === 'text' && <TextControls element={element} onUpdate={onUpdate} />}
         {element.type === 'shape' && (
           <>
@@ -444,7 +459,7 @@ export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicat
         {element.type === 'device' && <DeviceControls element={element} onUpdate={onUpdate} onUpload={onUploadToDevice} />}
         <MoreSettings element={element} onUpdate={onUpdate} />
       </div>
-      <div className="context-toolbar-actions">
+      <div ref={actionsRef} className="context-toolbar-actions">
         <Separator orientation="vertical" />
         <Button variant="ghost" size="icon-sm" onClick={onDuplicate} title="Duplizieren" aria-label="Duplizieren"><Copy /></Button>
         <Button variant={element.locked ? 'secondary' : 'ghost'} size="icon-sm" onClick={onToggleLock} title={element.locked ? 'Entsperren' : 'Sperren'} aria-label={element.locked ? 'Entsperren' : 'Sperren'}>

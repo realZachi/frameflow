@@ -28,7 +28,6 @@ import {
   Redo2 as Redo2Icon,
   SaveIcon,
   Shapes as ShapesIcon,
-  Share2 as Share2Icon,
   SlidersHorizontalIcon,
   Sparkles as SparklesIcon,
   Strikethrough as StrikethroughIcon,
@@ -75,7 +74,6 @@ export const Plus = createIcon(PlusIcon)
 export const Redo2 = createIcon(Redo2Icon)
 export const Save = createIcon(SaveIcon)
 export const Shapes = createIcon(ShapesIcon)
-export const Share2 = createIcon(Share2Icon)
 export const SlidersHorizontal = createIcon(SlidersHorizontalIcon)
 export const Sparkles = createIcon(SparklesIcon)
 export const Strikethrough = createIcon(StrikethroughIcon)

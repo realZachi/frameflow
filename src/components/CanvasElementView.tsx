@@ -187,15 +187,16 @@ export const ElementContent = ({ element }: { element: CanvasElement }) => {
 type CanvasItemProps = {
   element: CanvasElement
   selected: boolean
+  showTransformHandles: boolean
   exporting: boolean
-  onSelect: () => void
+  onSelect: (additive: boolean) => void
   onBeginDrag: (event: ReactPointerEvent, element: CanvasElement) => void
   onBeginResize: (event: ReactPointerEvent, element: CanvasElement) => void
   onBeginRotate: (event: ReactPointerEvent, element: CanvasElement) => void
   onCommitText: (patch: { text: string; html?: string }) => void
 }
 
-export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag, onBeginResize, onBeginRotate, onCommitText }: CanvasItemProps) => {
+export const CanvasItem = ({ element, selected, showTransformHandles, exporting, onSelect, onBeginDrag, onBeginResize, onBeginRotate, onCommitText }: CanvasItemProps) => {
   const [editing, setEditing] = useState(false)
   const editableRef = useRef<HTMLDivElement>(null)
   const committedRef = useRef(false)
@@ -267,8 +268,8 @@ export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag
       onPointerDown={(event) => {
         event.stopPropagation()
         if (editing) return
-        onSelect()
-        if (!element.locked) onBeginDrag(event, element)
+        onSelect(event.shiftKey)
+        if (!element.locked && !(event.shiftKey && selected)) onBeginDrag(event, element)
       }}
       onDoubleClick={() => {
         if (element.type !== 'text' || element.locked || exporting) return
@@ -358,10 +359,10 @@ export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag
         </div>
       )}
       {selected && !exporting && !editing && (
-        <div className="selection-frame" aria-hidden="true">
+        <div className={`selection-frame${showTransformHandles ? '' : ' selection-frame--group'}`} aria-hidden="true">
           {element.locked ? (
             <span className="lock-indicator"><LockKeyhole size={12} /></span>
-          ) : (
+          ) : showTransformHandles ? (
             <>
               <button className="resize-handle resize-handle--nw" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
               <button className="resize-handle resize-handle--ne" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
@@ -369,7 +370,7 @@ export const CanvasItem = ({ element, selected, exporting, onSelect, onBeginDrag
               <button className="resize-handle resize-handle--se" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
               <button className="rotate-handle" onPointerDown={(e) => onBeginRotate(e, element)} tabIndex={-1}><span /></button>
             </>
-          )}
+          ) : null}
         </div>
       )}
     </div>
