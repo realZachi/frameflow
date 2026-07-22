@@ -206,7 +206,7 @@ export default function App() {
     past.current = []
     future.current = []
     setHistoryState({ undo: false, redo: false })
-  }, [])
+  }, [setSelectedElementId])
 
   useEffect(() => {
     slidesRef.current = slides
@@ -548,10 +548,6 @@ export default function App() {
     })
   }, [])
 
-  const updateElementLive = useCallback((slideId: string, elementId: string, patch: Partial<CanvasElement>) => {
-    updateElementsLive(slideId, [{ id: elementId, patch }])
-  }, [updateElementsLive])
-
   const updateSelected = (patch: Partial<CanvasElement>) => {
     if (!selectedElementId) return
     commit((current) => current.map((slide) => slide.id === activeSlideId
@@ -591,7 +587,7 @@ export default function App() {
     setSlides(previous)
     setSelectedElementId(null)
     setHistoryState({ undo: past.current.length > 0, redo: future.current.length > 0 })
-  }, [])
+  }, [setSelectedElementId])
 
   const redo = useCallback(() => {
     const next = future.current[0]
@@ -602,7 +598,7 @@ export default function App() {
     setSlides(next)
     setSelectedElementId(null)
     setHistoryState({ undo: past.current.length > 0, redo: future.current.length > 0 })
-  }, [])
+  }, [setSelectedElementId])
 
   const deleteSelected = useCallback(() => {
     if (selectedElementIds.length === 0) return
@@ -634,12 +630,18 @@ export default function App() {
         const selectedIds = new Set(selectedElementIds)
         const movableElements = activeSlide.elements.filter((element) => selectedIds.has(element.id) && !element.locked)
         if (movableElements.length === 0) return
+        const minXDelta = Math.max(...movableElements.map((element) => -35 - element.x))
+        const maxXDelta = Math.min(...movableElements.map((element) => 97 - element.x))
+        const minYDelta = Math.max(...movableElements.map((element) => -35 - element.y))
+        const maxYDelta = Math.min(...movableElements.map((element) => 97 - element.y))
+        const constrainedXDelta = Math.max(minXDelta, Math.min(maxXDelta, xDelta))
+        const constrainedYDelta = Math.max(minYDelta, Math.min(maxYDelta, yDelta))
         if (!event.repeat) checkpoint()
         updateElementsLive(activeSlideId, movableElements.map((element) => ({
           id: element.id,
           patch: {
-            x: Math.max(-35, Math.min(97, element.x + xDelta)),
-            y: Math.max(-35, Math.min(97, element.y + yDelta)),
+            x: element.x + constrainedXDelta,
+            y: element.y + constrainedYDelta,
           },
         })))
       }

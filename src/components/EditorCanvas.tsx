@@ -4,8 +4,24 @@ import type { CanvasElement, Slide } from '../types'
 import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { CanvasItem } from './CanvasElementView'
 import { AiCursorOverlay } from './AiCursorOverlay'
+import { photoMockups } from '../mockups/catalog'
 
 type AiActivity = { tool: string; slideId?: string; x?: number; y?: number; seq: number }
+
+const DEFAULT_DRAG_MIN = -35
+const DRAG_MAX = 97
+const DEVICE_VISIBLE_EDGE = 3
+const ARTBOARD_ASPECT_RATIO = 1290 / 2796
+
+const getDragMinX = (element: CanvasElement) => element.type === 'device'
+  ? Math.min(DEFAULT_DRAG_MIN, DEVICE_VISIBLE_EDGE - element.width)
+  : DEFAULT_DRAG_MIN
+
+const getDragMinY = (element: CanvasElement) => {
+  if (element.type !== 'device') return DEFAULT_DRAG_MIN
+  const height = element.width * ARTBOARD_ASPECT_RATIO / photoMockups[element.deviceStyle].canvasAspectRatio
+  return Math.min(DEFAULT_DRAG_MIN, DEVICE_VISIBLE_EDGE - height)
+}
 
 type Interaction = {
   type: 'drag' | 'resize' | 'rotate'
@@ -115,10 +131,10 @@ export const EditorCanvas = ({
     const dy = ((event.clientY - current.startY) / current.artboard.height) * 100
 
     if (current.type === 'drag') {
-      const minDx = Math.max(...current.elements.map((item) => -35 - item.x))
-      const maxDx = Math.min(...current.elements.map((item) => 97 - item.x))
-      const minDy = Math.max(...current.elements.map((item) => -35 - item.y))
-      const maxDy = Math.min(...current.elements.map((item) => 97 - item.y))
+      const minDx = Math.max(...current.elements.map((item) => getDragMinX(item) - item.x))
+      const maxDx = Math.min(...current.elements.map((item) => DRAG_MAX - item.x))
+      const minDy = Math.max(...current.elements.map((item) => getDragMinY(item) - item.y))
+      const maxDy = Math.min(...current.elements.map((item) => DRAG_MAX - item.y))
       let nextDx = clamp(dx, minDx, maxDx)
       let nextDy = clamp(dy, minDy, maxDy)
       const snapX = current.selectionCenterX !== undefined
