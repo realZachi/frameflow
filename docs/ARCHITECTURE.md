@@ -37,6 +37,10 @@ Slides contain a background and an ordered array of discriminated canvas element
 
 Undo and redo operate on editor snapshots. A user action should create one meaningful checkpoint. AI generation deliberately creates one checkpoint for the entire run so the user can undo the result in one step.
 
+A project can contain zero slides. In that state there is no active slide, the
+canvas presents blank and AI-assisted creation paths, and the empty slide array
+is persisted as normal. New projects still begin with starter slides.
+
 ## Rendering and coordinates
 
 Every artboard is rendered as a 330 px-wide DOM element with the aspect ratio `1290 / 2796`. Element positions and widths are stored as percentages of the artboard; heights are derived from content or aspect ratio.

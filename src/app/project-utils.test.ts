@@ -66,6 +66,19 @@ describe('project utilities', () => {
     })
   })
 
+  it('loads an empty legacy project', () => {
+    localStorage.setItem('frameflow-project-v5', JSON.stringify({
+      slides: [],
+      uploads: [],
+    }))
+
+    expect(loadInitialState()).toEqual({
+      projectName: DEFAULT_PROJECT_NAME,
+      slides: [],
+      uploads: [],
+    })
+  })
+
   it('sorts and replaces project summaries by saved time', () => {
     const projects = [
       summary('old', 'Old', 10),

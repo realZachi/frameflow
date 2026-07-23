@@ -247,6 +247,8 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 
 .editor-shell { height: calc(100% - 62px); display: grid; grid-template-columns: 82px 304px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); position: relative; transition: grid-template-columns .18s cubic-bezier(.2, .8, .3, 1); }
 .editor-shell.is-sidebar-collapsed { grid-template-columns: 52px 0 minmax(0, 1fr); }
+.editor-shell.is-empty { grid-template-columns: minmax(0, 1fr); }
+.editor-shell.is-empty .stage-noise { left: 0; }
 
 .tool-rail { background: #20201c; color: #a3a39a; border-right: 1px solid #34342e; display: flex; flex-direction: column; align-items: stretch; position: relative; z-index: 120; }
 .rail-tools { display: flex; flex-direction: column; padding: 9px 7px; gap: 3px; overflow-y: auto; scrollbar-width: none; }
@@ -420,6 +422,14 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .canvas-stage.is-interacting { cursor: grabbing; user-select: none; }
 .stage-noise { position: fixed; inset: 62px 0 0 386px; pointer-events: none; opacity: .18; z-index: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.09'/%3E%3C/svg%3E"); }
 .is-sidebar-collapsed .stage-noise { left: 52px; }
+.editor-empty-state { min-height: 100%; display: grid; place-items: center; padding: 48px; position: relative; z-index: 2; }
+.editor-empty-state-content { width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; color: var(--foreground); text-align: center; }
+.editor-empty-state-icon { width: 46px; height: 46px; display: grid; place-items: center; margin-bottom: 18px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--background); box-shadow: 0 4px 14px oklch(0 0 0 / 7%); }
+.editor-empty-state h1 { margin: 0; font-family: 'Bricolage Grotesque Variable', sans-serif; font-size: 25px; line-height: 1.05; letter-spacing: -.7px; }
+.editor-empty-state p { max-width: 360px; margin: 10px 0 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.editor-empty-state-actions { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 22px; }
+.editor-empty-state-actions [data-slot='button'] { min-width: 142px; }
+.editor-empty-state-actions .editor-empty-state-primary { color: var(--primary-foreground); }
 .artboards { --zoom: .9; display: flex; align-items: flex-start; gap: 20px; width: max-content; min-width: 100%; min-height: 100%; padding: 96px 42px 90px; position: relative; z-index: 2; zoom: var(--zoom); }
 .artboard-wrap { width: 330px; flex: 0 0 330px; position: relative; }
 .artboard-actions { height: 32px; display: flex; align-items: center; gap: 7px; color: #7b7c77; padding: 0 2px; }

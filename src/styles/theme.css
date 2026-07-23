@@ -660,6 +660,7 @@ select:focus-visible {
 .context-toolbar-identity strong,
 .context-toolbar [data-slot='button'],
 .context-toolbar [data-slot='select-trigger'],
+.ai-provider-trigger,
 [data-slot='select-content'] [data-slot='select-item'],
 [data-slot='select-content'] [data-slot='select-label'],
 .element-settings-popover,

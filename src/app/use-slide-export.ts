@@ -25,7 +25,7 @@ export function useSlideExport({
   const [exportProgress, setExportProgress] = useState(0)
 
   const exportAll = useCallback(async (format: ExportFormat) => {
-    if (exporting) return
+    if (exporting || slides.length === 0) return
 
     setExporting(true)
     setExportProgress(0)

@@ -45,6 +45,7 @@ describe('EditorCanvas screen actions', () => {
         onDeleteSlide={() => undefined}
         onMoveSlide={() => undefined}
         onEditSlideWithAi={() => undefined}
+        onGenerateWithAi={() => undefined}
       />,
     )
     const root = document.createElement('div')
@@ -58,5 +59,64 @@ describe('EditorCanvas screen actions', () => {
 
     const aiAction = root.querySelector('[aria-label="Edit Hook with AI"]')
     expect(aiAction?.parentElement).toBe(actionGroups.item(0))
+  })
+
+  it('allows deleting the last remaining screen', () => {
+    const markup = renderToStaticMarkup(
+      <EditorCanvas
+        slides={slides.slice(0, 1)}
+        activeSlideId="slide-one"
+        selectedElementIds={[]}
+        exporting={false}
+        zoom={1}
+        onSetActiveSlide={() => undefined}
+        onSelectElement={() => undefined}
+        onUpdateElements={() => undefined}
+        onCommitText={() => undefined}
+        onCheckpoint={() => undefined}
+        onAddSlide={() => undefined}
+        onDuplicateSlide={() => undefined}
+        onDeleteSlide={() => undefined}
+        onMoveSlide={() => undefined}
+        onEditSlideWithAi={() => undefined}
+        onGenerateWithAi={() => undefined}
+      />,
+    )
+    const root = document.createElement('div')
+    root.innerHTML = markup
+
+    const deleteAction = root.querySelector('[aria-label="Delete screen"]')
+    expect(deleteAction).not.toBeNull()
+    expect(deleteAction?.hasAttribute('disabled')).toBe(false)
+  })
+
+  it('offers blank and AI creation actions when no screens remain', () => {
+    const markup = renderToStaticMarkup(
+      <EditorCanvas
+        slides={[]}
+        activeSlideId=""
+        selectedElementIds={[]}
+        exporting={false}
+        zoom={1}
+        onSetActiveSlide={() => undefined}
+        onSelectElement={() => undefined}
+        onUpdateElements={() => undefined}
+        onCommitText={() => undefined}
+        onCheckpoint={() => undefined}
+        onAddSlide={() => undefined}
+        onDuplicateSlide={() => undefined}
+        onDeleteSlide={() => undefined}
+        onMoveSlide={() => undefined}
+        onEditSlideWithAi={() => undefined}
+        onGenerateWithAi={() => undefined}
+      />,
+    )
+    const root = document.createElement('div')
+    root.innerHTML = markup
+
+    expect(root.querySelector('#editor-empty-state-title')?.textContent)
+      .toBe('Create your first screen')
+    expect(Array.from(root.querySelectorAll('button')).map((button) => button.textContent.trim()))
+      .toEqual(['Blank screen', 'Generate with AI'])
   })
 })

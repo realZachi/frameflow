@@ -16,9 +16,7 @@ import { useEditorKeyboard } from './editor/use-editor-keyboard'
 import type { Slide, ToolId } from './types'
 
 const getActiveSlide = (slides: Slide[], activeSlideId: string) => {
-  const slide = slides.find((item) => item.id === activeSlideId) ?? slides[0]
-  if (!slide) throw new Error('A project must contain at least one screen')
-  return slide
+  return slides.find((item) => item.id === activeSlideId) ?? slides[0]
 }
 
 export default function App() {
@@ -64,8 +62,7 @@ export default function App() {
     slides: Slide[]
   }) => {
     const firstSlide = project.slides[0]
-    if (!firstSlide) throw new Error('A project must contain at least one screen')
-    setActiveSlideId(firstSlide.id)
+    setActiveSlideId(firstSlide?.id ?? '')
     clearSelection()
     handleAiActivity(null)
     closeAi()
@@ -85,9 +82,11 @@ export default function App() {
   })
 
   const activeSlide = getActiveSlide(slides, activeSlideId)
-  const selectedElement = activeSlide.elements.find(
+  const selectedElement = activeSlide?.elements.find(
     (element) => element.id === selectedElementId,
   )
+  const resolvedActiveSlideId = activeSlide?.id ?? ''
+  const hasSlides = slides.length > 0
 
   const selectElement = useCallback((
     id: string | null,
@@ -101,7 +100,7 @@ export default function App() {
     }
 
     setSelectedElementIds((current) => {
-      if (!additive || (slideId && slideId !== activeSlideId)) {
+      if (!additive || (slideId && slideId !== resolvedActiveSlideId)) {
         return current.includes(id) && !additive ? current : [id]
       }
       return current.includes(id)
@@ -115,19 +114,19 @@ export default function App() {
     if (element?.type === 'device') setActiveTool('device')
     if (element?.type === 'shape') setActiveTool('elements')
     if (element?.type === 'image') setActiveTool('uploads')
-  }, [activeSlideId, clearSelection])
+  }, [clearSelection, resolvedActiveSlideId])
 
   const deleteSelected = useCallback(() => {
     if (selectedElementIds.length === 0) return
     const selectedIds = new Set(selectedElementIds)
-    commit((current) => current.map((slide) => slide.id === activeSlideId
+    commit((current) => current.map((slide) => slide.id === resolvedActiveSlideId
       ? {
           ...slide,
           elements: slide.elements.filter((element) => !selectedIds.has(element.id)),
         }
       : slide))
     clearSelection()
-  }, [activeSlideId, clearSelection, commit, selectedElementIds])
+  }, [clearSelection, commit, resolvedActiveSlideId, selectedElementIds])
 
   const commitElementText = useCallback((
     slideId: string,
@@ -147,7 +146,7 @@ export default function App() {
   const actions = useEditorActions({
     slides,
     activeSlide,
-    activeSlideId,
+    activeSlideId: resolvedActiveSlideId,
     selectedElement,
     selectedElementId,
     commit: history.commit,
@@ -174,6 +173,7 @@ export default function App() {
     clearSelection,
     setToast,
   })
+  const aiActionsDisabled = slideExport.exporting || !ai.controller || ai.open
 
   useEffect(() => {
     if (!toast) return
@@ -198,7 +198,7 @@ export default function App() {
   return (
     <div
       className={`app-shell${selectedElement ? ' has-selection' : ''}`}
-      data-sidebar-open={isSidebarOpen}
+      data-sidebar-open={hasSlides && isSidebarOpen}
     >
       <AppHeader
         projectName={project.projectName}
@@ -209,9 +209,10 @@ export default function App() {
         persistenceReady={project.persistenceReady}
         exporting={slideExport.exporting}
         exportProgress={slideExport.exportProgress}
+        exportDisabled={!hasSlides}
         canUndo={history.canUndo}
         canRedo={history.canRedo}
-        aiDisabled={slideExport.exporting || !ai.controller || ai.open}
+        aiDisabled={aiActionsDisabled}
         onProjectNameChange={project.setProjectName}
         onOpenProject={project.openProject}
         onCreateProject={project.createNewProject}
@@ -238,33 +239,37 @@ export default function App() {
         )}
       </AppHeader>
 
-      <div className={`editor-shell${isSidebarOpen ? '' : ' is-sidebar-collapsed'}`}>
-        <ToolRail
-          activeTool={activeTool}
-          isOpen={isSidebarOpen}
-          onChange={handleToolChange}
-        />
-        <PropertiesPanel
-          activeTool={activeTool}
-          activeSlide={activeSlide}
-          uploads={uploads}
-          onApplyTemplate={actions.applyTemplate}
-          onAddText={actions.addText}
-          onAddDevice={actions.addDevice}
-          onAddShape={actions.addShape}
-          onUpdateBackground={actions.updateBackground}
-          onUploadFiles={(files) => {
-            void actions.uploadFiles(files)
-          }}
-          onUploadBackground={(file) => {
-            void actions.uploadBackgroundImage(file)
-          }}
-          onAddImage={actions.addImage}
-          onSetDeviceImage={actions.setDeviceImage}
-        />
+      <div className={`editor-shell${isSidebarOpen ? '' : ' is-sidebar-collapsed'}${hasSlides ? '' : ' is-empty'}`}>
+        {hasSlides && (
+          <ToolRail
+            activeTool={activeTool}
+            isOpen={isSidebarOpen}
+            onChange={handleToolChange}
+          />
+        )}
+        {activeSlide && (
+          <PropertiesPanel
+            activeTool={activeTool}
+            activeSlide={activeSlide}
+            uploads={uploads}
+            onApplyTemplate={actions.applyTemplate}
+            onAddText={actions.addText}
+            onAddDevice={actions.addDevice}
+            onAddShape={actions.addShape}
+            onUpdateBackground={actions.updateBackground}
+            onUploadFiles={(files) => {
+              void actions.uploadFiles(files)
+            }}
+            onUploadBackground={(file) => {
+              void actions.uploadBackgroundImage(file)
+            }}
+            onAddImage={actions.addImage}
+            onSetDeviceImage={actions.setDeviceImage}
+          />
+        )}
         <EditorCanvas
           slides={slides}
-          activeSlideId={activeSlideId}
+          activeSlideId={resolvedActiveSlideId}
           selectedElementIds={selectedElementIds}
           exporting={slideExport.exporting}
           zoom={zoom}
@@ -279,17 +284,20 @@ export default function App() {
           onDeleteSlide={actions.deleteSlide}
           onMoveSlide={actions.moveSlide}
           onEditSlideWithAi={ai.openEditor}
-          aiActionsDisabled={slideExport.exporting || ai.open}
+          onGenerateWithAi={ai.openGenerator}
+          aiActionsDisabled={aiActionsDisabled}
         />
-        <div className="zoom-control">
-          <button onClick={zoomOut} disabled={zoom <= 0.65}>
-            <Minus size={14} />
-          </button>
-          <span>{Math.round(zoom * 100)}%</span>
-          <button onClick={zoomIn} disabled={zoom >= 1.15}>
-            <Plus size={14} />
-          </button>
-        </div>
+        {hasSlides && (
+          <div className="zoom-control">
+            <button onClick={zoomOut} disabled={zoom <= 0.65}>
+              <Minus size={14} />
+            </button>
+            <span>{Math.round(zoom * 100)}%</span>
+            <button onClick={zoomIn} disabled={zoom >= 1.15}>
+              <Plus size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       {toast && (

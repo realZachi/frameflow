@@ -62,14 +62,13 @@ const openDatabase = (): Promise<IDBDatabase> => {
   return databasePromise
 }
 
-const normalizeProject = (value: unknown): PersistedProject | null => {
+export const normalizePersistedProject = (value: unknown): PersistedProject | null => {
   if (!value || typeof value !== 'object') return null
   const project = value as Partial<PersistedProject>
   if (
     typeof project.id !== 'string'
     || typeof project.projectName !== 'string'
     || !Array.isArray(project.slides)
-    || project.slides.length === 0
     || !Array.isArray(project.uploads)
     || typeof project.savedAt !== 'number'
   ) return null
@@ -104,7 +103,7 @@ export const loadProjectWorkspace = async (): Promise<{ activeProject: Persisted
     transaction.oncomplete = () => {
       const projects = sortProjects(
         (projectsRequest.result as unknown[])
-          .map(normalizeProject)
+          .map(normalizePersistedProject)
           .filter((project): project is PersistedProject => project !== null),
       )
       const configuredId = (activeRequest.result as SettingRecord | undefined)?.value
@@ -122,7 +121,7 @@ export const loadProject = async (projectId: string): Promise<PersistedProject |
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(PROJECT_STORE, 'readonly')
     const request = transaction.objectStore(PROJECT_STORE).get(projectId)
-    request.onsuccess = () => resolve(normalizeProject(request.result))
+    request.onsuccess = () => resolve(normalizePersistedProject(request.result))
     request.onerror = () => reject(request.error ?? new Error('The local project could not be loaded.'))
   })
 }
@@ -168,7 +167,7 @@ export const loadLegacyProject = (): { slides: Slide[]; uploads: UploadAsset[] }
     const saved = localStorage.getItem(LEGACY_STORAGE_KEY)
     if (!saved) return null
     const parsed = JSON.parse(saved) as { slides?: Slide[]; uploads?: UploadAsset[] }
-    if (!parsed.slides?.length) return null
+    if (!Array.isArray(parsed.slides)) return null
     return { slides: parsed.slides, uploads: parsed.uploads ?? [] }
   } catch {
     return null

@@ -50,7 +50,8 @@ Split code earlier when a name, test, or review becomes difficult. Never evade a
 
 ## State and side effects
 
-- Preserve the invariant that every project has at least one slide.
+- Projects may contain zero slides. Keep the empty-state creation paths, optional
+  active slide, persistence, and undo/redo behavior working together.
 - Keep slide and element updates immutable.
 - Use one history checkpoint per meaningful user action.
 - Keep browser APIs, persistence, provider calls, and image export at explicit boundaries.

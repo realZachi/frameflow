@@ -3,7 +3,7 @@ import { getNudgeUpdates, type ElementUpdate } from './nudge'
 import type { Slide } from '../types'
 
 type EditorKeyboardOptions = {
-  activeSlide: Slide
+  activeSlide: Slide | undefined
   selectedElementIds: string[]
   checkpoint: () => void
   updateElementsLive: (slideId: string, updates: ElementUpdate[]) => void
@@ -52,6 +52,7 @@ export function useEditorKeyboard({
         return
       }
       if (selectedElementIds.length === 0 || !arrowKeys.includes(event.key)) return
+      if (!activeSlide) return
 
       event.preventDefault()
       const updates = getNudgeUpdates(

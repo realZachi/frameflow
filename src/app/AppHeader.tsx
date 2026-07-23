@@ -37,6 +37,7 @@ type AppHeaderProps = {
   persistenceReady: boolean
   exporting: boolean
   exportProgress: number
+  exportDisabled: boolean
   canUndo: boolean
   canRedo: boolean
   aiDisabled: boolean
@@ -137,11 +138,16 @@ function ProjectMenu({
 function ExportMenu({
   exporting,
   exportProgress,
+  exportDisabled,
   onExport,
-}: Pick<AppHeaderProps, 'exporting' | 'exportProgress' | 'onExport'>) {
+}: Pick<AppHeaderProps, 'exporting' | 'exportProgress' | 'exportDisabled' | 'onExport'>) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="export-button" disabled={exporting} aria-label="Choose export format">
+      <DropdownMenuTrigger
+        className="export-button"
+        disabled={exporting || exportDisabled}
+        aria-label="Choose export format"
+      >
         {exporting
           ? <><span className="export-spinner" /><b>{exportProgress}%</b></>
           : <><Download size={17} /><b>Export all as ZIP</b><ChevronDown className="export-button-chevron" size={13} /></>}
@@ -181,6 +187,7 @@ export function AppHeader({
   persistenceReady,
   exporting,
   exportProgress,
+  exportDisabled,
   canUndo,
   canRedo,
   aiDisabled,
@@ -257,7 +264,12 @@ export function AppHeader({
             <span className="ai-generate-button-mark" aria-hidden="true"><Sparkles size={14} /></span>
             <span>Generate with AI</span>
           </Button>
-          <ExportMenu exporting={exporting} exportProgress={exportProgress} onExport={onExport} />
+          <ExportMenu
+            exporting={exporting}
+            exportProgress={exportProgress}
+            exportDisabled={exportDisabled}
+            onExport={onExport}
+          />
         </div>
       </div>
       {children}

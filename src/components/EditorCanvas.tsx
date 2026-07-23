@@ -3,7 +3,7 @@ import { photoMockups } from '../mockups/catalog'
 import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { AiCursorOverlay } from './AiCursorOverlay'
 import { CanvasItem } from './CanvasElementView'
-import { ChevronLeft, ChevronRight, Copy, CursorMagicSelection02, Plus, Trash2 } from './icons'
+import { ChevronLeft, ChevronRight, Copy, CursorMagicSelection02, Plus, Sparkles, Trash2 } from './icons'
 import { Button } from './ui/button'
 import type { CanvasElement, Slide } from '../types'
 
@@ -56,6 +56,7 @@ type Props = {
   onDeleteSlide: (id: string) => void
   onMoveSlide: (id: string, direction: -1 | 1) => void
   onEditSlideWithAi: (id: string) => void
+  onGenerateWithAi: () => void
   aiActionsDisabled?: boolean
 }
 
@@ -76,6 +77,7 @@ export const EditorCanvas = ({
   onDeleteSlide,
   onMoveSlide,
   onEditSlideWithAi,
+  onGenerateWithAi,
   aiActionsDisabled = false,
 }: Props) => {
   const interaction = useRef<Interaction | null>(null)
@@ -202,72 +204,101 @@ export const EditorCanvas = ({
       onPointerCancel={end}
     >
       <div className="stage-noise" />
-      <div className="artboards" style={{ '--zoom': zoom } as React.CSSProperties}>
-        {slides.map((slide, index) => {
-          const isActive = slide.id === activeSlideId
-          const isAiTarget = aiActivity?.slideId === slide.id
-          const backgroundStyle = { ...getBackgroundStyle(slide.background), ...getBackgroundPatternStyle(slide.background) }
-          const pattern = slide.background.pattern ?? 'none'
-          return (
-            <section className={`artboard-wrap${isActive ? ' is-active' : ''}${isAiTarget ? ' is-ai-target' : ''}`} key={slide.id}>
-              <div className="artboard-actions">
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{slide.name}</strong>
-                <div className="artboard-screen-actions">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => onEditSlideWithAi(slide.id)}
-                    disabled={aiActionsDisabled}
-                    title={`Edit ${slide.name} with AI`}
-                    aria-label={`Edit ${slide.name} with AI`}
-                  >
-                    <CursorMagicSelection02 size={13} />
+      {slides.length === 0
+        ? (
+            <section className="editor-empty-state" aria-labelledby="editor-empty-state-title">
+              <div className="editor-empty-state-content">
+                <span className="editor-empty-state-icon" aria-hidden="true">
+                  <Plus size={20} />
+                </span>
+                <h1 id="editor-empty-state-title">Create your first screen</h1>
+                <p>Start with a blank canvas or let AI create a first draft for you.</p>
+                <div className="editor-empty-state-actions">
+                  <Button className="editor-empty-state-primary" size="lg" onClick={onAddSlide}>
+                    <Plus size={16} />
+                    Blank screen
                   </Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onDuplicateSlide(slide.id)} title="Duplicate screen" aria-label="Duplicate screen"><Copy size={13} /></Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, -1)} disabled={index === 0} title="Move left" aria-label="Move left"><ChevronLeft size={14} /></Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, 1)} disabled={index === slides.length - 1} title="Move right" aria-label="Move right"><ChevronRight size={14} /></Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onDeleteSlide(slide.id)} disabled={slides.length === 1} title="Delete screen" aria-label="Delete screen"><Trash2 size={13} /></Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={onGenerateWithAi}
+                    disabled={aiActionsDisabled}
+                  >
+                    <Sparkles size={16} />
+                    Generate with AI
+                  </Button>
                 </div>
               </div>
-              <div
-                id={`artboard-${slide.id}`}
-                className="artboard-export"
-                style={{ backgroundColor: slide.background.color1 }}
-                onPointerDown={() => {
-                  onSetActiveSlide(slide.id)
-                  onSelectElement(null)
-                }}
-              >
-                <div className={`artboard-background pattern-surface pattern--${pattern}`} style={backgroundStyle} />
-                {slide.elements.map((element) => (
-                  <CanvasItem
-                    key={element.id}
-                    element={element}
-                    selected={selectedElementIds.includes(element.id)}
-                    showTransformHandles={selectedElementIds.length === 1}
-                    exporting={exporting}
-                    onSelect={(additive) => onSelectElement(element.id, slide.id, additive)}
-                    onBeginDrag={(event, item) => begin('drag', event, slide.id, item)}
-                    onBeginResize={(event, item) => begin('resize', event, slide.id, item)}
-                    onBeginRotate={(event, item) => begin('rotate', event, slide.id, item)}
-                    onCommitText={(patch) => onCommitText(slide.id, element.id, patch)}
-                  />
-                ))}
-                {snapGuides?.slideId === slide.id && snapGuides.vertical && <div className="snap-guide snap-guide--vertical" data-editor-overlay aria-hidden="true" />}
-                {snapGuides?.slideId === slide.id && snapGuides.horizontal && <div className="snap-guide snap-guide--horizontal" data-editor-overlay aria-hidden="true" />}
-                {aiActivity?.slideId === slide.id && !exporting && <AiCursorOverlay activity={aiActivity} />}
-              </div>
-              <div className="artboard-size">1290 × 2796 px</div>
             </section>
           )
-        })}
-        <button className="add-artboard" onClick={onAddSlide}>
-          <span><Plus size={20} /></span>
-          <strong>Add screen</strong>
-          <small>New blank artboard</small>
-        </button>
-      </div>
+        : (
+            <div className="artboards" style={{ '--zoom': zoom } as React.CSSProperties}>
+              {slides.map((slide, index) => {
+                const isActive = slide.id === activeSlideId
+                const isAiTarget = aiActivity?.slideId === slide.id
+                const backgroundStyle = { ...getBackgroundStyle(slide.background), ...getBackgroundPatternStyle(slide.background) }
+                const pattern = slide.background.pattern ?? 'none'
+                return (
+                  <section className={`artboard-wrap${isActive ? ' is-active' : ''}${isAiTarget ? ' is-ai-target' : ''}`} key={slide.id}>
+                    <div className="artboard-actions">
+                      <span>{String(index + 1).padStart(2, '0')}</span>
+                      <strong>{slide.name}</strong>
+                      <div className="artboard-screen-actions">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => onEditSlideWithAi(slide.id)}
+                          disabled={aiActionsDisabled}
+                          title={`Edit ${slide.name} with AI`}
+                          aria-label={`Edit ${slide.name} with AI`}
+                        >
+                          <CursorMagicSelection02 size={13} />
+                        </Button>
+                        <Button variant="ghost" size="icon-xs" onClick={() => onDuplicateSlide(slide.id)} title="Duplicate screen" aria-label="Duplicate screen"><Copy size={13} /></Button>
+                        <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, -1)} disabled={index === 0} title="Move left" aria-label="Move left"><ChevronLeft size={14} /></Button>
+                        <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, 1)} disabled={index === slides.length - 1} title="Move right" aria-label="Move right"><ChevronRight size={14} /></Button>
+                        <Button variant="ghost" size="icon-xs" onClick={() => onDeleteSlide(slide.id)} title="Delete screen" aria-label="Delete screen"><Trash2 size={13} /></Button>
+                      </div>
+                    </div>
+                    <div
+                      id={`artboard-${slide.id}`}
+                      className="artboard-export"
+                      style={{ backgroundColor: slide.background.color1 }}
+                      onPointerDown={() => {
+                        onSetActiveSlide(slide.id)
+                        onSelectElement(null)
+                      }}
+                    >
+                      <div className={`artboard-background pattern-surface pattern--${pattern}`} style={backgroundStyle} />
+                      {slide.elements.map((element) => (
+                        <CanvasItem
+                          key={element.id}
+                          element={element}
+                          selected={selectedElementIds.includes(element.id)}
+                          showTransformHandles={selectedElementIds.length === 1}
+                          exporting={exporting}
+                          onSelect={(additive) => onSelectElement(element.id, slide.id, additive)}
+                          onBeginDrag={(event, item) => begin('drag', event, slide.id, item)}
+                          onBeginResize={(event, item) => begin('resize', event, slide.id, item)}
+                          onBeginRotate={(event, item) => begin('rotate', event, slide.id, item)}
+                          onCommitText={(patch) => onCommitText(slide.id, element.id, patch)}
+                        />
+                      ))}
+                      {snapGuides?.slideId === slide.id && snapGuides.vertical && <div className="snap-guide snap-guide--vertical" data-editor-overlay aria-hidden="true" />}
+                      {snapGuides?.slideId === slide.id && snapGuides.horizontal && <div className="snap-guide snap-guide--horizontal" data-editor-overlay aria-hidden="true" />}
+                      {aiActivity?.slideId === slide.id && !exporting && <AiCursorOverlay activity={aiActivity} />}
+                    </div>
+                    <div className="artboard-size">1290 × 2796 px</div>
+                  </section>
+                )
+              })}
+              <button className="add-artboard" onClick={onAddSlide}>
+                <span><Plus size={20} /></span>
+                <strong>Add screen</strong>
+                <small>New blank artboard</small>
+              </button>
+            </div>
+          )}
     </main>
   )
 }

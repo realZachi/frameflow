@@ -3,6 +3,7 @@ import { makeTemplate } from '../data'
 import { getDevicePlacement } from '../mockups/catalog'
 import { fileToDataUrl, uid } from '../utils'
 import { freshElementIds } from './element-utils'
+import { removeSlide } from './slide-operations'
 import type {
   Background,
   CanvasElement,
@@ -20,7 +21,7 @@ type Commit = (updater: (current: Slide[]) => Slide[]) => void
 
 type EditorActionsOptions = {
   slides: Slide[]
-  activeSlide: Slide
+  activeSlide: Slide | undefined
   activeSlideId: string
   selectedElement: CanvasElement | undefined
   selectedElementId: string | null
@@ -219,7 +220,7 @@ export function useEditorActions({
   const setDeviceImage = useCallback((asset: UploadAsset) => {
     const deviceTarget = selectedElement?.type === 'device'
       ? selectedElement
-      : activeSlide.elements.find((element) => element.type === 'device')
+      : activeSlide?.elements.find((element) => element.type === 'device')
     if (!deviceTarget) {
       addElement(createDeviceElement('iphone-17-a', asset.src), 'device')
       return
@@ -235,7 +236,7 @@ export function useEditorActions({
             : element),
         }
       : slide))
-  }, [activeSlide.elements, activeSlideId, addElement, commit, selectedElement, setActiveTool, setSelectedElementId])
+  }, [activeSlide, activeSlideId, addElement, commit, selectedElement, setActiveTool, setSelectedElementId])
 
   const uploadFiles = useCallback(async (files: FileList) => {
     const accepted = Array.from(files).filter((file) => file.type.startsWith('image/'))
@@ -277,13 +278,14 @@ export function useEditorActions({
   }, [activeSlideId, commit, setToast, setUploads])
 
   const applyTemplate = useCallback((template: TemplateId) => {
+    if (!activeSlide) return
     const replacement = makeTemplate(template, activeSlide.name)
     commit((current) => current.map((slide) => slide.id === activeSlideId
       ? { ...replacement, id: activeSlideId }
       : slide))
     setSelectedElementId(null)
     setToast('Template applied')
-  }, [activeSlide.name, activeSlideId, commit, setSelectedElementId, setToast])
+  }, [activeSlide, activeSlideId, commit, setSelectedElementId, setToast])
 
   const duplicateSelected = useCallback(() => {
     if (!selectedElement) return
@@ -355,15 +357,19 @@ export function useEditorActions({
   }, [commit, setActiveSlideId, setSelectedElementId, slides])
 
   const deleteSlide = useCallback((id: string) => {
-    if (slides.length === 1) return
-    const index = slides.findIndex((slide) => slide.id === id)
-    const fallback = slides[index - 1] ?? slides[index + 1]
-    if (!fallback) return
+    let nextActiveSlideId: string | null | undefined
+    commit((current) => {
+      const removal = removeSlide(current, id, activeSlideId)
+      if (!removal) return current
 
-    commit((current) => current.filter((slide) => slide.id !== id))
-    if (activeSlideId === id) setActiveSlideId(fallback.id)
+      nextActiveSlideId = removal.activeSlideId
+      return removal.slides
+    })
+    if (nextActiveSlideId === undefined) return
+
+    setActiveSlideId(nextActiveSlideId ?? '')
     setSelectedElementId(null)
-  }, [activeSlideId, commit, setActiveSlideId, setSelectedElementId, slides])
+  }, [activeSlideId, commit, setActiveSlideId, setSelectedElementId])
 
   const moveSlide = useCallback((id: string, direction: -1 | 1) => {
     commit((current) => {

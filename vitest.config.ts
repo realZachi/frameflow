@@ -15,6 +15,7 @@ export default defineConfig({
         'src/app/project-utils.ts',
         'src/editor/element-utils.ts',
         'src/editor/nudge.ts',
+        'src/editor/slide-operations.ts',
       ],
       thresholds: {
         lines: 80,
