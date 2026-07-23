@@ -7,11 +7,11 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { Bold, Italic, LockKeyhole, Underline } from './icons'
-import type { CanvasElement } from '../types'
 import { photoMockups, type PhotoMockupDefinition } from '../mockups/catalog'
 import { hexToRgba, richTextHasFormatting, richTextToPlain, sanitizeRichText } from '../utils'
+import { Bold, Italic, LockKeyhole, Underline } from './icons'
 import { ShapeGraphic } from './ShapeGraphic'
+import type { CanvasElement } from '../types'
 
 const FakeScreen = ({ theme }: { theme: Extract<CanvasElement, { type: 'device' }>['screenTheme'] }) => (
   <div className={`fake-screen fake-screen--${theme}`}>
@@ -41,33 +41,59 @@ const solveLinearSystem = (matrix: number[][], vector: number[]) => {
   for (let column = 0; column < size; column += 1) {
     let pivot = column
     for (let row = column + 1; row < size; row += 1) {
-      if (Math.abs(augmented[row][column]) > Math.abs(augmented[pivot][column])) pivot = row
+      const candidate = augmented[row]?.[column] ?? 0
+      const currentPivot = augmented[pivot]?.[column] ?? 0
+      if (Math.abs(candidate) > Math.abs(currentPivot)) pivot = row
     }
-    ;[augmented[column], augmented[pivot]] = [augmented[pivot], augmented[column]]
-    const divisor = augmented[column][column]
+    const columnRow = augmented[column]
+    const pivotRow = augmented[pivot]
+    if (!columnRow || !pivotRow) return null
+    augmented[column] = pivotRow
+    augmented[pivot] = columnRow
+    const activeRow = pivotRow
+    const divisor = activeRow[column]
+    if (divisor === undefined) return null
     if (Math.abs(divisor) < 1e-10) return null
-    for (let item = column; item <= size; item += 1) augmented[column][item] /= divisor
+    for (let item = column; item <= size; item += 1) {
+      activeRow[item] = (activeRow[item] ?? 0) / divisor
+    }
     for (let row = 0; row < size; row += 1) {
       if (row === column) continue
-      const factor = augmented[row][column]
-      for (let item = column; item <= size; item += 1) augmented[row][item] -= factor * augmented[column][item]
+      const targetRow = augmented[row]
+      if (!targetRow) return null
+      const factor = targetRow[column] ?? 0
+      for (let item = column; item <= size; item += 1) {
+        targetRow[item] = (targetRow[item] ?? 0) - factor * (activeRow[item] ?? 0)
+      }
     }
   }
 
-  return augmented.map((row) => row[size])
+  return augmented.map((row) => row[size] ?? 0)
 }
 
 const perspectiveMatrix = (width: number, height: number, definition: PhotoMockupDefinition) => {
   const sourceWidth = 139.2
   const sourceHeight = sourceWidth / definition.sourceAspectRatio
-  const source = [[0, 0], [sourceWidth, 0], [sourceWidth, sourceHeight], [0, sourceHeight]]
-  const target = definition.screenQuad.map((point) => [point.x * width, point.y * height])
+  const source: [number, number][] = [
+    [0, 0],
+    [sourceWidth, 0],
+    [sourceWidth, sourceHeight],
+    [0, sourceHeight],
+  ]
+  const target: [number, number][] = definition.screenQuad.map(
+    (point) => [point.x * width, point.y * height],
+  )
   const equations: number[][] = []
   const values: number[] = []
 
   for (let index = 0; index < 4; index += 1) {
-    const [x, y] = source[index]
-    const [targetX, targetY] = target[index]
+    const sourcePoint = source[index]
+    const targetPoint = target[index]
+    if (!sourcePoint || !targetPoint) {
+      return { transform: 'none', sourceWidth, sourceHeight }
+    }
+    const [x, y] = sourcePoint
+    const [targetX, targetY] = targetPoint
     equations.push([x, y, 1, 0, 0, 0, -targetX * x, -targetX * y])
     values.push(targetX)
     equations.push([0, 0, 0, x, y, 1, -targetY * x, -targetY * y])
@@ -76,12 +102,19 @@ const perspectiveMatrix = (width: number, height: number, definition: PhotoMocku
 
   const solved = solveLinearSystem(equations, values)
   if (!solved) return { transform: 'none', sourceWidth, sourceHeight }
-  const [a, b, c, d, e, f, g, h] = solved
+  const [a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0] = solved
   return {
     transform: `matrix3d(${a},${d},0,${g},${b},${e},0,${h},0,0,1,0,${c},${f},0,1)`,
     sourceWidth,
     sourceHeight,
   }
+}
+
+const runRichTextCommand = (command: string, value?: string) => {
+  // execCommand is the only browser API that preserves an arbitrary
+  // contenteditable selection while applying inline formatting.
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
+  document.execCommand(command, false, value)
 }
 
 const PhotoMockup = ({ element, definition }: { element: Extract<CanvasElement, { type: 'device' }>; definition: PhotoMockupDefinition }) => {
@@ -229,7 +262,10 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
     const sanitized = sanitizeRichText(node.innerHTML)
     const plain = richTextToPlain(sanitized)
     if (plain.trim().length === 0) return
-    onCommitText({ text: plain, html: richTextHasFormatting(sanitized) ? sanitized : undefined })
+    onCommitText({
+      text: plain,
+      ...(richTextHasFormatting(sanitized) ? { html: sanitized } : {}),
+    })
   }
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -277,24 +313,26 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
       }}
       onBlur={(event) => {
         // Focus moving to the toolbar (e.g. the color input) must not end the edit session.
-        if (!editing || event.currentTarget.contains(event.relatedTarget as Node | null)) return
+        if (!editing || event.currentTarget.contains(event.relatedTarget)) return
         commitEdit()
       }}
       data-element-id={element.id}
     >
-      {editing && element.type === 'text' ? (
-        <div
-          ref={editableRef}
-          className="canvas-text"
-          style={getTextElementStyle(element)}
-          contentEditable
-          suppressContentEditableWarning
-          data-editing="true"
-          onKeyDown={handleKeyDown}
-        />
-      ) : (
-        <ElementContent element={element} />
-      )}
+      {editing && element.type === 'text'
+        ? (
+            <div
+              ref={editableRef}
+              className="canvas-text"
+              style={getTextElementStyle(element)}
+              contentEditable
+              suppressContentEditableWarning
+              data-editing="true"
+              onKeyDown={handleKeyDown}
+            />
+          )
+        : (
+            <ElementContent element={element} />
+          )}
       {editing && element.type === 'text' && !exporting && (
         <div className="text-edit-toolbar" role="toolbar" aria-label="Textformatierung" onPointerDown={(event) => event.stopPropagation()}>
           <input
@@ -308,10 +346,8 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
             onChange={(event) => {
               editableRef.current?.focus()
               restoreSelection()
-              // execCommand is deprecated, but there is no standards-track replacement for
-              // applying inline formatting to an arbitrary contenteditable selection.
-              document.execCommand('styleWithCSS', false, 'true')
-              document.execCommand('foreColor', false, event.target.value)
+              runRichTextCommand('styleWithCSS', 'true')
+              runRichTextCommand('foreColor', event.target.value)
             }}
           />
           <button
@@ -321,8 +357,8 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
             }}
             onClick={(event) => {
               event.stopPropagation()
-              document.execCommand('styleWithCSS', false, 'false')
-              document.execCommand('bold')
+              runRichTextCommand('styleWithCSS', 'false')
+              runRichTextCommand('bold')
             }}
             title="Fett"
           >
@@ -335,8 +371,8 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
             }}
             onClick={(event) => {
               event.stopPropagation()
-              document.execCommand('styleWithCSS', false, 'false')
-              document.execCommand('italic')
+              runRichTextCommand('styleWithCSS', 'false')
+              runRichTextCommand('italic')
             }}
             title="Kursiv"
           >
@@ -349,8 +385,8 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
             }}
             onClick={(event) => {
               event.stopPropagation()
-              document.execCommand('styleWithCSS', false, 'false')
-              document.execCommand('underline')
+              runRichTextCommand('styleWithCSS', 'false')
+              runRichTextCommand('underline')
             }}
             title="Unterstrichen"
           >
@@ -360,17 +396,21 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
       )}
       {selected && !exporting && !editing && (
         <div className={`selection-frame${showTransformHandles ? '' : ' selection-frame--group'}`} aria-hidden="true">
-          {element.locked ? (
-            <span className="lock-indicator"><LockKeyhole size={12} /></span>
-          ) : showTransformHandles ? (
-            <>
-              <button className="resize-handle resize-handle--nw" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
-              <button className="resize-handle resize-handle--ne" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
-              <button className="resize-handle resize-handle--sw" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
-              <button className="resize-handle resize-handle--se" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
-              <button className="rotate-handle" onPointerDown={(e) => onBeginRotate(e, element)} tabIndex={-1}><span /></button>
-            </>
-          ) : null}
+          {element.locked
+            ? (
+                <span className="lock-indicator"><LockKeyhole size={12} /></span>
+              )
+            : showTransformHandles
+              ? (
+                  <>
+                    <button className="resize-handle resize-handle--nw" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
+                    <button className="resize-handle resize-handle--ne" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
+                    <button className="resize-handle resize-handle--sw" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
+                    <button className="resize-handle resize-handle--se" onPointerDown={(e) => onBeginResize(e, element)} tabIndex={-1} />
+                    <button className="rotate-handle" onPointerDown={(e) => onBeginRotate(e, element)} tabIndex={-1}><span /></button>
+                  </>
+                )
+              : null}
         </div>
       )}
     </div>

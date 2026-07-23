@@ -1,9 +1,9 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react'
 import { getFontEmbedCSS, toBlob } from 'html-to-image'
 import JSZip from 'jszip'
-import type { Slide } from '../types'
+import { useCallback, useState, type Dispatch, type SetStateAction } from 'react'
 import { downloadBlob } from '../utils'
 import { EXPORT_ARTBOARD_WIDTH, type ExportFormat } from './export-formats'
+import type { Slide } from '../types'
 
 type SlideExportOptions = {
   slides: Slide[]
@@ -55,7 +55,7 @@ export function useSlideExport({
           ...(fontEmbedCSS ? { fontEmbedCSS } : {}),
           preferredFontFormat: 'woff2',
           filter: (candidate) =>
-            !(candidate instanceof HTMLElement && candidate.dataset.aiOverlay),
+            !(candidate instanceof HTMLElement && candidate.dataset['aiOverlay']),
         })
         if (!blob) throw new Error(`Screen ${index + 1} konnte nicht gerendert werden`)
 

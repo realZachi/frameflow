@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAiWorkflow } from './ai/use-ai-workflow'
 import { AppHeader } from './app/AppHeader'
-import { ProjectDeleteDialog } from './app/ProjectDeleteDialog'
 import { loadInitialState } from './app/project-utils'
+import { ProjectDeleteDialog } from './app/ProjectDeleteDialog'
 import { useProjectWorkspace } from './app/use-project-workspace'
 import { useSlideExport } from './app/use-slide-export'
 import { AiGenerateModal } from './components/AiGenerateModal'
@@ -9,11 +10,10 @@ import { EditorCanvas } from './components/EditorCanvas'
 import { ElementToolbar } from './components/ElementToolbar'
 import { Check, Minus, Plus, X } from './components/icons'
 import { PropertiesPanel, ToolRail } from './components/Sidebar'
-import { useAiWorkflow } from './ai/use-ai-workflow'
 import { useEditorActions } from './editor/use-editor-actions'
 import { useEditorHistory } from './editor/use-editor-history'
 import { useEditorKeyboard } from './editor/use-editor-keyboard'
-import type { CanvasElement, Slide, ToolId } from './types'
+import type { Slide, ToolId } from './types'
 
 const getActiveSlide = (slides: Slide[], activeSlideId: string) => {
   const slide = slides.find((item) => item.id === activeSlideId) ?? slides[0]
@@ -122,9 +122,9 @@ export default function App() {
     const selectedIds = new Set(selectedElementIds)
     commit((current) => current.map((slide) => slide.id === activeSlideId
       ? {
-        ...slide,
-        elements: slide.elements.filter((element) => !selectedIds.has(element.id)),
-      }
+          ...slide,
+          elements: slide.elements.filter((element) => !selectedIds.has(element.id)),
+        }
       : slide))
     clearSelection()
   }, [activeSlideId, clearSelection, commit, selectedElementIds])
@@ -136,11 +136,11 @@ export default function App() {
   ) => {
     commit((current) => current.map((slide) => slide.id === slideId
       ? {
-        ...slide,
-        elements: slide.elements.map((element) => element.id === elementId
-          ? { ...element, ...patch } as CanvasElement
-          : element),
-      }
+          ...slide,
+          elements: slide.elements.map((element) => element.id === elementId
+            ? { ...element, ...patch }
+            : element),
+        }
       : slide))
   }, [commit])
 
@@ -227,7 +227,9 @@ export default function App() {
           <ElementToolbar
             element={selectedElement}
             onUpdate={actions.updateSelected}
-            onUploadToDevice={actions.uploadToSelectedDevice}
+            onUploadToDevice={(file) => {
+              void actions.uploadToSelectedDevice(file)
+            }}
             onDuplicate={actions.duplicateSelected}
             onToggleLock={actions.toggleLock}
             onMoveLayer={actions.moveSelectedLayer}
@@ -251,8 +253,12 @@ export default function App() {
           onAddDevice={actions.addDevice}
           onAddShape={actions.addShape}
           onUpdateBackground={actions.updateBackground}
-          onUploadFiles={actions.uploadFiles}
-          onUploadBackground={actions.uploadBackgroundImage}
+          onUploadFiles={(files) => {
+            void actions.uploadFiles(files)
+          }}
+          onUploadBackground={(file) => {
+            void actions.uploadBackgroundImage(file)
+          }}
           onAddImage={actions.addImage}
           onSetDeviceImage={actions.setDeviceImage}
         />
@@ -305,7 +311,7 @@ export default function App() {
           open={ai.open}
           onClose={ai.close}
           controller={ai.controller}
-          targetSlide={ai.targetSlide}
+          {...(ai.targetSlide ? { targetSlide: ai.targetSlide } : {})}
           onPrepareRun={ai.prepareRun}
           onFinished={ai.handleFinished}
           onActivity={ai.handleActivity}

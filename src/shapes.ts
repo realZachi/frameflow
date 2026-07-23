@@ -1,10 +1,10 @@
 import type { ShapeElement } from './types'
 
-export const shapeCatalog: Array<{
+export const shapeCatalog: {
   id: ShapeElement['shape']
   label: string
   group: 'Basis' | 'Akzent' | 'Linien'
-}> = [
+}[] = [
   { id: 'circle', label: 'Kreis', group: 'Basis' },
   { id: 'square', label: 'Quadrat', group: 'Basis' },
   { id: 'rounded-square', label: 'Soft Square', group: 'Basis' },

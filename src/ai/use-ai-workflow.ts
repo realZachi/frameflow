@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
-import type { Slide, UploadAsset } from '../types'
+import { useCallback, useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import { uid } from '../utils'
 import { createAiController } from './controller'
+import type { Slide, UploadAsset } from '../types'
 import type { AiToolActivity } from './tools'
 
 type AiWorkflowOptions = {
   slides: Slide[]
   setSlides: Dispatch<SetStateAction<Slide[]>>
-  slidesRef: MutableRefObject<Slide[]>
+  slidesRef: RefObject<Slide[]>
   setUploads: Dispatch<SetStateAction<UploadAsset[]>>
-  uploadsRef: MutableRefObject<UploadAsset[]>
+  uploadsRef: RefObject<UploadAsset[]>
   checkpoint: () => void
   setActiveSlideId: Dispatch<SetStateAction<string>>
   clearSelection: () => void
@@ -103,16 +103,17 @@ export function useAiWorkflow({
       followedSlideId.current = nextActivity.slideId
       scrollStageToArtboard(nextActivity.slideId)
     }
-    setActivity((previous) => ({
-      tool: nextActivity.tool,
-      ...(nextActivity.slideId ?? previous?.slideId
-        ? { slideId: nextActivity.slideId ?? previous?.slideId }
-        : {}),
-      ...(nextActivity.elementId ? { elementId: nextActivity.elementId } : {}),
-      x: nextActivity.x ?? previous?.x ?? 50,
-      y: nextActivity.y ?? previous?.y ?? 30,
-      seq: activitySequence.current,
-    }))
+    setActivity((previous) => {
+      const slideId = nextActivity.slideId ?? previous?.slideId
+      return {
+        tool: nextActivity.tool,
+        ...(slideId ? { slideId } : {}),
+        ...(nextActivity.elementId ? { elementId: nextActivity.elementId } : {}),
+        x: nextActivity.x ?? previous?.x ?? 50,
+        y: nextActivity.y ?? previous?.y ?? 30,
+        seq: activitySequence.current,
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -121,7 +122,7 @@ export function useAiWorkflow({
     return () => window.clearTimeout(timer)
   }, [activity])
 
-  const prepareRun = useCallback((files: Array<{ name: string; dataUrl: string }>) => {
+  const prepareRun = useCallback((files: { name: string; dataUrl: string }[]) => {
     checkpoint()
     clearSelection()
     preRunSlideIds.current = new Set(slidesRef.current.map((slide) => slide.id))

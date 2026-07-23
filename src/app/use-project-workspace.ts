@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
+import { useCallback, useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import { createInitialSlides } from '../data'
 import {
   deleteProject,
@@ -10,19 +10,19 @@ import {
   type PersistedProject,
   type ProjectSummary,
 } from '../persistence'
-import type { Slide, UploadAsset } from '../types'
 import { uid } from '../utils'
 import { DEFAULT_PROJECT_NAME, getUniqueProjectName, upsertProjectSummary } from './project-utils'
+import type { Slide, UploadAsset } from '../types'
 import type { SaveStatus } from './project-types'
 
 type ProjectWorkspaceOptions = {
   initialProjectName: string
   slides: Slide[]
   setSlides: Dispatch<SetStateAction<Slide[]>>
-  slidesRef: MutableRefObject<Slide[]>
+  slidesRef: RefObject<Slide[]>
   uploads: UploadAsset[]
   setUploads: Dispatch<SetStateAction<UploadAsset[]>>
-  uploadsRef: MutableRefObject<UploadAsset[]>
+  uploadsRef: RefObject<UploadAsset[]>
   onProjectReplaced: (project: PersistedProject) => void
   setToast: Dispatch<SetStateAction<string | null>>
 }
@@ -101,11 +101,12 @@ export function useProjectWorkspace({
 
   useEffect(() => {
     let cancelled = false
+    const isCancelled = () => cancelled
 
     const hydrateProject = async () => {
       try {
         const workspace = await loadProjectWorkspace()
-        if (cancelled) return
+        if (isCancelled()) return
 
         const project = workspace.activeProject ?? makeNewProject(
           projectNameRef.current,
@@ -114,7 +115,7 @@ export function useProjectWorkspace({
         )
         if (!workspace.activeProject) await saveProject(project)
         await setActiveProjectId(project.id)
-        if (cancelled) return
+        if (isCancelled()) return
 
         replaceProject(project)
         setProjects(workspace.activeProject
@@ -124,9 +125,9 @@ export function useProjectWorkspace({
         skipNextAutoSaveRef.current = true
         setSaveStatus('saved')
       } catch {
-        if (!cancelled) setSaveStatus('error')
+        if (!isCancelled()) setSaveStatus('error')
       } finally {
-        if (!cancelled) {
+        if (!isCancelled()) {
           persistenceReadyRef.current = true
           setPersistenceReady(true)
         }

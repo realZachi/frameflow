@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
-import { Sparkles, Upload, X } from './icons'
-import type { AiEditorController } from '../ai/controller'
 import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
 import { fileToDataUrl, uid } from '../utils'
+import { Sparkles, Upload, X } from './icons'
+import type { AiEditorController } from '../ai/controller'
 
 type ScreenshotDraft = { id: string; file: File; name: string; dataUrl: string }
 type LogEntry = { kind: 'status' | 'tool'; text: string }
@@ -13,7 +13,7 @@ export type AiGenerateModalProps = {
   onClose: () => void
   controller: AiEditorController
   targetSlide?: { id: string; name: string }
-  onPrepareRun: (files: Array<{ name: string; dataUrl: string }>) => Array<{ assetId: string; name: string; dataUrl: string }>
+  onPrepareRun: (files: { name: string; dataUrl: string }[]) => { assetId: string; name: string; dataUrl: string }[]
   onFinished: (slidesCreated: number) => void
   onActivity?: (activity: AiToolActivity | null) => void
 }
@@ -262,13 +262,12 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
       setReasoningTail('')
     } else if (event.type === 'reasoning') {
       setReasoningTail((current) => (current + event.delta).slice(-160))
-    }
-    else if (event.type === 'done') {
+    } else if (event.type === 'done') {
       setDoneInfo({ summary: event.summary, slidesCreated: event.slidesCreated })
       setPhase('done')
       onActivity?.(null)
       onFinished(event.slidesCreated)
-    } else if (event.type === 'error') {
+    } else {
       setErrorMessage(event.message)
       setPhase('error')
       onActivity?.(null)
@@ -291,10 +290,10 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
       description,
       screenshots: prepared,
       controller,
-      targetSlideId: targetSlide?.id,
+      ...(targetSlide ? { targetSlideId: targetSlide.id } : {}),
       signal: abortController.signal,
       onEvent: handleEvent,
-      onActivity,
+      ...(onActivity ? { onActivity } : {}),
     })
   }
 
@@ -335,7 +334,9 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
               screenshots={screenshots}
               fileInputRef={fileInputRef}
               onDescriptionChange={setDescription}
-              onFiles={handleFiles}
+              onFiles={(event) => {
+                void handleFiles(event)
+              }}
               onRemoveScreenshot={removeScreenshot}
             />
           )}

@@ -1,16 +1,16 @@
-import type { Background, CanvasElement, Slide, UploadAsset } from '../types'
 import { uid } from '../utils'
+import type { Background, CanvasElement, Slide, UploadAsset } from '../types'
 
 export type ProjectSnapshot = {
   canvas: { width: 1290; height: 2796; coordinates: 'percent' }
-  slides: Array<{
+  slides: {
     id: string
     name: string
     index: number
     background: Record<string, unknown> // background data WITHOUT data URLs: image is replaced with imageAssetId or hasImage
-    elements: Array<Record<string, unknown>> // element data WITHOUT data URLs: for device elements replace `screenshot` with `screenshotAssetId` (matched by comparing src against uploads) or hasScreenshot boolean; for image elements replace `src` with `assetId`
-  }>
-  assets: Array<{ id: string; name: string }>
+    elements: Record<string, unknown>[] // element data WITHOUT data URLs: for device elements replace `screenshot` with `screenshotAssetId` (matched by comparing src against uploads) or hasScreenshot boolean; for image elements replace `src` with `assetId`
+  }[]
+  assets: { id: string; name: string }[]
 }
 
 export type AiEditorController = {
@@ -161,14 +161,16 @@ export function createAiController(io: {
     }
     // A rewritten `text` invalidates any stale rich-text formatting stored in `html`,
     // unless the patch carries a freshly built `html` alongside it.
-    if (element.type === 'text' && 'text' in filteredPatch && !('html' in filteredPatch)) filteredPatch.html = undefined
+    if (element.type === 'text' && 'text' in filteredPatch && !('html' in filteredPatch)) {
+      filteredPatch['html'] = undefined
+    }
 
     io.setSlides((current) =>
       current.map((s) =>
         s.id === slideId
           ? {
               ...s,
-              elements: s.elements.map((el) => (el.id === elementId ? ({ ...el, ...filteredPatch } as CanvasElement) : el)),
+              elements: s.elements.map((el) => (el.id === elementId ? ({ ...el, ...filteredPatch }) : el)),
             }
           : s,
       ),

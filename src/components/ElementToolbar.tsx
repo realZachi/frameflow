@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { fontOptions } from '../data'
 import { deviceOptions, getDevicePlacement } from '../mockups/catalog'
-import type { CanvasElement } from '../types'
 import {
   AlignCenter,
   AlignLeft,
@@ -37,6 +36,7 @@ import {
 } from './ui/select'
 import { Separator } from './ui/separator'
 import { Slider } from './ui/slider'
+import type { CanvasElement } from '../types'
 
 type Props = {
   element: CanvasElement
@@ -108,7 +108,9 @@ const ToolbarRange = ({ label, value, min, max, step = 1, displayValue, triggerV
           min={min}
           max={max}
           step={step}
-          onValueChange={(next) => onChange(typeof next === 'number' ? next : next[0])}
+          onValueChange={(next) => onChange(
+            typeof next === 'number' ? next : (next[0] ?? value),
+          )}
           aria-label={label}
         />
         <div className="toolbar-range-limits" aria-hidden="true">
@@ -195,7 +197,7 @@ const AdvancedSlider = ({ label, value, min, max, step = 1, displayValue, onChan
 }) => (
   <div className="toolbar-slider">
     <div><span>{label}</span><strong>{displayValue ?? value}</strong></div>
-    <Slider value={[value]} min={min} max={max} step={step} onValueChange={(next) => onChange(typeof next === 'number' ? next : next[0])} aria-label={label} />
+    <Slider value={[value]} min={min} max={max} step={step} onValueChange={(next) => onChange(typeof next === 'number' ? next : (next[0] ?? value))} aria-label={label} />
   </div>
 )
 
@@ -378,10 +380,14 @@ const DeviceControls = ({ element, onUpdate, onUpload }: {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <>
-      <Select value={element.deviceStyle} onValueChange={(value) => {
-        const deviceStyle = value as typeof element.deviceStyle
-        onUpdate({ deviceStyle, ...getDevicePlacement(deviceStyle) })
-      }}>
+      <Select
+        value={element.deviceStyle}
+        onValueChange={(value) => {
+          const deviceStyle = deviceOptions.find((device) => device.id === value)?.id
+          if (!deviceStyle) return
+          onUpdate({ deviceStyle, ...getDevicePlacement(deviceStyle) })
+        }}
+      >
         <SelectTrigger size="sm" className="toolbar-device-select" aria-label="Mockup-Stil">
           <SelectValue>{deviceOptions.find((device) => device.id === element.deviceStyle)?.label ?? element.deviceStyle}</SelectValue>
         </SelectTrigger>

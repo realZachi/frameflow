@@ -1,11 +1,11 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ChevronLeft, ChevronRight, Copy, Plus, Sparkles, Trash2 } from './icons'
-import type { CanvasElement, Slide } from '../types'
-import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
-import { CanvasItem } from './CanvasElementView'
-import { AiCursorOverlay } from './AiCursorOverlay'
 import { photoMockups } from '../mockups/catalog'
+import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
+import { AiCursorOverlay } from './AiCursorOverlay'
+import { CanvasItem } from './CanvasElementView'
+import { ChevronLeft, ChevronRight, Copy, Plus, Sparkles, Trash2 } from './icons'
 import { Button } from './ui/button'
+import type { CanvasElement, Slide } from '../types'
 
 type AiActivity = { tool: string; slideId?: string; x?: number; y?: number; seq: number }
 
@@ -48,7 +48,7 @@ type Props = {
   aiActivity?: AiActivity | null
   onSetActiveSlide: (id: string) => void
   onSelectElement: (id: string | null, slideId?: string, additive?: boolean) => void
-  onUpdateElements: (slideId: string, updates: Array<{ id: string; patch: Partial<CanvasElement> }>) => void
+  onUpdateElements: (slideId: string, updates: { id: string; patch: Partial<CanvasElement> }[]) => void
   onCommitText: (slideId: string, id: string, patch: { text: string; html?: string }) => void
   onCheckpoint: () => void
   onAddSlide: () => void
@@ -85,10 +85,10 @@ export const EditorCanvas = ({
   const begin = (type: Interaction['type'], event: ReactPointerEvent, slideId: string, element: CanvasElement) => {
     event.preventDefault()
     event.stopPropagation()
-    const artboardNode = event.currentTarget.closest('.artboard-export') as HTMLElement | null
+    const artboardNode = event.currentTarget.closest('.artboard-export')
     if (!artboardNode) return
     const rect = artboardNode.getBoundingClientRect()
-    const itemNode = event.currentTarget.closest('.canvas-item') as HTMLElement | null
+    const itemNode = event.currentTarget.closest('.canvas-item')
     const itemRect = itemNode?.getBoundingClientRect()
     const centerX = itemRect ? itemRect.left + itemRect.width / 2 : 0
     const centerY = itemRect ? itemRect.top + itemRect.height / 2 : 0
@@ -101,14 +101,16 @@ export const EditorCanvas = ({
       : [element]
     const elementIds = new Set(elements.map((item) => item.id))
     const selectedRects = Array.from(artboardNode.querySelectorAll<HTMLElement>('[data-element-id]'))
-      .filter((node) => elementIds.has(node.dataset.elementId ?? ''))
+      .filter((node) => elementIds.has(node.dataset['elementId'] ?? ''))
       .map((node) => node.getBoundingClientRect())
-    const selectionBounds = selectedRects.length > 0 ? {
-      left: Math.min(...selectedRects.map((item) => item.left)),
-      right: Math.max(...selectedRects.map((item) => item.right)),
-      top: Math.min(...selectedRects.map((item) => item.top)),
-      bottom: Math.max(...selectedRects.map((item) => item.bottom)),
-    } : null
+    const selectionBounds = selectedRects.length > 0
+      ? {
+          left: Math.min(...selectedRects.map((item) => item.left)),
+          right: Math.max(...selectedRects.map((item) => item.right)),
+          top: Math.min(...selectedRects.map((item) => item.top)),
+          bottom: Math.max(...selectedRects.map((item) => item.bottom)),
+        }
+      : null
     interaction.current = {
       type,
       slideId,
@@ -117,8 +119,16 @@ export const EditorCanvas = ({
       startX: event.clientX,
       startY: event.clientY,
       artboard: rect,
-      selectionCenterX: selectionBounds ? ((selectionBounds.left + selectionBounds.right) / 2 - rect.left) / rect.width * 100 : undefined,
-      selectionCenterY: selectionBounds ? ((selectionBounds.top + selectionBounds.bottom) / 2 - rect.top) / rect.height * 100 : undefined,
+      ...(selectionBounds
+        ? {
+            selectionCenterX: (
+              (selectionBounds.left + selectionBounds.right) / 2 - rect.left
+            ) / rect.width * 100,
+            selectionCenterY: (
+              (selectionBounds.top + selectionBounds.bottom) / 2 - rect.top
+            ) / rect.height * 100,
+          }
+        : {}),
       centerX,
       centerY,
       startAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX) * (180 / Math.PI),
@@ -249,7 +259,7 @@ export const EditorCanvas = ({
                 ))}
                 {snapGuides?.slideId === slide.id && snapGuides.vertical && <div className="snap-guide snap-guide--vertical" data-editor-overlay aria-hidden="true" />}
                 {snapGuides?.slideId === slide.id && snapGuides.horizontal && <div className="snap-guide snap-guide--horizontal" data-editor-overlay aria-hidden="true" />}
-                {aiActivity && aiActivity.slideId === slide.id && !exporting && <AiCursorOverlay activity={aiActivity} />}
+                {aiActivity?.slideId === slide.id && !exporting && <AiCursorOverlay activity={aiActivity} />}
               </div>
               <div className="artboard-size">1290 × 2796 px</div>
             </section>

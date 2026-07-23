@@ -1,6 +1,5 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { TextElement } from '../types'
 import { clamp } from '../utils'
 import { buildHighlightHtml } from './richtext'
 import {
@@ -28,6 +27,7 @@ import {
   highlightsSchema,
   MEASUREMENT_NOTE,
 } from './tool-schemas'
+import type { TextElement } from '../types'
 
 export const createAddTextTool = ({ controller, emit }: ToolContext) => tool({
   description: `Add a text element to a slide. ${COORDINATE_NOTE} ${MEASUREMENT_NOTE}`,

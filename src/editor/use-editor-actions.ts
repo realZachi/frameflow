@@ -1,6 +1,8 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react'
 import { makeTemplate } from '../data'
 import { getDevicePlacement } from '../mockups/catalog'
+import { fileToDataUrl, uid } from '../utils'
+import { freshElementIds } from './element-utils'
 import type {
   Background,
   CanvasElement,
@@ -13,8 +15,6 @@ import type {
   ToolId,
   UploadAsset,
 } from '../types'
-import { fileToDataUrl, uid } from '../utils'
-import { freshElementIds } from '../app/project-utils'
 
 type Commit = (updater: (current: Slide[]) => Slide[]) => void
 
@@ -166,11 +166,11 @@ export function useEditorActions({
     if (!selectedElementId) return
     commit((current) => current.map((slide) => slide.id === activeSlideId
       ? {
-        ...slide,
-        elements: slide.elements.map((element) => element.id === selectedElementId
-          ? { ...element, ...patch } as CanvasElement
-          : element),
-      }
+          ...slide,
+          elements: slide.elements.map((element) => element.id === selectedElementId
+            ? { ...element, ...patch } as CanvasElement
+            : element),
+        }
       : slide))
   }, [activeSlideId, commit, selectedElementId])
 
@@ -229,11 +229,11 @@ export function useEditorActions({
     setActiveTool('device')
     commit((current) => current.map((slide) => slide.id === activeSlideId
       ? {
-        ...slide,
-        elements: slide.elements.map((element) => element.id === deviceTarget.id
-          ? { ...element, screenshot: asset.src }
-          : element),
-      }
+          ...slide,
+          elements: slide.elements.map((element) => element.id === deviceTarget.id
+            ? { ...element, screenshot: asset.src }
+            : element),
+        }
       : slide))
   }, [activeSlide.elements, activeSlideId, addElement, commit, selectedElement, setActiveTool, setSelectedElementId])
 
@@ -261,17 +261,17 @@ export function useEditorActions({
     setUploads((current) => [asset, ...current])
     commit((current) => current.map((slide) => slide.id === activeSlideId
       ? {
-        ...slide,
-        background: {
-          ...slide.background,
-          type: 'image',
-          image: asset.src,
-          imageFit: 'cover',
-          imagePosition: 'center',
-          overlayColor: '#111116',
-          overlayOpacity: 0.18,
-        },
-      }
+          ...slide,
+          background: {
+            ...slide.background,
+            type: 'image',
+            image: asset.src,
+            imageFit: 'cover',
+            imagePosition: 'center',
+            overlayColor: '#111116',
+            overlayOpacity: 0.18,
+          },
+        }
       : slide))
     setToast('Bild als Hintergrund eingesetzt')
   }, [activeSlideId, commit, setToast, setUploads])
@@ -292,7 +292,7 @@ export function useEditorActions({
       id: uid(selectedElement.type),
       x: selectedElement.x + 3,
       y: selectedElement.y + 2,
-    } as CanvasElement)
+    })
   }, [addElement, selectedElement])
 
   const toggleLock = useCallback(() => {

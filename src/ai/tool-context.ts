@@ -1,6 +1,6 @@
 import { clamp } from '../utils'
-import type { AiEditorController } from './controller'
 import { measureSlide, type ElementBox } from './measure'
+import type { AiEditorController } from './controller'
 
 export type AiToolActivity = {
   tool: string
@@ -66,7 +66,9 @@ export const getElement = (
   controller: AiEditorController,
   slideId: string,
   elementId: string,
-) => getSlide(controller, slideId)?.elements.find((element) => element.id === elementId)
+) => getSlide(controller, slideId)?.elements.find(
+  (element) => element['id'] === elementId,
+)
 
 export const numberField = (value: unknown): number =>
   typeof value === 'number' ? value : 0
@@ -80,8 +82,8 @@ export const buildElementTypes = (
 
   const types: Record<string, string> = {}
   for (const element of slide.elements) {
-    if (typeof element.id === 'string' && typeof element.type === 'string') {
-      types[element.id] = element.type
+    if (typeof element['id'] === 'string' && typeof element['type'] === 'string') {
+      types[element['id']] = element['type']
     }
   }
   return types

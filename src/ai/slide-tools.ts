@@ -40,15 +40,26 @@ export const createSlideTools = ({ controller, emit }: ToolContext) => {
     execute: async ({ name, background }) => {
       const normalizedBackground = background
         ? {
-          ...background,
-          angle: clampAngle(background.angle),
-          ...(background.patternOpacity !== undefined
-            ? { patternOpacity: clamp(background.patternOpacity, 0, 0.8) }
-            : {}),
-          ...(background.patternScale !== undefined
-            ? { patternScale: clampPatternScale(background.patternScale) }
-            : {}),
-        }
+            type: background.type,
+            color1: background.color1,
+            color2: background.color2,
+            angle: clampAngle(background.angle),
+            ...(background.gradientKind !== undefined
+              ? { gradientKind: background.gradientKind }
+              : {}),
+            ...(background.pattern !== undefined
+              ? { pattern: background.pattern }
+              : {}),
+            ...(background.patternColor !== undefined
+              ? { patternColor: background.patternColor }
+              : {}),
+            ...(background.patternOpacity !== undefined
+              ? { patternOpacity: clamp(background.patternOpacity, 0, 0.8) }
+              : {}),
+            ...(background.patternScale !== undefined
+              ? { patternScale: clampPatternScale(background.patternScale) }
+              : {}),
+          }
         : undefined
       const slideId = controller.addSlide({
         ...(name !== undefined ? { name } : {}),

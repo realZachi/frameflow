@@ -1,6 +1,6 @@
-import type { CSSProperties } from 'react'
 import { shapeAspectRatio } from '../shapes'
 import type { ShapeElement } from '../types'
+import type { CSSProperties } from 'react'
 
 const filledShape = (element: ShapeElement) => ({
   fill: element.color,

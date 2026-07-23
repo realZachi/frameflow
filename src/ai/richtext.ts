@@ -2,16 +2,16 @@ import { clamp, hexToRgba, sanitizeRichText } from '../utils'
 
 export type TextHighlight = {
   text: string
-  color?: string
-  backgroundColor?: string
-  backgroundOpacity?: number
-  borderRadius?: number
-  padding?: number
-  bold?: boolean
-  italic?: boolean
-  underline?: boolean
-  strikethrough?: boolean
-  opacity?: number
+  color?: string | undefined
+  backgroundColor?: string | undefined
+  backgroundOpacity?: number | undefined
+  borderRadius?: number | undefined
+  padding?: number | undefined
+  bold?: boolean | undefined
+  italic?: boolean | undefined
+  underline?: boolean | undefined
+  strikethrough?: boolean | undefined
+  opacity?: number | undefined
 }
 
 const escapeHtml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

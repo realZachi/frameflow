@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const COORDINATE_NOTE = 'Percent of the 1290x2796 canvas. x/y is the top-left corner of the element, width is percent of canvas width; height is automatic. x/y may be negative (down to -35) and width may exceed 100 (up to 140), so elements can deliberately bleed off the canvas edges for cropped, dynamic compositions.'
 
-export const MEASUREMENT_NOTE = "The result includes the element's actually rendered bounding box and any slide layout warnings — address warnings before moving on."
+export const MEASUREMENT_NOTE = 'The result includes the element\'s actually rendered bounding box and any slide layout warnings — address warnings before moving on.'
 
 export const fontFamilySchema = z
   .enum([
@@ -19,7 +19,7 @@ export const fontFamilySchema = z
     'Arial, sans-serif',
   ])
   .describe(
-    "Font to use. Display: 'Bricolage Grotesque Variable', 'Syne Variable', 'Bebas Neue' (400 only). Sans: 'Instrument Sans Variable', 'Manrope Variable'. Serif: 'Fraunces' (600), 'Playfair Display' (600/700), 'DM Serif Display' (400). Mono: 'Space Mono' (400/700). Handwritten: 'Caveat' (400/700). 'Arial, sans-serif' is a plain fallback.",
+    'Font to use. Display: \'Bricolage Grotesque Variable\', \'Syne Variable\', \'Bebas Neue\' (400 only). Sans: \'Instrument Sans Variable\', \'Manrope Variable\'. Serif: \'Fraunces\' (600), \'Playfair Display\' (600/700), \'DM Serif Display\' (400). Mono: \'Space Mono\' (400/700). Handwritten: \'Caveat\' (400/700). \'Arial, sans-serif\' is a plain fallback.',
   )
 
 export const shapeSchema = z.enum([
@@ -59,7 +59,7 @@ export const deviceStyleSchema = z
     'tilted-hand',
   ])
   .describe(
-    "Photorealistic iPhone mockup. 'iphone-17-a' and 'iphone-17-b' are upright/front views (width 58-72 fully in frame). 'iphone-17-c', 'iphone-17-d', and 'iphone-17-e' are low angled views (width 90-112, or up to 115-140 with negative x/y for a dramatic cropped close-up). 'iphone-17-f' is a leaning portrait phone (width 88-105). 'tilted-hand' is a hand holding the phone (width 110-125, usually cropped by a canvas edge). Perspective, light, and shadow are baked into every overlay.",
+    'Photorealistic iPhone mockup. \'iphone-17-a\' and \'iphone-17-b\' are upright/front views (width 58-72 fully in frame). \'iphone-17-c\', \'iphone-17-d\', and \'iphone-17-e\' are low angled views (width 90-112, or up to 115-140 with negative x/y for a dramatic cropped close-up). \'iphone-17-f\' is a leaning portrait phone (width 88-105). \'tilted-hand\' is a hand holding the phone (width 110-125, usually cropped by a canvas edge). Perspective, light, and shadow are baked into every overlay.',
   )
 
 export const screenThemeSchema = z

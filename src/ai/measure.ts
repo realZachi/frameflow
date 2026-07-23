@@ -93,7 +93,7 @@ export function measureSlideSync(slideId: string, elementTypes: Record<string, s
 
   const boxes: ElementBox[] = []
   nodes.forEach((node) => {
-    const elementId = node.dataset.elementId
+    const elementId = node.dataset['elementId']
     if (!elementId) return
     const rect = node.getBoundingClientRect()
     boxes.push({
@@ -113,6 +113,7 @@ export function measureSlideSync(slideId: string, elementTypes: Record<string, s
     for (let j = i + 1; j < boxes.length; j += 1) {
       const boxA = boxes[i]
       const boxB = boxes[j]
+      if (!boxA || !boxB) continue
       const typeA = elementTypes[boxA.elementId]
       const typeB = elementTypes[boxB.elementId]
       if (!typeA || !typeB) continue

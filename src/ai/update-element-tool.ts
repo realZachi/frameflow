@@ -81,7 +81,7 @@ type UpdateFields = Omit<UpdateElementInput, 'slideId' | 'elementId'>
 
 const assignDefined = (
   patch: Record<string, unknown>,
-  entries: Array<[string, unknown]>,
+  entries: [string, unknown][],
 ) => {
   for (const [key, value] of entries) {
     if (value !== undefined) patch[key] = value
@@ -136,7 +136,7 @@ const addTextFields = (
 
   if (fields.highlights === undefined) return []
   const text = fields.text ?? existingText
-  patch.html = buildHighlightHtml(text, fields.highlights)
+  patch['html'] = buildHighlightHtml(text, fields.highlights)
   return fields.highlights
     .filter((highlight) => highlight.text && !text.includes(highlight.text))
     .map((highlight) => highlight.text)
@@ -186,11 +186,11 @@ export const createUpdateElementTool = ({ controller, emit }: ToolContext) => to
     if (!existing) return notFound(elementNotFoundMessage(elementId, slideId))
 
     const patch = buildBasePatch(fields)
-    const existingText = typeof existing.text === 'string' ? existing.text : ''
-    const unmatchedHighlights = existing.type === 'text'
+    const existingText = typeof existing['text'] === 'string' ? existing['text'] : ''
+    const unmatchedHighlights = existing['type'] === 'text'
       ? addTextFields(patch, fields, existingText)
       : []
-    const elementType = typeof existing.type === 'string' ? existing.type : ''
+    const elementType = typeof existing['type'] === 'string' ? existing['type'] : ''
     addTypeFields(patch, fields, elementType)
 
     emit({
@@ -198,12 +198,12 @@ export const createUpdateElementTool = ({ controller, emit }: ToolContext) => to
       slideId,
       elementId,
       x: clamp(
-        numberField(patch.x ?? existing.x)
-          + numberField(patch.width ?? existing.width) / 2,
+        numberField(patch['x'] ?? existing['x'])
+        + numberField(patch['width'] ?? existing['width']) / 2,
         2,
         98,
       ),
-      y: clamp(numberField(patch.y ?? existing.y) + 4, 2, 96),
+      y: clamp(numberField(patch['y'] ?? existing['y']) + 4, 2, 96),
     })
     controller.updateElement(slideId, elementId, patch)
     const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)

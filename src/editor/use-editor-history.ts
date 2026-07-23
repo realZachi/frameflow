@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
+import { useCallback, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import type { CanvasElement, Slide } from '../types'
 
 type ElementUpdate = {
@@ -8,7 +8,7 @@ type ElementUpdate = {
 
 type EditorHistoryOptions = {
   setSlides: Dispatch<SetStateAction<Slide[]>>
-  slidesRef: MutableRefObject<Slide[]>
+  slidesRef: RefObject<Slide[]>
   clearSelection: () => void
 }
 

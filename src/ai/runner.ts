@@ -1,8 +1,8 @@
-import { APICallError, isStepCount, streamText } from 'ai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { APICallError, isStepCount, streamText } from 'ai'
+import { scopeAiControllerToSlide, type AiEditorController } from './controller'
 import { buildInstructions, buildUserMessage } from './prompt'
 import { createEditorTools } from './tools'
-import { scopeAiControllerToSlide, type AiEditorController } from './controller'
 import type { AiToolActivity } from './tools'
 
 export type { AiToolActivity } from './tools'
@@ -15,27 +15,39 @@ export type AiRunEvent =
   | { type: 'done'; summary: string; slidesCreated: number }
   | { type: 'error'; message: string }
 
+type UserContent =
+  | { type: 'text'; text: string }
+  | { type: 'file'; mediaType: string; data: string }
+
 const truncate = (value: string, max: number) => (value.length > max ? `${value.slice(0, max)}…` : value)
 
 const describeToolCall = (toolName: string, input: unknown): string => {
-  const data = (input && typeof input === 'object' ? (input as Record<string, unknown>) : {}) as Record<string, unknown>
+  const data = (input && typeof input === 'object' ? (input as Record<string, unknown>) : {})
   switch (toolName) {
     case 'get_canvas_state':
       return 'Board-Status abgerufen'
     case 'add_slide':
       return 'Neuer Screen angelegt'
     case 'rename_slide':
-      return typeof data.name === 'string' ? `Screen umbenannt: „${truncate(data.name, 30)}"` : 'Screen umbenannt'
+      return typeof data['name'] === 'string'
+        ? `Screen umbenannt: „${truncate(data['name'], 30)}"`
+        : 'Screen umbenannt'
     case 'set_slide_background':
       return 'Hintergrund geändert'
     case 'delete_slide':
       return 'Screen gelöscht'
     case 'add_text':
-      return typeof data.text === 'string' ? `Text: „${truncate(data.text, 30)}"` : 'Text hinzugefügt'
+      return typeof data['text'] === 'string'
+        ? `Text: „${truncate(data['text'], 30)}"`
+        : 'Text hinzugefügt'
     case 'add_device':
-      return typeof data.deviceStyle === 'string' ? `Gerät hinzugefügt (${data.deviceStyle})` : 'Gerät hinzugefügt'
+      return typeof data['deviceStyle'] === 'string'
+        ? `Gerät hinzugefügt (${data['deviceStyle']})`
+        : 'Gerät hinzugefügt'
     case 'add_shape':
-      return typeof data.shape === 'string' ? `Form hinzugefügt (${data.shape})` : 'Form hinzugefügt'
+      return typeof data['shape'] === 'string'
+        ? `Form hinzugefügt (${data['shape']})`
+        : 'Form hinzugefügt'
     case 'add_image':
       return 'Bild hinzugefügt'
     case 'set_device_screenshot':
@@ -74,7 +86,7 @@ const isAbortError = (error: unknown): boolean =>
 
 export async function runAiGeneration(options: {
   description: string
-  screenshots: Array<{ assetId: string; name: string; dataUrl: string }>
+  screenshots: { assetId: string; name: string; dataUrl: string }[]
   controller: AiEditorController
   targetSlideId?: string
   signal?: AbortSignal
@@ -92,15 +104,12 @@ export async function runAiGeneration(options: {
       baseURL: `${window.location.origin}/api/moonshot/v1`,
     })
 
-    const content: Array<
-      | { type: 'text'; text: string }
-      | { type: 'file'; mediaType: string; data: string }
-    > = [{
+    const content: UserContent[] = [{
       type: 'text',
       text: buildUserMessage(
         description,
         screenshots.map(({ assetId, name }) => ({ assetId, name })),
-        { targetSlideId },
+        targetSlideId ? { targetSlideId } : {},
       ),
     }]
 
@@ -114,11 +123,14 @@ export async function runAiGeneration(options: {
     const runController = targetSlideId ? scopeAiControllerToSlide(controller, targetSlideId) : controller
     const result = streamText({
       model: moonshot('kimi-k3'),
-      instructions: buildInstructions({ targetSlideId }),
+      instructions: buildInstructions(targetSlideId ? { targetSlideId } : {}),
       messages: [{ role: 'user', content }],
-      tools: createEditorTools(runController, { mode: targetSlideId ? 'edit' : 'generate', onActivity }),
+      tools: createEditorTools(runController, {
+        mode: targetSlideId ? 'edit' : 'generate',
+        ...(onActivity ? { onActivity } : {}),
+      }),
       stopWhen: isStepCount(64),
-      abortSignal: signal,
+      ...(signal ? { abortSignal: signal } : {}),
     })
 
     let accumulatedText = ''
@@ -127,6 +139,8 @@ export async function runAiGeneration(options: {
 
     for await (const part of result.stream) {
       if (signal?.aborted) break
+      // The SDK emits transport events that do not affect the visible activity log.
+      // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
       switch (part.type) {
         case 'text-delta': {
           accumulatedText += part.text

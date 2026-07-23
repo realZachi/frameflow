@@ -1,6 +1,5 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import type { DeviceElement, ImageElement, ShapeElement } from '../types'
 import { clamp } from '../utils'
 import {
   assetNotFoundMessage,
@@ -30,6 +29,7 @@ import {
   screenThemeSchema,
   shapeSchema,
 } from './tool-schemas'
+import type { DeviceElement, ImageElement, ShapeElement } from '../types'
 
 export const createMediaTools = ({ controller, emit }: ToolContext) => {
   const addDevice = tool({
@@ -216,7 +216,7 @@ export const createMediaTools = ({ controller, emit }: ToolContext) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))
       const element = getElement(controller, slideId, elementId)
       if (!element) return notFound(elementNotFoundMessage(elementId, slideId))
-      if (element.type !== 'device') {
+      if (element['type'] !== 'device') {
         return notFound(`Element ${elementId} on slide ${slideId} is not a device element.`)
       }
       const src = controller.getAssetSrc(assetId)
@@ -226,8 +226,12 @@ export const createMediaTools = ({ controller, emit }: ToolContext) => {
         tool: 'set_device_screenshot',
         slideId,
         elementId,
-        x: clamp(numberField(element.x) + numberField(element.width) / 2, 2, 98),
-        y: clamp(numberField(element.y) + 4, 2, 96),
+        x: clamp(
+          numberField(element['x']) + numberField(element['width']) / 2,
+          2,
+          98,
+        ),
+        y: clamp(numberField(element['y']) + 4, 2, 96),
       })
       controller.updateElement(slideId, elementId, { screenshot: src })
       const { box, slideWarnings } = await withMeasurement(controller, slideId, elementId)

@@ -6,12 +6,10 @@ import { settleFrames } from './measure'
 let fontEmbedCSSPromise: Promise<string | undefined> | null = null
 
 const getCachedFontEmbedCSS = (node: HTMLElement): Promise<string | undefined> => {
-  if (!fontEmbedCSSPromise) {
-    fontEmbedCSSPromise = getFontEmbedCSS(node).catch((error: unknown) => {
-      console.warn('Failed to compute font embed CSS for slide preview capture', error)
-      return undefined
-    })
-  }
+  fontEmbedCSSPromise ??= getFontEmbedCSS(node).catch((error: unknown) => {
+    console.warn('Failed to compute font embed CSS for slide preview capture', error)
+    return undefined
+  })
   return fontEmbedCSSPromise
 }
 
@@ -27,8 +25,9 @@ export async function captureSlidePreview(slideId: string): Promise<{ base64: st
       canvasHeight: 932,
       pixelRatio: 1,
       quality: 0.8,
-      fontEmbedCSS,
-      filter: (candidate) => !(candidate instanceof HTMLElement && candidate.dataset.aiOverlay),
+      ...(fontEmbedCSS ? { fontEmbedCSS } : {}),
+      filter: (candidate) =>
+        !(candidate instanceof HTMLElement && candidate.dataset['aiOverlay']),
     })
     return { base64: dataUrl.replace(/^data:image\/jpeg;base64,/, ''), mediaType: 'image/jpeg' }
   } catch (error) {

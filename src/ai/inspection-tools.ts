@@ -26,12 +26,16 @@ export const createInspectionTools = ({ controller, emit }: ToolContext) => {
       const existing = getElement(controller, slideId, elementId)
       emit(existing
         ? {
-          tool: 'delete_element',
-          slideId,
-          elementId,
-          x: clamp(numberField(existing.x) + numberField(existing.width) / 2, 2, 98),
-          y: clamp(numberField(existing.y) + 4, 2, 96),
-        }
+            tool: 'delete_element',
+            slideId,
+            elementId,
+            x: clamp(
+              numberField(existing['x']) + numberField(existing['width']) / 2,
+              2,
+              98,
+            ),
+            y: clamp(numberField(existing['y']) + 4, 2, 96),
+          }
         : { tool: 'delete_element', slideId })
       if (!controller.deleteElement(slideId, elementId)) {
         return notFound(elementNotFoundMessage(elementId, slideId))
@@ -42,7 +46,7 @@ export const createInspectionTools = ({ controller, emit }: ToolContext) => {
 
   const inspectSlide = tool({
     description:
-      "Get the true rendered bounding box of every element on a slide (x/width as percent of canvas width, y/height as percent of canvas height) plus layout warnings (overflow, overlaps). Call it whenever you need to verify a slide's layout before moving on.",
+      'Get the true rendered bounding box of every element on a slide (x/width as percent of canvas width, y/height as percent of canvas height) plus layout warnings (overflow, overlaps). Call it whenever you need to verify a slide\'s layout before moving on.',
     inputSchema: z.object({ slideId: z.string() }),
     execute: async ({ slideId }) => {
       if (!getSlide(controller, slideId)) return notFound(slideNotFoundMessage(slideId))

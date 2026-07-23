@@ -114,11 +114,11 @@ ${finish}`
 
 export function buildUserMessage(
   description: string,
-  assets: Array<{ assetId: string; name: string }>,
+  assets: { assetId: string; name: string }[],
   options: AiPromptOptions = {},
 ): string {
-  const assetLines =
-    assets.length > 0
+  const assetLines
+    = assets.length > 0
       ? assets.map((asset) => `- ${asset.assetId} — ${asset.name}`).join('\n')
       : '(no screenshots were uploaded)'
 

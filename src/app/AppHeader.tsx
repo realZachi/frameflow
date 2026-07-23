@@ -23,10 +23,10 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu'
-import type { ProjectSummary } from '../persistence'
 import { EXPORT_FORMATS, type ExportFormat } from './export-formats'
-import { formatProjectTime } from './project-utils'
 import { saveStatusLabels, type SaveStatus } from './project-types'
+import { formatProjectTime } from './project-utils'
+import type { ProjectSummary } from '../persistence'
 
 type AppHeaderProps = {
   projectName: string

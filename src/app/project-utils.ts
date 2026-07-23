@@ -1,7 +1,6 @@
 import { createInitialSlides } from '../data'
 import { loadLegacyProject, type PersistedProject, type ProjectSummary } from '../persistence'
-import type { CanvasElement, Slide, UploadAsset } from '../types'
-import { uid } from '../utils'
+import type { Slide, UploadAsset } from '../types'
 
 export const DEFAULT_PROJECT_NAME = 'Summer Launch'
 
@@ -51,6 +50,3 @@ export const formatProjectTime = (timestamp: number) => new Date(timestamp).toLo
   hour: '2-digit',
   minute: '2-digit',
 })
-
-export const freshElementIds = (elements: CanvasElement[]) =>
-  elements.map((element) => ({ ...element, id: uid(element.type) }))

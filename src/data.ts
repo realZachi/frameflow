@@ -1,5 +1,5 @@
-import type { CanvasElement, Slide, TemplateId } from './types'
 import { uid } from './utils'
+import type { CanvasElement, Slide, TemplateId } from './types'
 
 const text = (
   value: string,
@@ -207,7 +207,7 @@ export const createInitialSlides = () => [
   makeTemplate('coral', 'Export'),
 ]
 
-export const templateMeta: Array<{ id: TemplateId; name: string; eyebrow: string }> = [
+export const templateMeta: { id: TemplateId; name: string; eyebrow: string }[] = [
   { id: 'ink', name: 'Midnight pitch', eyebrow: 'Bold / product' },
   { id: 'paper', name: 'Editorial calm', eyebrow: 'Soft / premium' },
   { id: 'lime', name: 'Electric launch', eyebrow: 'Bright / energetic' },

@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react'
 import type { Background } from './types'
+import type { CSSProperties } from 'react'
 
 export const uid = (prefix = 'item') => `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 
@@ -19,7 +19,10 @@ export const downloadBlob = (blob: Blob, filename: string) => {
 export const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
+    reader.onload = () => {
+      if (typeof reader.result === 'string') resolve(reader.result)
+      else reject(new Error('Die Datei konnte nicht als Data-URL gelesen werden.'))
+    }
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
@@ -126,8 +129,8 @@ export function sanitizeRichText(input: string): string {
   const output = document.createElement('div')
   appendRichTextChildren(parsed.body, output)
 
-  while (output.lastChild && output.lastChild.nodeType === Node.ELEMENT_NODE && (output.lastChild as Element).tagName === 'BR') {
-    output.removeChild(output.lastChild)
+  while (output.lastElementChild?.tagName === 'BR') {
+    output.lastElementChild.remove()
   }
 
   return output.innerHTML
@@ -136,7 +139,7 @@ export function sanitizeRichText(input: string): string {
 export function richTextToPlain(html: string): string {
   const parsed = new DOMParser().parseFromString(html, 'text/html')
   parsed.querySelectorAll('br').forEach((br) => br.replaceWith('\n'))
-  return parsed.body.textContent ?? ''
+  return parsed.body.textContent
 }
 
 export function richTextHasFormatting(html: string): boolean {

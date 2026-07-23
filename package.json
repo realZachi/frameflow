@@ -11,11 +11,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "build": "bun run typecheck && vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "bun run lint --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "audit": "bun audit",
-    "check": "bun run lint && bun run build && bun run audit"
+    "check": "bun run lint && bun run test:coverage && bun run build && bun run audit"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.14",
@@ -49,16 +54,23 @@
   },
   "devDependencies": {
     "@eslint/js": "latest",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^26.1.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
+    "@vitest/coverage-v8": "^4.1.6",
     "eslint": "latest",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react-refresh": "latest",
     "globals": "latest",
+    "jsdom": "^29.1.1",
     "typescript": "5.9.3",
     "typescript-eslint": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "vitest": "^4.1.6"
   }
 }

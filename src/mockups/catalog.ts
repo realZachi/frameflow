@@ -133,7 +133,7 @@ export const photoMockups: Record<DeviceStyle, PhotoMockupDefinition> = {
   },
 }
 
-export const deviceOptions: Array<{ id: DeviceStyle; label: string; kind: 'photo'; preview: string }> = [
+export const deviceOptions: { id: DeviceStyle; label: string; kind: 'photo'; preview: string }[] = [
   { id: 'iphone-17-a', label: '17 Pro · Aufrecht', kind: 'photo', preview: iphone17AOverlay },
   { id: 'iphone-17-b', label: '17 Pro · Frontal', kind: 'photo', preview: iphone17BOverlay },
   { id: 'iphone-17-c', label: '17 Pro · Rechts', kind: 'photo', preview: iphone17COverlay },

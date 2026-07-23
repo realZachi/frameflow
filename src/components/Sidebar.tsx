@@ -1,4 +1,8 @@
 import { useRef, type ChangeEvent, type ReactNode } from 'react'
+import { templateMeta } from '../data'
+import { deviceOptions } from '../mockups/catalog'
+import { shapeCatalog } from '../shapes'
+import { getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import {
   Blend,
   ChevronDown,
@@ -12,14 +16,10 @@ import {
   Type,
   Upload,
 } from './icons'
-import { templateMeta } from '../data'
-import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
-import { deviceOptions } from '../mockups/catalog'
-import { shapeCatalog } from '../shapes'
-import { getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { ShapeGraphic } from './ShapeGraphic'
+import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
 
-const tools: Array<{ id: ToolId; label: string; icon: ReactNode }> = [
+const tools: { id: ToolId; label: string; icon: ReactNode }[] = [
   { id: 'templates', label: 'Vorlagen', icon: <Sparkles size={19} /> },
   { id: 'device', label: 'Mockups', icon: <MonitorSmartphone size={19} /> },
   { id: 'elements', label: 'Elemente', icon: <Shapes size={19} /> },
@@ -149,24 +149,24 @@ const ElementsPanel = ({ onAddShape }: {
 const DevicePanel = ({ onAddDevice }: {
   onAddDevice: (style: Extract<CanvasElement, { type: 'device' }>['deviceStyle']) => void
 }) => (
-    <>
-      <div className="panel-heading"><div><span>GERÄTE</span><h2>Mockups</h2></div><p>Realistische Rahmen mit sauberer Screenshot-Maske.</p></div>
-      <div className="device-grid">
-        {deviceOptions.map((device) => (
-          <button
-            key={device.id}
-            onClick={() => onAddDevice(device.id)}
-          >
-            <span className="device-swatch" style={{ backgroundImage: `url(${device.preview})` }}><i /></span>
-            <small>{device.label}</small>
-          </button>
-        ))}
-      </div>
-      <p className="panel-hint">Wähle ein Mockup, um es zum aktiven Screen hinzuzufügen.</p>
-    </>
-  )
+  <>
+    <div className="panel-heading"><div><span>GERÄTE</span><h2>Mockups</h2></div><p>Realistische Rahmen mit sauberer Screenshot-Maske.</p></div>
+    <div className="device-grid">
+      {deviceOptions.map((device) => (
+        <button
+          key={device.id}
+          onClick={() => onAddDevice(device.id)}
+        >
+          <span className="device-swatch" style={{ backgroundImage: `url(${device.preview})` }}><i /></span>
+          <small>{device.label}</small>
+        </button>
+      ))}
+    </div>
+    <p className="panel-hint">Wähle ein Mockup, um es zum aktiven Screen hinzuzufügen.</p>
+  </>
+)
 
-const backgroundPatterns: Array<{ id: BackgroundPattern; label: string }> = [
+const backgroundPatterns: { id: BackgroundPattern; label: string }[] = [
   { id: 'none', label: 'Ohne' },
   { id: 'dots', label: 'Punkte' },
   { id: 'grid', label: 'Raster' },
@@ -225,7 +225,7 @@ const BackgroundFillControls = ({
           </div>
           <FieldLabel>Position</FieldLabel>
           <label className="select-field">
-            <select value={background.imagePosition ?? 'center'} onChange={(event) => onUpdate({ imagePosition: event.target.value as Background['imagePosition'] })}>
+            <select value={background.imagePosition ?? 'center'} onChange={(event) => onUpdate({ imagePosition: event.target.value as NonNullable<Background['imagePosition']> })}>
               <option value="top">Oben</option>
               <option value="center">Mitte</option>
               <option value="bottom">Unten</option>
@@ -264,11 +264,11 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
       />
       <Section title="Paletten" compact>
         <div className="palette-grid palette-grid--wide">
-          {[
+          {([
             ['#252435', '#111116'], ['#f2eee5', '#f2eee5'], ['#d8ff55', '#d8ff55'], ['#ff6b4a', '#ffb171'],
             ['#26615d', '#102d2c'], ['#6e57ff', '#ff87cb'], ['#10203a', '#38bdf8'], ['#f8d66d', '#ef8354'],
             ['#1a1a17', '#1a1a17'], ['#f2a7ba', '#fde7d8'], ['#5433ff', '#20bdff'], ['#273c75', '#44bd32'],
-          ].map(([a, b]) => <button key={`${a}${b}`} style={{ background: a === b ? a : `linear-gradient(135deg, ${a}, ${b})` }} onClick={() => onUpdate({ type: a === b ? 'solid' : 'gradient', gradientKind: 'linear', color1: a, color2: b })} />)}
+          ] as const).map(([a, b]) => <button key={`${a}${b}`} style={{ background: a === b ? a : `linear-gradient(135deg, ${a}, ${b})` }} onClick={() => onUpdate({ type: a === b ? 'solid' : 'gradient', gradientKind: 'linear', color1: a, color2: b })} />)}
         </div>
       </Section>
       <Section title="Muster" compact>
@@ -309,16 +309,18 @@ const UploadsPanel = ({ uploads, onUpload, onAddImage, onSetDeviceImage }: {
       <div className="panel-heading"><div><span>MEDIEN</span><h2>Uploads</h2></div><p>App-Screenshots und Motive bleiben lokal in deinem Browser.</p></div>
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={handleFiles} />
       <button className="large-upload" onClick={() => inputRef.current?.click()}><span><Upload size={20} /></span><strong>Dateien hochladen</strong><small>PNG, JPG oder WebP · mehrere möglich</small></button>
-      {uploads.length ? (
-        <div className="upload-list">
-          {uploads.map((asset) => (
-            <div className="upload-asset" key={asset.id}>
-              <img src={asset.src} alt={asset.name} />
-              <div><strong>{asset.name}</strong><span><button onClick={() => onSetDeviceImage(asset)}>In Gerät</button><button onClick={() => onAddImage(asset)}>Frei</button></span></div>
+      {uploads.length
+        ? (
+            <div className="upload-list">
+              {uploads.map((asset) => (
+                <div className="upload-asset" key={asset.id}>
+                  <img src={asset.src} alt={asset.name} />
+                  <div><strong>{asset.name}</strong><span><button onClick={() => onSetDeviceImage(asset)}>In Gerät</button><button onClick={() => onAddImage(asset)}>Frei</button></span></div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : <div className="empty-uploads"><ImagePlus size={24} /><span>Noch keine Dateien</span></div>}
+          )
+        : <div className="empty-uploads"><ImagePlus size={24} /><span>Noch keine Dateien</span></div>}
     </>
   )
 }

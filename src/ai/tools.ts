@@ -1,4 +1,3 @@
-import type { AiEditorController } from './controller'
 import { createInspectionTools } from './inspection-tools'
 import { createMediaTools } from './media-tools'
 import { createSlideTools } from './slide-tools'
@@ -8,6 +7,7 @@ import {
   type AiToolActivity,
 } from './tool-context'
 import { createUpdateElementTool } from './update-element-tool'
+import type { AiEditorController } from './controller'
 
 export type { AiToolActivity } from './tool-context'
 

@@ -1,4 +1,3 @@
-import type { ComponentProps } from 'react'
 import {
   AlignCenter as AlignCenterIcon,
   AlignLeft as AlignLeftIcon,
@@ -39,6 +38,7 @@ import {
   X as XIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
+import type { ComponentProps } from 'react'
 
 type IconProps = Omit<ComponentProps<typeof HugeiconsIcon>, 'icon'>
 
