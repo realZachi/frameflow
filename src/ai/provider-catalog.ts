@@ -1,14 +1,26 @@
 export type AiProviderId = 'moonshot' | 'google' | 'qwen' | 'openai' | 'anthropic'
 
+export type AiReasoningEffort =
+  | 'provider-default'
+  | 'minimal'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh'
+
+export type AiSdkReasoningEffort = Exclude<AiReasoningEffort, 'provider-default'>
+
 export type AiModelSelection = {
   provider: AiProviderId
   model: string
+  reasoningEffort?: AiReasoningEffort
 }
 
 export type AiModelOption = {
   id: string
   label: string
   description: string
+  reasoningEfforts?: readonly AiReasoningEffort[]
 }
 
 export type AiProviderOption = {
@@ -18,6 +30,31 @@ export type AiProviderOption = {
   transport: 'direct' | 'proxy'
   models: readonly AiModelOption[]
 }
+
+export const AI_REASONING_EFFORT_LABELS: Record<AiReasoningEffort, string> = {
+  'provider-default': 'Provider default',
+  minimal: 'Minimal',
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  xhigh: 'XHigh',
+}
+
+const GOOGLE_REASONING_EFFORTS = [
+  'provider-default',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+] as const satisfies readonly AiReasoningEffort[]
+
+const STANDARD_REASONING_EFFORTS = [
+  'provider-default',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+] as const satisfies readonly AiReasoningEffort[]
 
 export const AI_PROVIDERS: readonly AiProviderOption[] = [
   {
@@ -43,16 +80,19 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         id: 'gemini-3.6-flash',
         label: 'Gemini 3.6 Flash',
         description: 'Recommended · latest fast Gemini model',
+        reasoningEfforts: GOOGLE_REASONING_EFFORTS,
       },
       {
         id: 'gemini-3.1-pro-preview',
         label: 'Gemini 3.1 Pro Preview',
         description: 'Highest quality for complex layouts',
+        reasoningEfforts: GOOGLE_REASONING_EFFORTS,
       },
       {
         id: 'gemini-3.5-flash-lite',
         label: 'Gemini 3.5 Flash Lite',
         description: 'Fast and cost-efficient',
+        reasoningEfforts: GOOGLE_REASONING_EFFORTS,
       },
     ],
   },
@@ -66,16 +106,19 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         id: 'qwen3.7-plus',
         label: 'Qwen 3.7 Plus',
         description: 'Recommended · flagship vision model',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
       {
         id: 'qwen3.6-plus',
         label: 'Qwen 3.6 Plus',
         description: 'Strong quality and long context',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
       {
         id: 'qwen3.6-flash',
         label: 'Qwen 3.6 Flash',
         description: 'Fast and cost-efficient',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
     ],
   },
@@ -89,16 +132,19 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         id: 'gpt-5.6-terra',
         label: 'GPT-5.6 Terra',
         description: 'Recommended · balanced quality and cost',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
       {
         id: 'gpt-5.6-sol',
         label: 'GPT-5.6 Sol',
         description: 'Highest quality for agentic work',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
       {
         id: 'gpt-5.6-luna',
         label: 'GPT-5.6 Luna',
         description: 'Fast and cost-efficient',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
     ],
   },
@@ -112,16 +158,19 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         id: 'claude-sonnet-5',
         label: 'Claude Sonnet 5',
         description: 'Recommended · latest balanced Claude model',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
       {
         id: 'claude-opus-4-8',
         label: 'Claude Opus 4.8',
         description: 'Highest quality for complex work',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
       {
         id: 'claude-haiku-4-5',
         label: 'Claude Haiku 4.5',
         description: 'Fast and cost-efficient',
+        reasoningEfforts: STANDARD_REASONING_EFFORTS,
       },
     ],
   },
@@ -155,4 +204,19 @@ export const getAiModel = (selection: AiModelSelection): AiModelOption => {
     throw new Error(`Unknown ${selection.provider} model: ${selection.model}`)
   }
   return model
+}
+
+export const getAiSdkReasoningEffort = (
+  selection: AiModelSelection,
+): AiSdkReasoningEffort | undefined => {
+  const model = getAiModel(selection)
+  const reasoningEffort = selection.reasoningEffort ?? 'provider-default'
+  if (!model.reasoningEfforts) {
+    if (reasoningEffort === 'provider-default') return undefined
+    throw new Error(`${model.label} does not support reasoning effort`)
+  }
+  if (!model.reasoningEfforts.includes(reasoningEffort)) {
+    throw new Error(`Unsupported reasoning effort for ${model.label}: ${reasoningEffort}`)
+  }
+  return reasoningEffort === 'provider-default' ? undefined : reasoningEffort
 }

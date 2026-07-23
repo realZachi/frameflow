@@ -4,6 +4,7 @@ import {
   DEFAULT_AI_SELECTION,
   getAiModel,
   getAiProvider,
+  getAiSdkReasoningEffort,
   getDefaultAiModel,
   isAiProviderId,
 } from './provider-catalog'
@@ -46,5 +47,34 @@ describe('AI provider catalog', () => {
       'Unknown google model',
     )
     expect(getAiProvider('qwen').label).toBe('Qwen')
+  })
+
+  it('exposes only model-supported reasoning efforts to the AI SDK', () => {
+    expect(getAiProvider('openai').models[0]?.reasoningEfforts).toEqual([
+      'provider-default',
+      'low',
+      'medium',
+      'high',
+      'xhigh',
+    ])
+    expect(getAiSdkReasoningEffort({
+      provider: 'openai',
+      model: 'gpt-5.6-sol',
+      reasoningEffort: 'xhigh',
+    })).toBe('xhigh')
+    expect(getAiSdkReasoningEffort({
+      provider: 'openai',
+      model: 'gpt-5.6-terra',
+    })).toBeUndefined()
+    expect(() => getAiSdkReasoningEffort({
+      provider: 'google',
+      model: 'gemini-3.6-flash',
+      reasoningEffort: 'xhigh',
+    })).toThrow('Unsupported reasoning effort')
+    expect(() => getAiSdkReasoningEffort({
+      provider: 'moonshot',
+      model: 'kimi-k3',
+      reasoningEffort: 'high',
+    })).toThrow('does not support reasoning effort')
   })
 })

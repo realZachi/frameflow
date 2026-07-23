@@ -9,6 +9,10 @@ The browser uses the AI SDK's native Google, Alibaba/Qwen, OpenAI, and Anthropic
 - Do not add a proxy for providers whose browser API supports the required CORS flow. Keep the entire provider setup localhost-only; a hosted AI-enabled deployment needs a separate authenticated backend design.
 - Never return secrets or raw data URLs in model-visible state.
 - Keep uploads browser-local except for screenshots explicitly included in an AI run.
+- Keep developer AI run logging gated by `FRAMEFLOW_AI_LOGGING` and write only
+  through the local Vite middleware to the git-ignored `ai-logs/` directory.
+  Persist only the versioned, bounded log schema: never add input prompt text,
+  screenshot payloads or names, credentials, or raw provider metadata.
 
 ## Tool architecture
 
@@ -44,3 +48,5 @@ Clear selection before generation and preview capture. Any live overlay must car
 Rich text comes from structured highlights through `src/ai/richtext.ts`. The model never writes raw HTML. `sanitizeRichText` remains the final whitelist.
 
 The stream runner reports errors and aborts as events instead of rejecting. Preserve visible reasoning progress for long-running reasoning models.
+
+Reasoning-effort choices belong to the model catalog. Offer only values supported by the selected model and pass non-default choices through the AI SDK's top-level `reasoning` option; do not duplicate provider-specific effort mapping in the UI.

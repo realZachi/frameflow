@@ -63,6 +63,8 @@ The AI SDK calls Google, Qwen, OpenAI, and Anthropic directly from the browser. 
 
 If a selected provider has no configured key, the dialog names the missing environment variable and disables generation. When you start a run, its description and selected screenshots are sent directly to that provider. Normal editing, local persistence, and export do not call any AI provider. API usage may incur provider charges.
 
+Developer AI run logging is disabled by default. Set `FRAMEFLOW_AI_LOGGING=true` in `.env.local` and restart the local server to write one JSON file per run to the git-ignored `ai-logs/` directory in the repository. Logs contain the selected provider and model, run timing, visible model and reasoning output, tool activity, completion status, and normalized token usage. Frameflow does not add input prompt text, screenshot payloads or names, API keys, or raw provider metadata to the records.
+
 AI requests may be written in any language, but generated canvas copy and completion summaries remain in English.
 
 ## Use the editor

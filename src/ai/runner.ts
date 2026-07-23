@@ -1,8 +1,28 @@
-import { APICallError, isStepCount, streamText } from 'ai'
+import {
+  APICallError,
+  isStepCount,
+  streamText,
+  type FinishReason,
+  type TextStreamPart,
+  type ToolSet,
+} from 'ai'
 import { scopeAiControllerToSlide, type AiEditorController } from './controller'
 import { buildInstructions, buildUserMessage } from './prompt'
-import { getAiModel, getAiProvider, type AiModelSelection } from './provider-catalog'
+import {
+  AI_REASONING_EFFORT_LABELS,
+  getAiModel,
+  getAiProvider,
+  getAiSdkReasoningEffort,
+  type AiModelSelection,
+} from './provider-catalog'
 import { getAiProviderKey } from './provider-config'
+import {
+  toAiRunTokenUsage,
+  type AiRunReport,
+  type AiRunTokenUsage,
+  type AiRunToolCall,
+} from './run-log'
+import { saveAiRunReport } from './run-log-client'
 import { createEditorTools } from './tools'
 import type { AiToolActivity } from './tools'
 
@@ -124,6 +144,61 @@ const describeError = (error: unknown, selection: AiModelSelection): string => {
 const isAbortError = (error: unknown): boolean =>
   (error instanceof Error && error.name === 'AbortError') || (error instanceof DOMException && error.name === 'AbortError')
 
+type AiRunAccumulator = {
+  assistantOutput: string
+  reasoningOutput: string
+  toolCalls: AiRunToolCall[]
+  slidesCreated: number
+  usage: AiRunTokenUsage | null
+  finishReason: FinishReason | null
+  errorMessage: string | null
+  hadError: boolean
+}
+
+const collectStreamPart = <TOOLS extends ToolSet>(options: {
+  part: TextStreamPart<TOOLS>
+  selection: AiModelSelection
+  runStartedAt: number
+  accumulator: AiRunAccumulator
+  onEvent: (event: AiRunEvent) => void
+}) => {
+  const { part, selection, runStartedAt, accumulator, onEvent } = options
+  // The SDK emits transport events that do not affect the visible activity log.
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
+  switch (part.type) {
+    case 'text-delta':
+      accumulator.assistantOutput += part.text
+      onEvent({ type: 'text', delta: part.text })
+      break
+    case 'reasoning-delta':
+      accumulator.reasoningOutput += part.text
+      onEvent({ type: 'reasoning', delta: part.text })
+      break
+    case 'tool-call': {
+      if (part.toolName === 'add_slide') accumulator.slidesCreated += 1
+      const detail = describeToolCall(part.toolName, part.input)
+      accumulator.toolCalls.push({
+        name: part.toolName,
+        detail,
+        offsetMs: Date.now() - runStartedAt,
+      })
+      onEvent({ type: 'tool', name: part.toolName, detail })
+      break
+    }
+    case 'finish':
+      accumulator.usage = toAiRunTokenUsage(part.totalUsage)
+      accumulator.finishReason = part.finishReason
+      break
+    case 'error':
+      accumulator.hadError = true
+      accumulator.errorMessage = describeError(part.error, selection)
+      onEvent({ type: 'error', message: accumulator.errorMessage })
+      break
+    default:
+      break
+  }
+}
+
 export async function runAiGeneration(options: {
   selection: AiModelSelection
   description: string
@@ -144,10 +219,44 @@ export async function runAiGeneration(options: {
     onEvent,
     onActivity,
   } = options
+  const runStartedAt = Date.now()
+  const accumulator: AiRunAccumulator = {
+    assistantOutput: '',
+    reasoningOutput: '',
+    toolCalls: [],
+    slidesCreated: 0,
+    usage: null,
+    finishReason: null,
+    errorMessage: null,
+    hadError: false,
+  }
+
+  const finishRun = async (outcome: AiRunReport['outcome']) => {
+    const report: AiRunReport = {
+      outcome,
+      assistantOutput: accumulator.assistantOutput,
+      reasoningOutput: accumulator.reasoningOutput,
+      toolCalls: accumulator.toolCalls.map((toolCall) => ({ ...toolCall })),
+      slidesCreated: accumulator.slidesCreated,
+      usage: accumulator.usage,
+      finishReason: accumulator.finishReason,
+      errorMessage: accumulator.errorMessage,
+    }
+    await saveAiRunReport({
+      startedAt: runStartedAt,
+      finishedAt: Date.now(),
+      mode: targetSlideId ? 'edit' : 'generate',
+      selection,
+      descriptionCharacters: description.length,
+      screenshotCount: screenshots.length,
+      report,
+    })
+  }
 
   try {
     const provider = getAiProvider(selection.provider)
     const modelOption = getAiModel(selection)
+    const reasoning = getAiSdkReasoningEffort(selection)
     const model = await createAiModel(selection)
 
     const content: UserContent[] = [{
@@ -166,7 +275,11 @@ export async function runAiGeneration(options: {
 
     onEvent({
       type: 'status',
-      message: `Connecting to ${provider.label} · ${modelOption.label}…`,
+      message: `Connecting to ${[
+        provider.label,
+        modelOption.label,
+        ...(reasoning ? [`${AI_REASONING_EFFORT_LABELS[reasoning]} effort`] : []),
+      ].join(' · ')}…`,
     })
 
     const runController = targetSlideId ? scopeAiControllerToSlide(controller, targetSlideId) : controller
@@ -179,51 +292,32 @@ export async function runAiGeneration(options: {
         ...(onActivity ? { onActivity } : {}),
       }),
       stopWhen: isStepCount(64),
+      ...(reasoning ? { reasoning } : {}),
       ...(signal ? { abortSignal: signal } : {}),
     })
 
-    let accumulatedText = ''
-    let slidesCreated = 0
-    let hadError = false
-
     for await (const part of result.stream) {
       if (signal?.aborted) break
-      // The SDK emits transport events that do not affect the visible activity log.
-      // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
-      switch (part.type) {
-        case 'text-delta': {
-          accumulatedText += part.text
-          onEvent({ type: 'text', delta: part.text })
-          break
-        }
-        case 'reasoning-delta': {
-          // kimi-k3 is a reasoning model; without these deltas the run appears
-          // frozen for minutes even while the model is working.
-          onEvent({ type: 'reasoning', delta: part.text })
-          break
-        }
-        case 'tool-call': {
-          if (part.toolName === 'add_slide') slidesCreated += 1
-          onEvent({ type: 'tool', name: part.toolName, detail: describeToolCall(part.toolName, part.input) })
-          break
-        }
-        case 'error': {
-          hadError = true
-          onEvent({ type: 'error', message: describeError(part.error, selection) })
-          break
-        }
-        default:
-          break
-      }
+      collectStreamPart({
+        part,
+        selection,
+        runStartedAt,
+        accumulator,
+        onEvent,
+      })
     }
 
     if (signal?.aborted) {
       onEvent({ type: 'status', message: 'Cancelled' })
+      await finishRun('cancelled')
       return
     }
-    if (hadError) return
+    if (accumulator.hadError) {
+      await finishRun('failed')
+      return
+    }
 
-    let finalText = accumulatedText.trim()
+    let finalText = accumulator.assistantOutput.trim()
     try {
       const resolvedText = await result.text
       if (resolvedText.trim().length > 0) finalText = resolvedText.trim()
@@ -231,12 +325,36 @@ export async function runAiGeneration(options: {
       // fall back to accumulated deltas below
     }
 
-    onEvent({ type: 'done', summary: finalText, slidesCreated })
+    if (!accumulator.usage) {
+      try {
+        accumulator.usage = toAiRunTokenUsage(await result.usage)
+      } catch {
+        // Some providers omit usage even when the text stream completes.
+      }
+    }
+    if (!accumulator.finishReason) {
+      try {
+        accumulator.finishReason = await result.finishReason
+      } catch {
+        // The visible completion remains valid if finish metadata is unavailable.
+      }
+    }
+
+    accumulator.assistantOutput = finalText
+    onEvent({
+      type: 'done',
+      summary: finalText,
+      slidesCreated: accumulator.slidesCreated,
+    })
+    await finishRun('completed')
   } catch (error) {
     if (isAbortError(error)) {
       onEvent({ type: 'status', message: 'Cancelled' })
+      await finishRun('cancelled')
       return
     }
-    onEvent({ type: 'error', message: describeError(error, selection) })
+    accumulator.errorMessage = describeError(error, selection)
+    onEvent({ type: 'error', message: accumulator.errorMessage })
+    await finishRun('failed')
   }
 }

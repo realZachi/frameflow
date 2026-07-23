@@ -16,6 +16,7 @@ Browser
 Optional AI path
 Browser → AI SDK provider → Google / Qwen / OpenAI / Anthropic
 Browser → /api/moonshot/* → Vite proxy → Moonshot API
+Browser → /api/ai-run-logs → Vite → ./ai-logs/*.json (developer opt-in)
 ```
 
 The core editor has no backend requirement. The optional AI path is designed for localhost use: configured `VITE_*` provider keys enter the browser bundle. Google, Qwen, OpenAI, and Anthropic are called directly; Moonshot alone uses a local same-origin proxy because its API does not support the required browser CORS flow. Do not deploy an AI-enabled build with these keys.
@@ -69,6 +70,8 @@ Persistence is browser-local:
 
 Avoid putting credentials or provider responses into persisted project data.
 
+Developer AI run logging is enabled only when `FRAMEFLOW_AI_LOGGING=true`. The browser sends a versioned, bounded record to the local Vite middleware, which validates it and writes one JSON file per run to the git-ignored `ai-logs/` directory in the repository. Records include normalized token usage, visible text and reasoning output, tool activity, and coarse request sizes. Frameflow does not add input prompt text, screenshot payloads or names, credentials, or raw provider metadata to the records.
+
 ## Export
 
 `src/app/use-slide-export.ts` uses `html-to-image` to rasterize each artboard and JSZip to package the results. Output definitions live in `src/app/export-formats.ts`.
@@ -113,6 +116,9 @@ The AI feature is split into explicit layers:
 | `src/ai/measure.ts` | DOM-based element boxes and layout warnings |
 | `src/ai/preview.ts` | Downscaled rendered slide previews |
 | `src/ai/richtext.ts` | Safe per-word highlight markup |
+| `src/ai/run-log.ts` | Versioned, privacy-bounded AI run log schema |
+| `src/ai/run-log-client.ts` | Env-gated delivery to the local log endpoint |
+| `scripts/ai-run-log-plugin.ts` | Validated, project-local JSON file writer |
 
 The model does not receive unrestricted application access. It can only use the tools supplied by `createEditorTools`, and the controller applies per-element field whitelists.
 
@@ -120,7 +126,7 @@ Mutating tools return measured element bounds and layout warnings. The model can
 
 Rich text is built from structured highlight input. The model never writes raw HTML. `sanitizeRichText` in `src/utils.ts` is the final whitelist for allowed span styles.
 
-`src/ai/provider-catalog.ts` owns the selectable providers, models, and transport metadata. `src/ai/provider-config.ts` reads the matching `VITE_*` key from `.env.local`, and `src/ai/runner.ts` lazily loads the selected native AI SDK provider. Requests go directly from the local browser to Google, Alibaba/Qwen, OpenAI, or Anthropic. Moonshot uses the OpenAI chat provider through the only Vite proxy route.
+`src/ai/provider-catalog.ts` owns the selectable providers, models, transport metadata, and model-specific reasoning-effort choices. `src/ai/provider-config.ts` reads the matching `VITE_*` key from `.env.local`, and `src/ai/runner.ts` lazily loads the selected native AI SDK provider. The runner passes a non-default effort through the AI SDK's standardized `reasoning` option so each native provider can map it to its own API. Requests go directly from the local browser to Google, Alibaba/Qwen, OpenAI, or Anthropic. Moonshot uses the OpenAI chat provider through the only Vite proxy route.
 
 The keys are intentionally browser-visible for this localhost-only workflow. Never commit `.env.local` or publish an AI-enabled build. A hosted deployment must replace this local credential model with an authenticated backend.
 

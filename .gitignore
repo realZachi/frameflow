@@ -15,6 +15,7 @@ test-results/
 
 # Logs and editor files
 *.log
+ai-logs/
 .DS_Store
 .idea/
 .vscode/
