@@ -754,7 +754,8 @@ select:focus-visible {
 
 .isolate.z-50:has(> [data-slot='select-content']),
 .isolate.z-50:has(> [data-slot='popover-content']) { z-index: 300; }
-.isolate.z-50:has(> .project-menu-content) { z-index: 700; }
+.isolate.z-50:has(> .project-menu-content),
+.isolate.z-50:has(> .export-menu-content) { z-index: 700; }
 .project-menu-content { padding: 5px; }
 .project-menu-label { display: flex; flex-direction: column; gap: 2px; padding: 7px 8px; }
 .project-menu-label strong { color: var(--popover-foreground); font-size: 12px; font-weight: 650; }
@@ -769,6 +770,17 @@ select:focus-visible {
 .project-menu-project-copy small { color: var(--muted-foreground); font-size: 9px; }
 .project-menu-action { min-height: 34px; padding: 6px 8px; font-size: 12px; cursor: pointer; }
 .project-menu-action svg { color: var(--muted-foreground); }
+
+.export-menu-content { padding: 5px; }
+.export-menu-label { display: flex; flex-direction: column; gap: 2px; padding: 7px 8px; }
+.export-menu-label strong { color: var(--popover-foreground); font-size: 12px; font-weight: 650; }
+.export-menu-label span { color: var(--muted-foreground); font-size: 10px; font-weight: 450; }
+.export-menu-item { min-height: 48px; gap: 9px; padding: 6px 8px; cursor: pointer; }
+.export-menu-size { width: 36px; height: 26px; display: grid; place-items: center; flex: 0 0 auto; color: var(--primary-foreground); background: var(--primary); border-radius: var(--radius-md); font-size: 10px; font-weight: 680; }
+.export-menu-copy { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: 1px; }
+.export-menu-copy strong { color: var(--popover-foreground); font-size: 12px; font-weight: 620; }
+.export-menu-copy small { color: var(--muted-foreground); font-size: 10px; }
+.export-menu-item > svg { color: var(--muted-foreground); }
 
 [data-slot='alert-dialog-overlay'] { z-index: 750; background: oklch(0 0 0 / 32%); backdrop-filter: blur(1.5px); }
 [data-slot='alert-dialog-content'] { z-index: 800; }
@@ -842,6 +854,9 @@ select:focus-visible {
   background: color-mix(in oklch, var(--primary) 88%, var(--background));
   transform: none;
 }
+
+.export-button-chevron { margin-left: -1px; transition: transform .15s ease; }
+.export-button[data-popup-open] .export-button-chevron { transform: rotate(180deg); }
 
 .export-spinner {
   border-color: color-mix(in oklch, var(--primary-foreground) 25%, transparent);

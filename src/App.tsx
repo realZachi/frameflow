@@ -62,6 +62,14 @@ import type { Background, CanvasElement, DeviceElement, ShapeElement, Slide, Tem
 import { downloadBlob, fileToDataUrl, uid } from './utils'
 
 const DEFAULT_PROJECT_NAME = 'Summer Launch'
+const EXPORT_ARTBOARD_WIDTH = 330
+
+const EXPORT_FORMATS = [
+  { id: 'iphone-6.9', label: '6,9″ Display', shortLabel: '6,9″', width: 1290, height: 2796, filename: '6.9-inch' },
+  { id: 'iphone-6.5', label: '6,5″ Display', shortLabel: '6,5″', width: 1242, height: 2688, filename: '6.5-inch' },
+] as const
+
+type ExportFormat = (typeof EXPORT_FORMATS)[number]
 
 const loadInitialState = (): { projectName: string; slides: Slide[]; uploads: UploadAsset[] } => {
   const legacy = loadLegacyProject()
@@ -831,7 +839,7 @@ export default function App() {
 
   const updateBackground = (patch: Partial<Background>) => commit((current) => current.map((slide) => slide.id === activeSlideId ? { ...slide, background: { ...slide.background, ...patch } } : slide))
 
-  const exportAll = async () => {
+  const exportAll = async (format: ExportFormat) => {
     if (exporting) return
     setExporting(true)
     setExportProgress(0)
@@ -848,8 +856,10 @@ export default function App() {
         if (!node) continue
         const blob = await toBlob(node, {
           pixelRatio: 1,
-          canvasWidth: 1290,
-          canvasHeight: 2796,
+          width: EXPORT_ARTBOARD_WIDTH,
+          height: EXPORT_ARTBOARD_WIDTH * format.height / format.width,
+          canvasWidth: format.width,
+          canvasHeight: format.height,
           backgroundColor: slide.background.color1,
           fontEmbedCSS,
           preferredFontFormat: 'woff2',
@@ -861,8 +871,8 @@ export default function App() {
         setExportProgress(Math.round(((index + 1) / slides.length) * 100))
       }
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } })
-      downloadBlob(blob, `${projectName.trim().replace(/[^a-z0-9äöüß_-]+/gi, '-') || 'Frameflow'}-Screens.zip`)
-      setToast(`${slides.length} PNGs als ZIP exportiert`)
+      downloadBlob(blob, `${projectName.trim().replace(/[^a-z0-9äöüß_-]+/gi, '-') || 'Frameflow'}-${format.filename}-Screens.zip`)
+      setToast(`${slides.length} PNGs für ${format.label} als ZIP exportiert`)
     } catch (error) {
       console.error(error)
       setToast('Export fehlgeschlagen – bitte erneut versuchen')
@@ -1021,9 +1031,35 @@ export default function App() {
             <span className="ai-generate-button-mark" aria-hidden="true"><Sparkles size={14} /></span>
             <span>AI erstellen</span>
           </Button>
-          <button className="export-button" onClick={exportAll} disabled={exporting}>
-            {exporting ? <><span className="export-spinner" /><b>{exportProgress}%</b></> : <><Download size={17} /><b>Alle als ZIP</b></>}
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="export-button" disabled={exporting} aria-label="Exportformat wählen">
+              {exporting
+                ? <><span className="export-spinner" /><b>{exportProgress}%</b></>
+                : <><Download size={17} /><b>Alle als ZIP</b><ChevronDown className="export-button-chevron" size={13} /></>}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6} className="export-menu-content w-64">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="export-menu-label">
+                  <strong>Alle Screens exportieren</strong>
+                  <span>App-Store-Format wählen</span>
+                </DropdownMenuLabel>
+                {EXPORT_FORMATS.map((format) => (
+                  <DropdownMenuItem
+                    key={format.id}
+                    className="export-menu-item"
+                    onClick={() => void exportAll(format)}
+                  >
+                    <span className="export-menu-size">{format.shortLabel}</span>
+                    <span className="export-menu-copy">
+                      <strong>{format.label}</strong>
+                      <small>{format.width} × {format.height} px</small>
+                    </span>
+                    <Download size={15} />
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         </div>
         {selectedElement && selectedElementIds.length === 1 && (
