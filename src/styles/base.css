@@ -537,6 +537,15 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .ai-modal-field textarea { resize: vertical; min-height: 92px; line-height: 1.4; }
 .ai-modal-hint { font-size: 9px; color: var(--muted); line-height: 1.4; }
 
+.ai-provider-controls { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
+.ai-provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ai-modal-field.ai-modal-field--compact { min-width: 0; margin-bottom: 0; }
+.ai-provider-trigger { width: 100%; }
+.ai-provider-description { font-size: 9px; line-height: 1.4; }
+.ai-provider-warning { display: flex; align-items: flex-start; gap: 7px; padding: 9px 10px; border: 1px solid; border-radius: 8px; font-size: 10px; line-height: 1.4; }
+.ai-provider-warning svg { flex: 0 0 auto; margin-top: 1px; }
+.ai-provider-warning code { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: .92em; }
+
 .ai-modal-dropzone { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #b8b8ae; background: #efeee8; border-radius: 9px; color: #57574f; font-size: 11px; font-weight: 600; cursor: pointer; }
 .ai-modal-dropzone:hover { background: #e8e7e0; border-color: #9d9d92; }
 .ai-modal-thumbs { display: grid; grid-template-columns: repeat(auto-fill, 72px); gap: 8px; margin-top: 10px; }

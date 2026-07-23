@@ -2,9 +2,11 @@
 
 ## Security and provider boundary
 
-The browser calls `/api/moonshot/*`; the Vite development/preview proxy forwards to Moonshot and injects `MOONSHOT_API_KEY`.
+The browser uses the AI SDK's native Google, Alibaba/Qwen, OpenAI, and Anthropic providers directly. Moonshot uses the OpenAI chat provider through the local `/api/moonshot` CORS proxy.
 
-- The key must remain server-side, in `.env.local`, without a `VITE_` prefix.
+- Provider keys live in `.env.local` as `VITE_*` values and are intentionally visible to the local browser.
+- Never commit `.env.local`, reuse a shared production credential, or deploy a build containing provider keys.
+- Do not add a proxy for providers whose browser API supports the required CORS flow. Keep the entire provider setup localhost-only; a hosted AI-enabled deployment needs a separate authenticated backend design.
 - Never return secrets or raw data URLs in model-visible state.
 - Keep uploads browser-local except for screenshots explicitly included in an AI run.
 

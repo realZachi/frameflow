@@ -5,20 +5,22 @@ import { defineConfig, loadEnv } from 'vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const moonshotKey = env['MOONSHOT_API_KEY'] ?? ''
-
-  // Proxy instead of a direct browser call: the Moonshot API does not allow CORS,
-  // and the key remains server-side (no VITE_ prefix, never included in the bundle).
+  const publicMoonshotKey = env['VITE_MOONSHOT_API_KEY']?.trim() ?? ''
+  const moonshotKey = publicMoonshotKey.length > 0
+    ? publicMoonshotKey
+    : (env['MOONSHOT_API_KEY']?.trim() ?? '')
   const moonshotProxy = {
     '/api/moonshot': {
       target: 'https://api.moonshot.ai',
       changeOrigin: true,
-      rewrite: (path: string) => path.replace(/^\/api\/moonshot/, ''),
-      headers: { Authorization: `Bearer ${moonshotKey}` },
+      rewrite: (requestPath: string) => requestPath.replace(/^\/api\/moonshot/, ''),
     },
   }
 
   return {
+    define: {
+      'import.meta.env.VITE_MOONSHOT_API_KEY': JSON.stringify(moonshotKey),
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

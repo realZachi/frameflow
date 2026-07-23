@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
+import {
+  getDefaultAiModel,
+  type AiModelSelection,
+  type AiProviderId,
+} from '../ai/provider-catalog'
+import {
+  AI_PROVIDER_AVAILABILITY,
+  INITIAL_AI_SELECTION,
+} from '../ai/provider-config'
 import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
 import { fileToDataUrl, uid } from '../utils'
+import { AiProviderControls } from './AiProviderControls'
 import { Sparkles, Upload, X } from './icons'
 import type { AiEditorController } from '../ai/controller'
 
@@ -202,6 +212,7 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
   const [reasoningTail, setReasoningTail] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [doneInfo, setDoneInfo] = useState<{ summary: string; slidesCreated: number } | null>(null)
+  const [selection, setSelection] = useState<AiModelSelection>(INITIAL_AI_SELECTION)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logRef = useRef<HTMLDivElement>(null)
@@ -234,7 +245,9 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
   if (!open) return null
 
   const isEditMode = Boolean(targetSlide)
-  const canGenerate = Boolean(description.trim()) && (isEditMode || screenshots.length > 0)
+  const canGenerate = Boolean(description.trim())
+    && (isEditMode || screenshots.length > 0)
+    && AI_PROVIDER_AVAILABILITY[selection.provider]
 
   const handleFiles = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -250,6 +263,13 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
   }
 
   const removeScreenshot = (id: string) => setScreenshots((current) => current.filter((shot) => shot.id !== id))
+
+  const handleProviderChange = (provider: AiProviderId) => {
+    setSelection({
+      provider,
+      model: getDefaultAiModel(provider).id,
+    })
+  }
 
   const handleEvent = (event: AiRunEvent) => {
     if (cancelledRef.current) return
@@ -287,6 +307,7 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
     setDoneInfo(null)
     setPhase('running')
     await runAiGeneration({
+      selection,
       description,
       screenshots: prepared,
       controller,
@@ -328,17 +349,25 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
 
         <div className="ai-modal-body">
           {phase === 'idle' && (
-            <IdleContent
-              isEditMode={isEditMode}
-              description={description}
-              screenshots={screenshots}
-              fileInputRef={fileInputRef}
-              onDescriptionChange={setDescription}
-              onFiles={(event) => {
-                void handleFiles(event)
-              }}
-              onRemoveScreenshot={removeScreenshot}
-            />
+            <>
+              <AiProviderControls
+                selection={selection}
+                availability={AI_PROVIDER_AVAILABILITY}
+                onProviderChange={handleProviderChange}
+                onModelChange={(model) => setSelection((current) => ({ ...current, model }))}
+              />
+              <IdleContent
+                isEditMode={isEditMode}
+                description={description}
+                screenshots={screenshots}
+                fileInputRef={fileInputRef}
+                onDescriptionChange={setDescription}
+                onFiles={(event) => {
+                  void handleFiles(event)
+                }}
+                onRemoveScreenshot={removeScreenshot}
+              />
+            </>
           )}
 
           {phase === 'running' && (

@@ -26,7 +26,7 @@ Use Bun for all package and script operations. Never use npm or manually edit `b
 
 - Keep editor mutations immutable; undo/redo snapshots depend on it.
 - Never commit secrets, private screenshots, unlicensed assets, PSD/PSB files, or generated `dist/`.
-- Keep `MOONSHOT_API_KEY` server-side and unprefixed; `VITE_*` values are public.
+- AI provider keys use public `VITE_*` variables for localhost-only calls; only Moonshot uses the local CORS proxy. Never commit `.env.local` or deploy a keyed build.
 - Use shadcn/Base UI and Hugeicons for editor chrome. Do not add a parallel UI or token system.
 - Update generated `src/components/ui/` files only with the shadcn CLI.
 - Use Conventional Commit messages and keep commits independently coherent.

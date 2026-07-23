@@ -28,11 +28,12 @@ Maintainers will acknowledge reports and coordinate a fix and disclosure on a be
 
 ## Security boundaries
 
-- `MOONSHOT_API_KEY` is a server-side secret. It must never use a `VITE_` prefix or appear in browser code, logs, screenshots, issues, or commits.
+- AI provider keys use `VITE_*` variables and are intentionally visible to the local browser. Use dedicated local-development keys with restrictive quotas where possible.
 - `.env.local` is ignored by Git and must remain untracked.
+- Never publish or deploy a build created with provider keys configured.
 - Uploaded images and projects stay in IndexedDB during normal editing.
-- Screenshots selected for an AI run are sent to Moonshot AI.
-- Self-hosters are responsible for protecting their proxy, provider key, access logs, and usage quota.
-- Static deployments must not embed a provider key in JavaScript.
+- Screenshots selected for an AI run are sent to the selected provider. Google, Qwen, OpenAI, and Anthropic are contacted directly; Moonshot goes through the same-origin local CORS proxy.
+- Users are responsible for protecting provider keys and usage quotas.
+- A hosted AI-enabled deployment requires an authenticated backend and must not reuse the localhost-only key setup.
 
 If a key is accidentally exposed, revoke it at the provider immediately, remove it from the current files, and treat it as compromised even if the Git commit is later rewritten.

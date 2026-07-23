@@ -16,7 +16,7 @@ Frameflow is an open-source, desktop-first editor for building complete App Stor
 - **Use AI when useful** — describe an app, upload raw screenshots, and let the agent build or revise screens through the same editor operations.
 - **Work locally** — projects and uploads are stored in the browser with IndexedDB.
 - **Export accurately** — download complete sets as `1290 × 2796` or `1242 × 2688` PNG files in one ZIP archive.
-- **Bring your own key** — AI generation uses the self-hoster's Moonshot API key; the editor itself needs no API key.
+- **Choose your AI** — AI generation supports Moonshot, Google, Qwen, OpenAI, and Anthropic; the editor itself needs no API key.
 
 ## Quick start
 
@@ -38,26 +38,30 @@ The `"private": true` package flag only prevents accidental publication to a pac
 
 ## Enable AI generation
 
-AI generation is optional. It currently uses Moonshot AI's OpenAI-compatible API and the `kimi-k3` model.
+AI generation is optional. The provider and model can be selected in the generation dialog. The existing Moonshot integration remains available alongside Google Gemini, Alibaba Qwen, OpenAI GPT, and Anthropic Claude models that support both screenshots and editor tool calls.
 
-1. Create a key in the [Kimi API console](https://platform.kimi.ai/console/api-keys).
+1. Create an API key for at least one supported provider.
 2. Copy the environment template:
 
    ```bash
    cp .env.example .env.local
    ```
 
-3. Add your key to `.env.local`:
+3. Add one or more keys to `.env.local`:
 
    ```dotenv
-   MOONSHOT_API_KEY=your_key_here
+   VITE_MOONSHOT_API_KEY=
+   VITE_GOOGLE_GENERATIVE_AI_API_KEY=
+   VITE_ALIBABA_API_KEY=
+   VITE_OPENAI_API_KEY=
+   VITE_ANTHROPIC_API_KEY=
    ```
 
 4. Restart the development server after changing the key.
 
-The key intentionally has no `VITE_` prefix. Vite's local server reads it and proxies `/api/moonshot/*` to Moonshot, so the key is not included in the browser bundle. Never commit `.env.local` or put a secret in a `VITE_*` variable.
+The AI SDK calls Google, Qwen, OpenAI, and Anthropic directly from the browser. Moonshot alone uses the local `/api/moonshot` CORS proxy; its key still comes from the local browser environment. The `VITE_*` keys are visible in the browser by design. This setup is for `localhost` only: never commit `.env.local`, publish a keyed build, or reuse a shared production key.
 
-When you start an AI run, the description and screenshots selected for that run are sent to Moonshot AI. Normal editing, local persistence, and export do not call the AI provider. API usage may incur charges from Moonshot.
+If a selected provider has no configured key, the dialog names the missing environment variable and disables generation. When you start a run, its description and selected screenshots are sent directly to that provider. Normal editing, local persistence, and export do not call any AI provider. API usage may incur provider charges.
 
 AI requests may be written in any language, but generated canvas copy and completion summaries remain in English.
 
@@ -83,7 +87,7 @@ Projects save automatically in the current browser profile. Clearing site data a
 | `bun run test` | Run the Vitest suite once |
 | `bun run test:coverage` | Run tests and enforce coverage thresholds |
 | `bun run build` | Type-check and create the production bundle |
-| `bun run preview` | Serve the production bundle locally with the API proxy |
+| `bun run preview` | Serve the production bundle locally, including the Moonshot CORS proxy |
 | `bun run audit` | Check installed dependencies for known vulnerabilities |
 | `bun run check` | Run every required local and CI quality gate |
 
@@ -93,9 +97,9 @@ Rendered editor, export, and AI changes still require focused browser verificati
 
 `bun run build` creates a static application in `dist/`. The editor can be hosted as a static site when AI generation is not needed.
 
-AI generation additionally requires a server-side proxy from `/api/moonshot/*` to `https://api.moonshot.ai/*` that injects `Authorization: Bearer $MOONSHOT_API_KEY`. The Vite development and preview servers already provide this proxy. For another hosting platform, reproduce that route in a server function or reverse proxy and keep the key in the host's secret store.
+The core editor can be hosted as a static site when built without provider keys. The included AI credential flow is intentionally localhost-only because Vite embeds configured `VITE_*` values into client code.
 
-Do not expose a shared production key in client-side code. If every deployment should use a different key, each self-hoster should configure `MOONSHOT_API_KEY` in their own server environment.
+Do not publish an AI-enabled build with this setup. A hosted AI workflow needs a separately designed authenticated backend or secure short-lived credential exchange.
 
 ## Architecture
 

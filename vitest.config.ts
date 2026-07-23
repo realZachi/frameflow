@@ -9,6 +9,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: [
+        'src/ai/provider-config.ts',
+        'src/ai/provider-catalog.ts',
         'src/ai/richtext.ts',
         'src/app/project-utils.ts',
         'src/editor/element-utils.ts',

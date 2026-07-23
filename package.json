@@ -24,7 +24,10 @@
     "check": "bun run structure && bun run lint && bun run test:coverage && bun run build && bun run audit"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.14",
+    "@ai-sdk/alibaba": "^2.0.16",
+    "@ai-sdk/anthropic": "^4.0.18",
+    "@ai-sdk/google": "^4.0.22",
+    "@ai-sdk/openai": "^4.0.18",
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/bricolage-grotesque": "latest",
     "@fontsource-variable/geist": "^5.3.0",

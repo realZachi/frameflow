@@ -41,7 +41,7 @@ Frameflow uses Bun for package and script operations.
 
 5. Open [http://127.0.0.1:4173](http://127.0.0.1:4173).
 
-The editor works without an API key. To work on AI generation, copy `.env.example` to `.env.local`, add your own `MOONSHOT_API_KEY`, and restart the server. Keep that file local.
+The editor works without an API key. To work on AI generation, copy `.env.example` to `.env.local`, add at least one of the listed `VITE_*` provider keys, and restart the app. These keys are visible to the local browser, so keep that file local and never deploy a keyed build.
 
 ## Project map
 
@@ -163,7 +163,7 @@ Use concise [Conventional Commit](https://www.conventionalcommits.org/) messages
 ```text
 feat: add perspective device mockup
 fix: preserve export dimensions
-docs: clarify Moonshot setup
+docs: clarify provider setup
 ```
 
 ## Licensing of contributions

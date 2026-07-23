@@ -156,6 +156,7 @@ select:focus-visible {
 
 .isolate.z-50:has(> [data-slot='select-content']),
 .isolate.z-50:has(> [data-slot='popover-content']) { z-index: 300; }
+.isolate.z-50:has(> .ai-modal-select-content) { z-index: 650; }
 .isolate.z-50:has(> .project-menu-content),
 .isolate.z-50:has(> .export-menu-content) { z-index: 700; }
 .project-menu-content { padding: 5px; }
@@ -552,6 +553,20 @@ select:focus-visible {
 
 .ai-modal-hint,
 .ai-modal-assistant-text { color: var(--muted-foreground); }
+
+.ai-provider-description { color: var(--muted-foreground); }
+
+.ai-provider-warning {
+  color: var(--destructive);
+  background: color-mix(in oklch, var(--destructive) 7%, var(--background));
+  border-color: color-mix(in oklch, var(--destructive) 25%, var(--border));
+}
+
+.ai-provider-warning code {
+  color: var(--foreground);
+  background: var(--muted);
+  border-radius: var(--radius-sm);
+}
 
 .ai-modal-dropzone:hover {
   background: var(--accent);

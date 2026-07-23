@@ -1,7 +1,8 @@
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { APICallError, isStepCount, streamText } from 'ai'
 import { scopeAiControllerToSlide, type AiEditorController } from './controller'
 import { buildInstructions, buildUserMessage } from './prompt'
+import { getAiModel, getAiProvider, type AiModelSelection } from './provider-catalog'
+import { getAiProviderKey } from './provider-config'
 import { createEditorTools } from './tools'
 import type { AiToolActivity } from './tools'
 
@@ -70,10 +71,49 @@ const extractMediaType = (dataUrl: string): string => {
   return match?.[1] ?? 'image/png'
 }
 
-const describeError = (error: unknown): string => {
+const createAiModel = async (selection: AiModelSelection) => {
+  const apiKey = getAiProviderKey(selection.provider)
+  if (!apiKey) {
+    throw new Error(`${getAiProvider(selection.provider).envVar} is not configured`)
+  }
+
+  switch (selection.provider) {
+    case 'moonshot': {
+      const { createOpenAI } = await import('@ai-sdk/openai')
+      return createOpenAI({
+        apiKey,
+        baseURL: `${window.location.origin}/api/moonshot/v1`,
+      }).chat(selection.model)
+    }
+    case 'google': {
+      const { createGoogle } = await import('@ai-sdk/google')
+      return createGoogle({ apiKey })(selection.model)
+    }
+    case 'qwen': {
+      const { createAlibaba } = await import('@ai-sdk/alibaba')
+      return createAlibaba({ apiKey })(selection.model)
+    }
+    case 'openai': {
+      const { createOpenAI } = await import('@ai-sdk/openai')
+      return createOpenAI({ apiKey })(selection.model)
+    }
+    case 'anthropic': {
+      const { createAnthropic } = await import('@ai-sdk/anthropic')
+      return createAnthropic({
+        apiKey,
+        headers: {
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+      })(selection.model)
+    }
+  }
+}
+
+const describeError = (error: unknown, selection: AiModelSelection): string => {
   if (APICallError.isInstance(error)) {
-    if (error.statusCode === 400 || error.statusCode === 401 || error.statusCode === 403) {
-      return `Moonshot API error (${error.statusCode}) — check MOONSHOT_API_KEY in .env.local and restart the development server. ${error.message}`
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      const provider = getAiProvider(selection.provider)
+      return `${provider.label} API error (${error.statusCode}) — check ${provider.envVar} in .env.local and restart the app. ${error.message}`
     }
     return error.message
   }
@@ -85,6 +125,7 @@ const isAbortError = (error: unknown): boolean =>
   (error instanceof Error && error.name === 'AbortError') || (error instanceof DOMException && error.name === 'AbortError')
 
 export async function runAiGeneration(options: {
+  selection: AiModelSelection
   description: string
   screenshots: { assetId: string; name: string; dataUrl: string }[]
   controller: AiEditorController
@@ -93,16 +134,21 @@ export async function runAiGeneration(options: {
   onEvent: (event: AiRunEvent) => void
   onActivity?: (activity: AiToolActivity) => void
 }): Promise<void> {
-  const { description, screenshots, controller, targetSlideId, signal, onEvent, onActivity } = options
+  const {
+    selection,
+    description,
+    screenshots,
+    controller,
+    targetSlideId,
+    signal,
+    onEvent,
+    onActivity,
+  } = options
 
   try {
-    // The key never enters the browser: the Vite development server proxies
-    // /api/moonshot to api.moonshot.ai and sets the Authorization header
-    // from MOONSHOT_API_KEY (see vite.config.ts).
-    const moonshot = createOpenAICompatible({
-      name: 'moonshot',
-      baseURL: `${window.location.origin}/api/moonshot/v1`,
-    })
+    const provider = getAiProvider(selection.provider)
+    const modelOption = getAiModel(selection)
+    const model = await createAiModel(selection)
 
     const content: UserContent[] = [{
       type: 'text',
@@ -118,11 +164,14 @@ export async function runAiGeneration(options: {
       content.push({ type: 'file', mediaType: extractMediaType(shot.dataUrl), data: shot.dataUrl })
     }
 
-    onEvent({ type: 'status', message: 'Connecting to Moonshot AI…' })
+    onEvent({
+      type: 'status',
+      message: `Connecting to ${provider.label} · ${modelOption.label}…`,
+    })
 
     const runController = targetSlideId ? scopeAiControllerToSlide(controller, targetSlideId) : controller
     const result = streamText({
-      model: moonshot('kimi-k3'),
+      model,
       instructions: buildInstructions(targetSlideId ? { targetSlideId } : {}),
       messages: [{ role: 'user', content }],
       tools: createEditorTools(runController, {
@@ -160,7 +209,7 @@ export async function runAiGeneration(options: {
         }
         case 'error': {
           hadError = true
-          onEvent({ type: 'error', message: describeError(part.error) })
+          onEvent({ type: 'error', message: describeError(part.error, selection) })
           break
         }
         default:
@@ -188,6 +237,6 @@ export async function runAiGeneration(options: {
       onEvent({ type: 'status', message: 'Cancelled' })
       return
     }
-    onEvent({ type: 'error', message: describeError(error) })
+    onEvent({ type: 'error', message: describeError(error, selection) })
   }
 }
