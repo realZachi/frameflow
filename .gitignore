@@ -22,6 +22,9 @@ ai-logs/
 .vscode/
 *.swp
 
+# Local maintainer drafts
+.local/
+
 # Source design files and generated exports
 *.psd
 *.psb
