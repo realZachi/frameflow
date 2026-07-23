@@ -546,6 +546,10 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .ai-modal-field input[type="password"], .ai-modal-field input[type="text"], .ai-modal-field textarea { width: 100%; border: 1px solid #d9d9d2; border-radius: 8px; background: white; padding: 10px 12px; font-size: 12px; color: #2b2b27; }
 .ai-modal-field textarea { resize: vertical; min-height: 92px; line-height: 1.4; }
 .ai-modal-hint { font-size: 9px; color: var(--muted); line-height: 1.4; }
+.ai-modal-prompt-helper { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; }
+.ai-modal-copy-prompt { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; border: 1px dashed var(--border); background: var(--muted); color: var(--foreground); border-radius: var(--radius-md); padding: 8px 12px; font-size: 11px; font-weight: 620; cursor: pointer; }
+.ai-modal-copy-prompt:hover { background: var(--accent); border-color: var(--ring); }
+.ai-modal-copy-prompt svg { flex: 0 0 auto; color: var(--muted-foreground); }
 
 .ai-provider-controls { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
 .ai-provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

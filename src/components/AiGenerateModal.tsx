@@ -11,6 +11,7 @@ import {
 import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
 import { fileToDataUrl, uid } from '../utils'
 import { AiProviderControls } from './AiProviderControls'
+import { CopyCodingPromptButton } from './CopyCodingPrompt'
 import { Sparkles, Upload, X } from './icons'
 import type { AiEditorController } from '../ai/controller'
 
@@ -123,6 +124,14 @@ const IdleContent = ({
           ? 'For example: shorten the headline, make the device larger, and increase contrast …'
           : 'Describe your app: audience, core features, tone …'}
       />
+      {!isEditMode && (
+        <div className="ai-modal-prompt-helper">
+          <CopyCodingPromptButton />
+          <small className="ai-modal-hint">
+            Not sure what to write? Paste this prompt into your coding assistant (Cursor, Claude Code, Copilot …) and it will draft a description from your codebase.
+          </small>
+        </div>
+      )}
     </div>
     <div className="ai-modal-field">
       <label>{isEditMode ? 'Screenshots (optional)' : 'Screenshots'}</label>
