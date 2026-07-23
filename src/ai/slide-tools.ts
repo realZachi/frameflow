@@ -16,7 +16,7 @@ import { backgroundPatternSchema } from './tool-schemas'
 export const createSlideTools = ({ controller, emit }: ToolContext) => {
   const getCanvasState = tool({
     description:
-      'Get the current state of the project: every slide (with id, name, background, elements) and every uploaded screenshot asset (with id, name). Always call this first, and again whenever you need up-to-date ids.',
+      'Get the current state of the project: every slide (with id, name, background, elements) and every uploaded asset (with id, name), including screenshots and app logos. Always call this first, and again whenever you need up-to-date ids.',
     inputSchema: z.object({}),
     execute: async () => controller.snapshot(),
   })

@@ -8,7 +8,8 @@ The browser uses the AI SDK's native Google, Alibaba/Qwen, OpenAI, and Anthropic
 - Never commit `.env.local`, reuse a shared production credential, or deploy a build containing provider keys.
 - Do not add a proxy for providers whose browser API supports the required CORS flow. Keep the entire provider setup localhost-only; a hosted AI-enabled deployment needs a separate authenticated backend design.
 - Never return secrets or raw data URLs in model-visible state.
-- Keep uploads browser-local except for screenshots explicitly included in an AI run.
+- Keep uploads browser-local except for screenshots and app logos explicitly included in an AI run.
+- In generate mode, collect app name and app logo separately from the app description and screenshots. Pass the name and logo asset id through the user message, attach the logo image, and instruct the model to place the logo with `add_image` (never as a device screenshot).
 - Keep developer AI run logging gated by `FRAMEFLOW_AI_LOGGING` and write only
   through the local Vite middleware to the git-ignored `ai-logs/` directory.
   Persist only the versioned, bounded log schema: never add input prompt text,

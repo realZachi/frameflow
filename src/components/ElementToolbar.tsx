@@ -256,7 +256,7 @@ const ImageSettings = ({ element, onUpdate }: {
   <div className="toolbar-popover-section">
     <strong className="toolbar-popover-heading">Image details</strong>
     <AdvancedSlider label="Corners" value={element.borderRadius} min={0} max={50} displayValue={`${element.borderRadius}%`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
-    <AdvancedSlider label="Shadow" value={element.shadow ?? 32} min={0} max={100} displayValue={`${element.shadow ?? 32}%`} onChange={(shadow) => onUpdate({ shadow })} />
+    <AdvancedSlider label="Shadow" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
   </div>
 )
 
@@ -469,7 +469,7 @@ export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicat
               ]}
               onChange={(borderRadius) => onUpdate({ borderRadius })}
             />
-            <ToolbarRange label="Shadow" value={element.shadow ?? 32} min={0} max={100} displayValue={`${Math.round(element.shadow ?? 32)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
+            <ToolbarRange label="Shadow" value={element.shadow ?? 0} min={0} max={100} displayValue={`${Math.round(element.shadow ?? 0)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
             <ToolbarRange
               label="Opacity"
               value={Math.round(element.opacity * 100)}

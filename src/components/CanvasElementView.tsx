@@ -199,7 +199,7 @@ export const ElementContent = ({ element }: { element: CanvasElement }) => {
   if (element.type === 'device') return <DeviceMockup element={element} />
 
   if (element.type === 'image') {
-    const shadow = element.shadow ?? 32
+    const shadow = element.shadow ?? 0
     return (
       <img
         className="canvas-image"

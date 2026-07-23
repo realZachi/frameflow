@@ -155,15 +155,15 @@ export const createMediaTools = ({ controller, emit }: ToolContext) => {
   })
 
   const addImage = tool({
-    description: `Add a free-floating uploaded image to a slide (not inside a device frame). ${COORDINATE_NOTE} ${MEASUREMENT_NOTE}`,
+    description: `Add a free-floating uploaded image to a slide (not inside a device frame). Use this for app logos and other brand marks. ${COORDINATE_NOTE} ${MEASUREMENT_NOTE}`,
     inputSchema: z.object({
       slideId: z.string(),
-      assetId: z.string().describe('Asset id (from get_canvas_state) of the uploaded image to place.'),
+      assetId: z.string().describe('Asset id (from get_canvas_state) of the uploaded image to place, including app logo assets.'),
       x: z.number().describe(COORDINATE_NOTE),
       y: z.number().describe(COORDINATE_NOTE),
       width: z.number().describe(COORDINATE_NOTE),
-      borderRadius: z.number().optional().describe('Corner radius, 0-100. Defaults to 4.'),
-      shadow: z.number().optional().describe('Drop shadow intensity, 0-100. Defaults to 32.'),
+      borderRadius: z.number().optional().describe('Corner radius, 0-100. Defaults to 0 (no rounding).'),
+      shadow: z.number().optional().describe('Drop shadow intensity, 0-100. Defaults to 0 (no shadow).'),
       rotation: z.number().optional().describe('Rotation in degrees, -180 to 180. Defaults to 0.'),
       opacity: z.number().optional().describe('Opacity from 0 to 1. Defaults to 1.'),
     }),
@@ -189,8 +189,8 @@ export const createMediaTools = ({ controller, emit }: ToolContext) => {
         rotation: clampRotation(rotation ?? 0),
         opacity: clampOpacity(opacity ?? 1),
         src,
-        borderRadius: clampBorderRadius(borderRadius ?? 4),
-        shadow: clampShadow(shadow ?? 32),
+        borderRadius: clampBorderRadius(borderRadius ?? 0),
+        shadow: clampShadow(shadow ?? 0),
       }
       emit({
         tool: 'add_image',

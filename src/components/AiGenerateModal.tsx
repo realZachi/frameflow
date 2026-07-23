@@ -14,7 +14,7 @@ import { AiProviderControls } from './AiProviderControls'
 import { Sparkles, Upload, X } from './icons'
 import type { AiEditorController } from '../ai/controller'
 
-type ScreenshotDraft = { id: string; file: File; name: string; dataUrl: string }
+type ImageDraft = { id: string; file: File; name: string; dataUrl: string }
 type LogEntry = { kind: 'status' | 'tool'; text: string }
 type RunPhase = 'idle' | 'running' | 'done' | 'error'
 
@@ -30,24 +30,86 @@ export type AiGenerateModalProps = {
 
 type IdleContentProps = {
   isEditMode: boolean
+  appName: string
   description: string
-  screenshots: ScreenshotDraft[]
+  logo: ImageDraft | null
+  screenshots: ImageDraft[]
+  logoInputRef: RefObject<HTMLInputElement | null>
   fileInputRef: RefObject<HTMLInputElement | null>
+  onAppNameChange: (appName: string) => void
   onDescriptionChange: (description: string) => void
+  onLogoFile: (event: ChangeEvent<HTMLInputElement>) => void
+  onRemoveLogo: () => void
   onFiles: (event: ChangeEvent<HTMLInputElement>) => void
   onRemoveScreenshot: (id: string) => void
 }
 
 const IdleContent = ({
   isEditMode,
+  appName,
   description,
+  logo,
   screenshots,
+  logoInputRef,
   fileInputRef,
+  onAppNameChange,
   onDescriptionChange,
+  onLogoFile,
+  onRemoveLogo,
   onFiles,
   onRemoveScreenshot,
 }: IdleContentProps) => (
   <>
+    {!isEditMode && (
+      <>
+        <div className="ai-modal-field">
+          <label htmlFor="ai-modal-app-name">App name</label>
+          <input
+            id="ai-modal-app-name"
+            type="text"
+            value={appName}
+            onChange={(event) => onAppNameChange(event.target.value)}
+            placeholder="e.g. Frameflow"
+            autoComplete="off"
+          />
+        </div>
+        <div className="ai-modal-field">
+          <label>App logo</label>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            hidden
+            onChange={onLogoFile}
+          />
+          <button
+            type="button"
+            className="ai-modal-dropzone"
+            onClick={() => logoInputRef.current?.click()}
+          >
+            <Upload size={16} />
+            <span>{logo ? 'Replace logo' : 'Upload app logo'}</span>
+          </button>
+          <small className="ai-modal-hint">
+            The AI will place this logo on the generated screens (not inside device frames).
+          </small>
+          {logo && (
+            <div className="ai-modal-thumbs">
+              <div className="ai-modal-thumb ai-modal-thumb--logo">
+                <img src={logo.dataUrl} alt={logo.name} />
+                <button
+                  type="button"
+                  onClick={onRemoveLogo}
+                  aria-label={`Remove ${logo.name}`}
+                >
+                  <X size={11} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
+    )}
     <div className="ai-modal-field">
       <label htmlFor="ai-modal-description">
         {isEditMode ? 'What would you like to change?' : 'What is your app about?'}
@@ -204,8 +266,10 @@ const ModalFooter = ({
 }
 
 export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
+  const [appName, setAppName] = useState('')
   const [description, setDescription] = useState('')
-  const [screenshots, setScreenshots] = useState<ScreenshotDraft[]>([])
+  const [logo, setLogo] = useState<ImageDraft | null>(null)
+  const [screenshots, setScreenshots] = useState<ImageDraft[]>([])
   const [phase, setPhase] = useState<RunPhase>('idle')
   const [log, setLog] = useState<LogEntry[]>([])
   const [assistantText, setAssistantText] = useState('')
@@ -214,6 +278,7 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
   const [doneInfo, setDoneInfo] = useState<{ summary: string; slidesCreated: number } | null>(null)
   const [selection, setSelection] = useState<AiModelSelection>(INITIAL_AI_SELECTION)
 
+  const logoInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -246,8 +311,20 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
 
   const isEditMode = Boolean(targetSlide)
   const canGenerate = Boolean(description.trim())
-    && (isEditMode || screenshots.length > 0)
+    && (isEditMode || (Boolean(appName.trim()) && logo !== null && screenshots.length > 0))
     && AI_PROVIDER_AVAILABILITY[selection.provider]
+
+  const handleLogoFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setLogo({
+      id: uid('logo'),
+      file,
+      name: file.name,
+      dataUrl: await fileToDataUrl(file),
+    })
+    event.target.value = ''
+  }
 
   const handleFiles = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -296,7 +373,13 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
 
   const handleGenerate = async () => {
     if (!canGenerate || phase === 'running') return
-    const prepared = onPrepareRun(screenshots.map((shot) => ({ name: shot.name, dataUrl: shot.dataUrl })))
+    const filesToPrepare = [
+      ...screenshots.map((shot) => ({ name: shot.name, dataUrl: shot.dataUrl })),
+      ...(!isEditMode && logo ? [{ name: logo.name, dataUrl: logo.dataUrl }] : []),
+    ]
+    const prepared = onPrepareRun(filesToPrepare)
+    const preparedScreenshots = prepared.slice(0, screenshots.length)
+    const preparedLogo = !isEditMode && logo ? prepared[screenshots.length] : undefined
     const abortController = new AbortController()
     abortControllerRef.current = abortController
     cancelledRef.current = false
@@ -309,7 +392,9 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
     await runAiGeneration({
       selection,
       description,
-      screenshots: prepared,
+      screenshots: preparedScreenshots,
+      ...(!isEditMode && appName.trim() ? { appName: appName.trim() } : {}),
+      ...(preparedLogo ? { logo: preparedLogo } : {}),
       controller,
       ...(targetSlide ? { targetSlideId: targetSlide.id } : {}),
       signal: abortController.signal,
@@ -361,10 +446,18 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
               />
               <IdleContent
                 isEditMode={isEditMode}
+                appName={appName}
                 description={description}
+                logo={logo}
                 screenshots={screenshots}
+                logoInputRef={logoInputRef}
                 fileInputRef={fileInputRef}
+                onAppNameChange={setAppName}
                 onDescriptionChange={setDescription}
+                onLogoFile={(event) => {
+                  void handleLogoFile(event)
+                }}
+                onRemoveLogo={() => setLogo(null)}
                 onFiles={(event) => {
                   void handleFiles(event)
                 }}

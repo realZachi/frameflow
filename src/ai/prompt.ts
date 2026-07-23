@@ -1,4 +1,8 @@
-type AiPromptOptions = { targetSlideId?: string }
+type AiPromptOptions = {
+  targetSlideId?: string
+  appName?: string
+  logoAssetId?: string
+}
 
 export function buildInstructions(options: AiPromptOptions = {}): string {
   const { targetSlideId } = options
@@ -12,11 +16,11 @@ export function buildInstructions(options: AiPromptOptions = {}): string {
 4. Make the user's requested change. Preserve unrelated content, screenshots, and styling unless the user explicitly asks for a full redesign.
 5. Uploaded screenshots are OPTIONAL in this mode. If none were provided, edit the existing elements and use any existing device screenshot as-is. Never add a placeholder device merely because no screenshot was uploaded.
 6. After editing, follow the verify routine below. Keep the run focused on this single screen.`
-    : `1. Call get_canvas_state first. It shows the slides that already exist in the project and the ids of every uploaded screenshot asset.
+    : `1. Call get_canvas_state first. It shows the slides that already exist in the project and the ids of every uploaded asset (screenshots and app logo).
 2. Do NOT modify or delete the user's existing slides. Only create NEW slides for your design, and append them with add_slide.
 3. Decide how many screens to build yourself - typically 3 to 6, depending on how many screenshots were provided and how much story the app has to tell. Do not pad the set with filler screens just to hit a number.
 4. ART DIRECTION - commit to a concept before you build anything:
-   - Palette: background, text color, one accent. Be confident - a saturated brand color or a rich dark tone as a full-bleed background almost always beats a timid neutral. Take cues from the app's own screenshots and subject.
+   - Palette: background, text color, one accent. Be confident - a saturated brand color or a rich dark tone as a full-bleed background almost always beats a timid neutral. Take cues from the app's own screenshots, logo, and subject.
    - One font pairing (a display face for headlines, a quieter face for supporting copy) and ONE highlight treatment.
    - A composition plan: assign every slide an archetype from the library below. No two adjacent slides may use the same archetype, and a set should use at least 3 different ones.
 5. Build each slide following its archetype, then run the verify routine below before moving on to the next slide.`
@@ -29,9 +33,15 @@ export function buildInstructions(options: AiPromptOptions = {}): string {
   const consistency = targetSlideId
     ? 'Keep the screen consistent with its existing visual system unless the user explicitly requests a redesign.'
     : 'Consistency lives in the SYSTEM, not in repeating one layout. Across every slide keep the same palette, the same font pairing, the same accent color, the same highlight treatment, the same device screenTheme, and a consistent shape vocabulary - while the composition changes from slide to slide via the archetypes.'
+  const brandRule = targetSlideId
+    ? 'If the user provides an app name or logo for this edit, use them only when the requested change calls for branding updates.'
+    : `BRANDING is required when the user provides an app name and/or logo:
+- Use the exact app name the user gave for brand mentions on canvas (headlines, labels, lockups). Do not invent a different product name.
+- When a logo asset is provided, incorporate it with add_image on at least the first slide and ideally 1-2 more slides in the set (for example a small top lockup, a corner badge, or next to the app name). Keep the logo crisp: modest width (roughly 8-18), high contrast against the background, no heavy shadow that muddies the mark, and never stretch it into a device screenshot.
+- Do not place the logo asset inside a device frame via set_device_screenshot or add_device screenshotAssetId — screenshot assets are for app UI captures; the logo is a free-floating brand mark via add_image only.`
   const assetRule = targetSlideId
     ? 'Use newly uploaded screenshot assets only when they are relevant to the requested edit. No screenshot upload is required.'
-    : 'Use every screenshot asset the user provided at least once, wherever it makes sense in the story.'
+    : 'Use every screenshot asset the user provided at least once, wherever it makes sense in the story. Treat the logo asset separately from screenshots as described under branding.'
   const finish = targetSlideId
     ? 'Once you are done, reply in English with a short 1-2 sentence summary of what you changed. Plain prose, no markdown, no lists.'
     : 'Once you are done building slides, reply in English with a short 2-3 sentence summary of the design concept you created. Plain prose, no markdown, no lists.'
@@ -88,6 +98,8 @@ ${consistency}
 
 Headlines are short, 3-6 words, fontSize 32-46 at width 80-90, set in high contrast against the background. Supporting copy is fontSize 18-24.
 
+${brandRule}
+
 ${assetRule}
 
 ## Fonts
@@ -126,17 +138,35 @@ export function buildUserMessage(
   const targetContext = options.targetSlideId
     ? `Target slide: ${options.targetSlideId}\nEdit only this existing slide. Screenshot assets are optional.`
     : 'Create a new App Store screenshot set without changing existing slides.'
-  const attachmentContext = assets.length > 0
-    ? 'The images for these assets follow in this message, in the same order as the list above.'
-    : 'No screenshot images are attached.'
+  const brandLines = [
+    options.appName?.trim()
+      ? `App name: ${options.appName.trim()}`
+      : null,
+    options.logoAssetId
+      ? `App logo asset id: ${options.logoAssetId} (use add_image with this id; do not treat it as a device screenshot)`
+      : null,
+  ].filter((line): line is string => Boolean(line))
+  const brandContext = brandLines.length > 0
+    ? `Brand:\n${brandLines.join('\n')}`
+    : 'Brand:\n(no separate app name or logo provided)'
+  const attachmentParts = [
+    assets.length > 0
+      ? 'The screenshot images for the assets listed above follow in this message, in the same order as that list.'
+      : 'No screenshot images are attached.',
+    options.logoAssetId
+      ? 'The app logo image is also attached and labeled with its asset id.'
+      : null,
+  ].filter((line): line is string => Boolean(line))
 
   return `${targetContext}
 
 User request:
 ${description}
 
+${brandContext}
+
 Available screenshot assets:
 ${assetLines}
 
-${attachmentContext}`
+${attachmentParts.join(' ')}`
 }

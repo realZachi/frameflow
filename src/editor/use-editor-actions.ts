@@ -212,8 +212,8 @@ export function useEditorActions({
       rotation: 0,
       opacity: 1,
       src: asset.src,
-      borderRadius: 4,
-      shadow: 32,
+      borderRadius: 0,
+      shadow: 0,
     }, 'uploads')
   }, [addElement])
 

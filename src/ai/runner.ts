@@ -91,6 +91,45 @@ const extractMediaType = (dataUrl: string): string => {
   return match?.[1] ?? 'image/png'
 }
 
+type PreparedAsset = { assetId: string; name: string; dataUrl: string }
+
+const buildUserContent = (options: {
+  description: string
+  screenshots: PreparedAsset[]
+  appName?: string
+  logo?: PreparedAsset
+  targetSlideId?: string
+}): UserContent[] => {
+  const { description, screenshots, appName, logo, targetSlideId } = options
+  const content: UserContent[] = [{
+    type: 'text',
+    text: buildUserMessage(
+      description,
+      screenshots.map(({ assetId, name }) => ({ assetId, name })),
+      {
+        ...(targetSlideId ? { targetSlideId } : {}),
+        ...(appName?.trim() ? { appName: appName.trim() } : {}),
+        ...(logo ? { logoAssetId: logo.assetId } : {}),
+      },
+    ),
+  }]
+
+  for (const shot of screenshots) {
+    content.push({ type: 'text', text: `Screenshot asset "${shot.assetId}" (${shot.name}):` })
+    content.push({ type: 'file', mediaType: extractMediaType(shot.dataUrl), data: shot.dataUrl })
+  }
+
+  if (logo) {
+    content.push({
+      type: 'text',
+      text: `App logo asset "${logo.assetId}" (${logo.name}) — place with add_image, never as a device screenshot:`,
+    })
+    content.push({ type: 'file', mediaType: extractMediaType(logo.dataUrl), data: logo.dataUrl })
+  }
+
+  return content
+}
+
 const createAiModel = async (selection: AiModelSelection) => {
   const apiKey = getAiProviderKey(selection.provider)
   if (!apiKey) {
@@ -202,7 +241,9 @@ const collectStreamPart = <TOOLS extends ToolSet>(options: {
 export async function runAiGeneration(options: {
   selection: AiModelSelection
   description: string
-  screenshots: { assetId: string; name: string; dataUrl: string }[]
+  screenshots: PreparedAsset[]
+  appName?: string
+  logo?: PreparedAsset
   controller: AiEditorController
   targetSlideId?: string
   signal?: AbortSignal
@@ -213,6 +254,8 @@ export async function runAiGeneration(options: {
     selection,
     description,
     screenshots,
+    appName,
+    logo,
     controller,
     targetSlideId,
     signal,
@@ -259,19 +302,13 @@ export async function runAiGeneration(options: {
     const reasoning = getAiSdkReasoningEffort(selection)
     const model = await createAiModel(selection)
 
-    const content: UserContent[] = [{
-      type: 'text',
-      text: buildUserMessage(
-        description,
-        screenshots.map(({ assetId, name }) => ({ assetId, name })),
-        targetSlideId ? { targetSlideId } : {},
-      ),
-    }]
-
-    for (const shot of screenshots) {
-      content.push({ type: 'text', text: `Screenshot asset "${shot.assetId}" (${shot.name}):` })
-      content.push({ type: 'file', mediaType: extractMediaType(shot.dataUrl), data: shot.dataUrl })
-    }
+    const content = buildUserContent({
+      description,
+      screenshots,
+      ...(appName !== undefined ? { appName } : {}),
+      ...(logo ? { logo } : {}),
+      ...(targetSlideId ? { targetSlideId } : {}),
+    })
 
     onEvent({
       type: 'status',
