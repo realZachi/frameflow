@@ -3,7 +3,7 @@ import { photoMockups } from '../mockups/catalog'
 import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { AiCursorOverlay } from './AiCursorOverlay'
 import { CanvasItem } from './CanvasElementView'
-import { ChevronLeft, ChevronRight, Copy, CursorMagicSelection02, Plus, Sparkles, Trash2 } from './icons'
+import { ChevronLeft, ChevronRight, Copy, CursorMagicSelection02, Plus, StartUp02, Trash2 } from './icons'
 import { Button } from './ui/button'
 import type { CanvasElement, Slide } from '../types'
 
@@ -224,7 +224,7 @@ export const EditorCanvas = ({
                     onClick={onGenerateWithAi}
                     disabled={aiActionsDisabled}
                   >
-                    <Sparkles size={16} />
+                    <StartUp02 size={16} />
                     Generate with AI
                   </Button>
                 </div>

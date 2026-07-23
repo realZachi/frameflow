@@ -8,7 +8,7 @@ import {
   Plus,
   Redo2,
   Save,
-  Sparkles,
+  StartUp02,
   Trash2,
   Undo2,
 } from '../components/icons'
@@ -261,7 +261,7 @@ export function AppHeader({
             onClick={onOpenAi}
             disabled={aiDisabled}
           >
-            <span className="ai-generate-button-mark" aria-hidden="true"><Sparkles size={14} /></span>
+            <span className="ai-generate-button-mark" aria-hidden="true"><StartUp02 size={14} /></span>
             <span>Generate with AI</span>
           </Button>
           <ExportMenu

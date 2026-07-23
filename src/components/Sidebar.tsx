@@ -12,7 +12,7 @@ import {
   Palette,
   Plus,
   Shapes,
-  Sparkles,
+  StartUp02,
   Type,
   Upload,
 } from './icons'
@@ -20,7 +20,7 @@ import { ShapeGraphic } from './ShapeGraphic'
 import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
 
 const tools: { id: ToolId; label: string; icon: ReactNode }[] = [
-  { id: 'templates', label: 'Templates', icon: <Sparkles size={19} /> },
+  { id: 'templates', label: 'Templates', icon: <StartUp02 size={19} /> },
   { id: 'device', label: 'Mockups', icon: <MonitorSmartphone size={19} /> },
   { id: 'elements', label: 'Elements', icon: <Shapes size={19} /> },
   { id: 'text', label: 'Text', icon: <Type size={19} /> },

@@ -527,7 +527,7 @@ select:focus-visible {
 
 .toast button { color: var(--muted-foreground); }
 .ai-modal-overlay { background: oklch(0 0 0 / 35%); }
-
+.ai-modal-overlay--live { background: transparent; backdrop-filter: none; }
 .ai-modal-card {
   background: var(--background);
   border-color: var(--border);
@@ -595,6 +595,7 @@ select:focus-visible {
 }
 
 .ai-modal-btn-secondary:hover { background: var(--accent); }
+.ai-cursor { color: var(--primary); }
 .ai-cursor-label { background: var(--primary); color: var(--primary-foreground); }
 .ai-cursor-ripple { background: color-mix(in oklch, var(--primary) 40%, transparent); }
 

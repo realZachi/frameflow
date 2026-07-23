@@ -29,7 +29,7 @@ import {
   SaveIcon,
   Shapes as ShapesIcon,
   SlidersHorizontalIcon,
-  Sparkles as SparklesIcon,
+  StartUp02Icon,
   Strikethrough as StrikethroughIcon,
   Trash2 as Trash2Icon,
   Type as TypeIcon,
@@ -77,7 +77,7 @@ export const Redo2 = createIcon(Redo2Icon)
 export const Save = createIcon(SaveIcon)
 export const Shapes = createIcon(ShapesIcon)
 export const SlidersHorizontal = createIcon(SlidersHorizontalIcon)
-export const Sparkles = createIcon(SparklesIcon)
+export const StartUp02 = createIcon(StartUp02Icon)
 export const Strikethrough = createIcon(StrikethroughIcon)
 export const Trash2 = createIcon(Trash2Icon)
 export const Type = createIcon(TypeIcon)

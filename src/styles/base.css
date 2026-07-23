@@ -592,7 +592,8 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .ai-modal-overlay--live .ai-modal-log { max-height: 150px; }
 
 .ai-cursor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 400; overflow: hidden; }
-.ai-cursor { position: absolute; display: flex; align-items: center; gap: 6px; transition: left .6s cubic-bezier(.22, 1, .36, 1), top .6s cubic-bezier(.22, 1, .36, 1); filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+.ai-cursor { position: absolute; display: flex; align-items: center; gap: 6px; transition: left .6s cubic-bezier(.22, 1, .36, 1), top .6s cubic-bezier(.22, 1, .36, 1); filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); color: #7c5cff; }
+.ai-cursor > svg { flex: 0 0 auto; color: inherit; }
 .ai-cursor-label { background: #7c5cff; color: white; font-size: 9px; font-weight: 650; letter-spacing: .1px; border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
 .ai-cursor-ripple { position: absolute; left: 1px; top: 1px; width: 13px; height: 13px; border-radius: 50%; background: rgba(124,92,255,.5); transform: scale(.3); opacity: .5; animation: ai-cursor-ripple .7s ease-out forwards; pointer-events: none; }
 @keyframes ai-cursor-ripple { from { transform: scale(.3); opacity: .5; } to { transform: scale(2.2); opacity: 0; } }

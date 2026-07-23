@@ -12,7 +12,7 @@ import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/run
 import { fileToDataUrl, uid } from '../utils'
 import { AiProviderControls } from './AiProviderControls'
 import { CopyCodingPromptButton } from './CopyCodingPrompt'
-import { Sparkles, Upload, X } from './icons'
+import { StartUp02, Upload, X } from './icons'
 import type { AiEditorController } from '../ai/controller'
 
 type ImageDraft = { id: string; file: File; name: string; dataUrl: string }
@@ -261,7 +261,7 @@ const ModalFooter = ({
   if (phase === 'idle') {
     return (
       <button className="export-button ai-modal-generate" onClick={onGenerate} disabled={!canGenerate}>
-        <Sparkles size={16} /><b>{isEditMode ? 'Edit' : 'Generate'}</b>
+        <StartUp02 size={16} /><b>{isEditMode ? 'Edit' : 'Generate'}</b>
       </button>
     )
   }
@@ -432,7 +432,7 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
       <div className="ai-modal-card" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit screen with AI' : 'Generate with AI'}>
         <div className="ai-modal-header">
           <div className="ai-modal-title">
-            <Sparkles size={16} />
+            <StartUp02 size={16} />
             <div>
               <h2>{isEditMode ? 'Edit screen with AI' : 'Generate with AI'}</h2>
               {targetSlide && <span>{targetSlide.name}</span>}
