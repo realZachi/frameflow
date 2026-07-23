@@ -7,6 +7,8 @@ An AI-first, browser-based editor for App Store screenshot sets — the AI doesn
 
 Describe your app, upload raw screenshots, and an AI agent designs the full set — not as opaque bitmaps, but by driving the same editor operations you'd use by hand. Every text layer, gradient, shape, and device mockup it places stays a real canvas element: select it, restyle it, move it, or redo it manually. Then export every artboard at exact store resolutions.
 
+![The Frameflow editor showing a five-screen App Store screenshot set, with a text layer selected for inline editing](docs/assets/editor-screenshot.png)
+
 Projects live entirely in your browser — no account, no backend. The editor itself works without any API key; bring your own key only for AI generation.
 
 ## Features
