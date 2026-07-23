@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
 import { Sparkles, Upload, X } from './icons'
 import type { AiEditorController } from '../ai/controller'
 import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
@@ -16,6 +16,181 @@ export type AiGenerateModalProps = {
   onPrepareRun: (files: Array<{ name: string; dataUrl: string }>) => Array<{ assetId: string; name: string; dataUrl: string }>
   onFinished: (slidesCreated: number) => void
   onActivity?: (activity: AiToolActivity | null) => void
+}
+
+type IdleContentProps = {
+  isEditMode: boolean
+  description: string
+  screenshots: ScreenshotDraft[]
+  fileInputRef: RefObject<HTMLInputElement | null>
+  onDescriptionChange: (description: string) => void
+  onFiles: (event: ChangeEvent<HTMLInputElement>) => void
+  onRemoveScreenshot: (id: string) => void
+}
+
+const IdleContent = ({
+  isEditMode,
+  description,
+  screenshots,
+  fileInputRef,
+  onDescriptionChange,
+  onFiles,
+  onRemoveScreenshot,
+}: IdleContentProps) => (
+  <>
+    <div className="ai-modal-field">
+      <label htmlFor="ai-modal-description">
+        {isEditMode ? 'Was soll sich ändern?' : 'Worum geht es in deiner App?'}
+      </label>
+      <textarea
+        id="ai-modal-description"
+        rows={4}
+        value={description}
+        onChange={(event) => onDescriptionChange(event.target.value)}
+        placeholder={isEditMode
+          ? 'Zum Beispiel: Überschrift kürzen, Gerät größer machen und Kontrast erhöhen …'
+          : 'Beschreibe deine App: Zielgruppe, Kernfeatures, Tonalität …'}
+      />
+    </div>
+    <div className="ai-modal-field">
+      <label>{isEditMode ? 'Screenshots (optional)' : 'Screenshots'}</label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        multiple
+        hidden
+        onChange={onFiles}
+      />
+      <button
+        type="button"
+        className="ai-modal-dropzone"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <Upload size={16} />
+        <span>{isEditMode ? 'Screenshot hinzufügen' : 'Screenshots auswählen'}</span>
+      </button>
+      {isEditMode && (
+        <small className="ai-modal-hint">
+          Nur nötig, wenn du ein neues Motiv oder einen neuen App-Screenshot verwenden möchtest.
+        </small>
+      )}
+      {screenshots.length > 0 && (
+        <div className="ai-modal-thumbs">
+          {screenshots.map((shot) => (
+            <div className="ai-modal-thumb" key={shot.id}>
+              <img src={shot.dataUrl} alt={shot.name} />
+              <button
+                type="button"
+                onClick={() => onRemoveScreenshot(shot.id)}
+                aria-label={`${shot.name} entfernen`}
+              >
+                <X size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </>
+)
+
+const RunningContent = ({
+  log,
+  logRef,
+  reasoningTail,
+  assistantText,
+}: {
+  log: LogEntry[]
+  logRef: RefObject<HTMLDivElement | null>
+  reasoningTail: string
+  assistantText: string
+}) => (
+  <div className="ai-modal-run">
+    <div className="ai-modal-log" ref={logRef}>
+      {log.map((entry, index) => (
+        <div
+          className={`ai-modal-log-entry ai-modal-log-entry--${entry.kind}`}
+          key={`${entry.kind}-${index}`}
+        >
+          {entry.text}
+        </div>
+      ))}
+      <div className="ai-modal-log-entry ai-modal-log-entry--spinner">
+        <span className="ai-modal-spinner" />
+        {reasoningTail ? `Denkt nach … ${reasoningTail}` : 'Generiere …'}
+      </div>
+    </div>
+    {assistantText && <p className="ai-modal-assistant-text">{assistantText}</p>}
+  </div>
+)
+
+const ResultContent = ({
+  phase,
+  doneInfo,
+  isEditMode,
+  assistantText,
+  errorMessage,
+}: {
+  phase: RunPhase
+  doneInfo: { summary: string; slidesCreated: number } | null
+  isEditMode: boolean
+  assistantText: string
+  errorMessage: string | null
+}) => {
+  if (phase === 'done' && doneInfo) {
+    return (
+      <div className="ai-modal-result ai-modal-result--done">
+        <p>
+          {isEditMode
+            ? 'Screen bearbeitet.'
+            : `Fertig: ${doneInfo.slidesCreated} Screens erstellt.`}
+        </p>
+        {(doneInfo.summary || assistantText) && (
+          <p className="ai-modal-assistant-text">
+            {doneInfo.summary || assistantText}
+          </p>
+        )}
+      </div>
+    )
+  }
+  if (phase === 'error') {
+    return <div className="ai-modal-result ai-modal-result--error"><p>{errorMessage}</p></div>
+  }
+  return null
+}
+
+const ModalFooter = ({
+  phase,
+  isEditMode,
+  canGenerate,
+  onGenerate,
+  onCancel,
+  onClose,
+  onRetry,
+}: {
+  phase: RunPhase
+  isEditMode: boolean
+  canGenerate: boolean
+  onGenerate: () => void
+  onCancel: () => void
+  onClose: () => void
+  onRetry: () => void
+}) => {
+  if (phase === 'idle') {
+    return (
+      <button className="export-button ai-modal-generate" onClick={onGenerate} disabled={!canGenerate}>
+        <Sparkles size={16} /><b>{isEditMode ? 'Bearbeiten' : 'Generieren'}</b>
+      </button>
+    )
+  }
+  if (phase === 'running') {
+    return <button className="ai-modal-btn-secondary" onClick={onCancel}>Abbrechen</button>
+  }
+  if (phase === 'done') {
+    return <button className="export-button ai-modal-generate" onClick={onClose}><b>Schließen</b></button>
+  }
+  return <button className="ai-modal-btn-secondary" onClick={onRetry}>Erneut versuchen</button>
 }
 
 export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
@@ -154,84 +329,44 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
 
         <div className="ai-modal-body">
           {phase === 'idle' && (
-            <>
-              <div className="ai-modal-field">
-                <label htmlFor="ai-modal-description">{isEditMode ? 'Was soll sich ändern?' : 'Worum geht es in deiner App?'}</label>
-                <textarea
-                  id="ai-modal-description"
-                  rows={4}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder={isEditMode
-                    ? 'Zum Beispiel: Überschrift kürzen, Gerät größer machen und Kontrast erhöhen …'
-                    : 'Beschreibe deine App: Zielgruppe, Kernfeatures, Tonalität …'}
-                />
-              </div>
-              <div className="ai-modal-field">
-                <label>{isEditMode ? 'Screenshots (optional)' : 'Screenshots'}</label>
-                <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={handleFiles} />
-                <button type="button" className="ai-modal-dropzone" onClick={() => fileInputRef.current?.click()}>
-                  <Upload size={16} /><span>{isEditMode ? 'Screenshot hinzufügen' : 'Screenshots auswählen'}</span>
-                </button>
-                {isEditMode && <small className="ai-modal-hint">Nur nötig, wenn du ein neues Motiv oder einen neuen App-Screenshot verwenden möchtest.</small>}
-                {screenshots.length > 0 && (
-                  <div className="ai-modal-thumbs">
-                    {screenshots.map((shot) => (
-                      <div className="ai-modal-thumb" key={shot.id}>
-                        <img src={shot.dataUrl} alt={shot.name} />
-                        <button type="button" onClick={() => removeScreenshot(shot.id)} aria-label={`${shot.name} entfernen`}><X size={11} /></button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
+            <IdleContent
+              isEditMode={isEditMode}
+              description={description}
+              screenshots={screenshots}
+              fileInputRef={fileInputRef}
+              onDescriptionChange={setDescription}
+              onFiles={handleFiles}
+              onRemoveScreenshot={removeScreenshot}
+            />
           )}
 
           {phase === 'running' && (
-            <div className="ai-modal-run">
-              <div className="ai-modal-log" ref={logRef}>
-                {log.map((entry, index) => (
-                  <div className={`ai-modal-log-entry ai-modal-log-entry--${entry.kind}`} key={index}>{entry.text}</div>
-                ))}
-                <div className="ai-modal-log-entry ai-modal-log-entry--spinner">
-                  <span className="ai-modal-spinner" />
-                  {reasoningTail ? `Denkt nach … ${reasoningTail}` : 'Generiere …'}
-                </div>
-              </div>
-              {assistantText && <p className="ai-modal-assistant-text">{assistantText}</p>}
-            </div>
+            <RunningContent
+              log={log}
+              logRef={logRef}
+              reasoningTail={reasoningTail}
+              assistantText={assistantText}
+            />
           )}
-
-          {phase === 'done' && doneInfo && (
-            <div className="ai-modal-result ai-modal-result--done">
-              <p>{isEditMode ? 'Screen bearbeitet.' : `Fertig: ${doneInfo.slidesCreated} Screens erstellt.`}</p>
-              {(doneInfo.summary || assistantText) && <p className="ai-modal-assistant-text">{doneInfo.summary || assistantText}</p>}
-            </div>
-          )}
-
-          {phase === 'error' && (
-            <div className="ai-modal-result ai-modal-result--error">
-              <p>{errorMessage}</p>
-            </div>
-          )}
+          <ResultContent
+            phase={phase}
+            doneInfo={doneInfo}
+            isEditMode={isEditMode}
+            assistantText={assistantText}
+            errorMessage={errorMessage}
+          />
         </div>
 
         <div className="ai-modal-footer">
-          {phase === 'idle' && (
-            <button className="export-button ai-modal-generate" onClick={handleGenerate} disabled={!canGenerate}>
-              <Sparkles size={16} /><b>{isEditMode ? 'Bearbeiten' : 'Generieren'}</b>
-            </button>
-          )}
-          {phase === 'running' && (
-            <button className="ai-modal-btn-secondary" onClick={handleCancel}>Abbrechen</button>
-          )}
-          {phase === 'done' && (
-            <button className="export-button ai-modal-generate" onClick={requestClose}><b>Schließen</b></button>
-          )}
-          {phase === 'error' && (
-            <button className="ai-modal-btn-secondary" onClick={handleRetry}>Erneut versuchen</button>
-          )}
+          <ModalFooter
+            phase={phase}
+            isEditMode={isEditMode}
+            canGenerate={canGenerate}
+            onGenerate={() => void handleGenerate()}
+            onCancel={handleCancel}
+            onClose={requestClose}
+            onRetry={handleRetry}
+          />
         </div>
       </div>
     </div>

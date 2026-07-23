@@ -199,6 +199,84 @@ const AdvancedSlider = ({ label, value, min, max, step = 1, displayValue, onChan
   </div>
 )
 
+const BaseSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>) => (
+  <div className="toolbar-popover-section">
+    <AdvancedSlider label="Breite" value={element.width} min={8} max={140} displayValue={`${Math.round(element.width)}%`} onChange={(width) => onUpdate({ width })} />
+    <AdvancedSlider label="Drehung" value={element.rotation} min={-180} max={180} displayValue={`${Math.round(element.rotation)}°`} onChange={(rotation) => onUpdate({ rotation })} />
+    <AdvancedSlider label="Deckkraft" value={element.opacity} min={0.05} max={1} step={0.01} displayValue={`${Math.round(element.opacity * 100)}%`} onChange={(opacity) => onUpdate({ opacity })} />
+  </div>
+)
+
+const TextSettings = ({ element, onUpdate }: {
+  element: Extract<CanvasElement, { type: 'text' }>
+  onUpdate: Props['onUpdate']
+}) => (
+  <div className="toolbar-popover-section">
+    <strong className="toolbar-popover-heading">Textdetails</strong>
+    <AdvancedSlider label="Zeilenhöhe" value={element.lineHeight} min={0.7} max={1.8} step={0.02} displayValue={element.lineHeight.toFixed(2)} onChange={(lineHeight) => onUpdate({ lineHeight })} />
+    <AdvancedSlider label="Schriftstärke" value={element.fontWeight} min={100} max={900} step={50} onChange={(fontWeight) => onUpdate({ fontWeight })} />
+    <div className="toolbar-transform-control">
+      <span>Schreibweise</span>
+      <div className="toolbar-button-group">
+        <Button variant={(element.textTransform ?? 'none') === 'none' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'none' })}>Aa</Button>
+        <Button variant={element.textTransform === 'uppercase' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'uppercase' })}>AA</Button>
+        <Button variant={element.textTransform === 'lowercase' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'lowercase' })}>aa</Button>
+      </div>
+    </div>
+    <AdvancedSlider label="Laufweite" value={element.letterSpacing} min={-4} max={8} step={0.1} displayValue={`${element.letterSpacing.toFixed(1)} px`} onChange={(letterSpacing) => onUpdate({ letterSpacing })} />
+    <ToolbarColor label="Textfläche" value={element.backgroundColor ?? '#ffffff'} onChange={(backgroundColor) => onUpdate({ backgroundColor })} />
+    <AdvancedSlider label="Flächen-Deckkraft" value={element.backgroundOpacity ?? 0} min={0} max={1} step={0.01} displayValue={`${Math.round((element.backgroundOpacity ?? 0) * 100)}%`} onChange={(backgroundOpacity) => onUpdate({ backgroundOpacity })} />
+    <AdvancedSlider label="Innenabstand" value={element.padding ?? 0} min={0} max={24} displayValue={`${element.padding ?? 0} px`} onChange={(padding) => onUpdate({ padding })} />
+    <AdvancedSlider label="Ecken" value={element.borderRadius ?? 0} min={0} max={40} displayValue={`${element.borderRadius ?? 0} px`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
+    <ToolbarColor label="Kontur" value={element.strokeColor ?? '#111116'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
+    <AdvancedSlider label="Konturstärke" value={element.strokeWidth ?? 0} min={0} max={3} step={0.25} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
+    <AdvancedSlider label="Textschatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
+    <ToolbarColor label="Schattenfarbe" value={element.shadowColor ?? '#000000'} onChange={(shadowColor) => onUpdate({ shadowColor })} />
+  </div>
+)
+
+const ShapeSettings = ({ element, onUpdate }: {
+  element: Extract<CanvasElement, { type: 'shape' }>
+  onUpdate: Props['onUpdate']
+}) => (
+  <div className="toolbar-popover-section">
+    <strong className="toolbar-popover-heading">Formdetails</strong>
+    <ToolbarColor label="Kontur" value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
+    <AdvancedSlider label="Konturstärke" value={element.strokeWidth ?? 0} min={0} max={12} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
+    <AdvancedSlider label="Schatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
+  </div>
+)
+
+const ImageSettings = ({ element, onUpdate }: {
+  element: Extract<CanvasElement, { type: 'image' }>
+  onUpdate: Props['onUpdate']
+}) => (
+  <div className="toolbar-popover-section">
+    <strong className="toolbar-popover-heading">Bilddetails</strong>
+    <AdvancedSlider label="Ecken" value={element.borderRadius} min={0} max={50} displayValue={`${element.borderRadius}%`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
+    <AdvancedSlider label="Schatten" value={element.shadow ?? 32} min={0} max={100} displayValue={`${element.shadow ?? 32}%`} onChange={(shadow) => onUpdate({ shadow })} />
+  </div>
+)
+
+const DeviceSettings = ({ element, onUpdate }: {
+  element: Extract<CanvasElement, { type: 'device' }>
+  onUpdate: Props['onUpdate']
+}) => (
+  <div className="toolbar-popover-section">
+    <strong className="toolbar-popover-heading">Perspektive</strong>
+    <AdvancedSlider label="Seitliche Neigung" value={element.tiltY} min={-18} max={18} displayValue={`${element.tiltY}°`} onChange={(tiltY) => onUpdate({ tiltY })} />
+    <AdvancedSlider label="Vertikale Neigung" value={element.tiltX} min={-12} max={12} displayValue={`${element.tiltX}°`} onChange={(tiltX) => onUpdate({ tiltX })} />
+    <AdvancedSlider label="Schatten" value={element.shadow} min={0} max={100} displayValue={`${element.shadow}%`} onChange={(shadow) => onUpdate({ shadow })} />
+  </div>
+)
+
+const ElementSpecificSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>) => {
+  if (element.type === 'text') return <TextSettings element={element} onUpdate={onUpdate} />
+  if (element.type === 'shape') return <ShapeSettings element={element} onUpdate={onUpdate} />
+  if (element.type === 'image') return <ImageSettings element={element} onUpdate={onUpdate} />
+  return <DeviceSettings element={element} onUpdate={onUpdate} />
+}
+
 const MoreSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>) => (
   <Popover>
     <PopoverTrigger render={<Button variant="outline" size="icon-sm" className="toolbar-more" title="Weitere Einstellungen" aria-label="Weitere Einstellungen" />}>
@@ -208,62 +286,8 @@ const MoreSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>
       <PopoverHeader>
         <PopoverTitle>Weitere Einstellungen</PopoverTitle>
       </PopoverHeader>
-      <div className="toolbar-popover-section">
-        <AdvancedSlider label="Breite" value={element.width} min={8} max={140} displayValue={`${Math.round(element.width)}%`} onChange={(width) => onUpdate({ width })} />
-        <AdvancedSlider label="Drehung" value={element.rotation} min={-180} max={180} displayValue={`${Math.round(element.rotation)}°`} onChange={(rotation) => onUpdate({ rotation })} />
-        <AdvancedSlider label="Deckkraft" value={element.opacity} min={0.05} max={1} step={0.01} displayValue={`${Math.round(element.opacity * 100)}%`} onChange={(opacity) => onUpdate({ opacity })} />
-      </div>
-
-      {element.type === 'text' && (
-        <div className="toolbar-popover-section">
-          <strong className="toolbar-popover-heading">Textdetails</strong>
-          <AdvancedSlider label="Zeilenhöhe" value={element.lineHeight} min={0.7} max={1.8} step={0.02} displayValue={element.lineHeight.toFixed(2)} onChange={(lineHeight) => onUpdate({ lineHeight })} />
-          <AdvancedSlider label="Schriftstärke" value={element.fontWeight} min={100} max={900} step={50} onChange={(fontWeight) => onUpdate({ fontWeight })} />
-          <div className="toolbar-transform-control">
-            <span>Schreibweise</span>
-            <div className="toolbar-button-group">
-              <Button variant={(element.textTransform ?? 'none') === 'none' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'none' })}>Aa</Button>
-              <Button variant={element.textTransform === 'uppercase' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'uppercase' })}>AA</Button>
-              <Button variant={element.textTransform === 'lowercase' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'lowercase' })}>aa</Button>
-            </div>
-          </div>
-          <AdvancedSlider label="Laufweite" value={element.letterSpacing} min={-4} max={8} step={0.1} displayValue={`${element.letterSpacing.toFixed(1)} px`} onChange={(letterSpacing) => onUpdate({ letterSpacing })} />
-          <ToolbarColor label="Textfläche" value={element.backgroundColor ?? '#ffffff'} onChange={(backgroundColor) => onUpdate({ backgroundColor })} />
-          <AdvancedSlider label="Flächen-Deckkraft" value={element.backgroundOpacity ?? 0} min={0} max={1} step={0.01} displayValue={`${Math.round((element.backgroundOpacity ?? 0) * 100)}%`} onChange={(backgroundOpacity) => onUpdate({ backgroundOpacity })} />
-          <AdvancedSlider label="Innenabstand" value={element.padding ?? 0} min={0} max={24} displayValue={`${element.padding ?? 0} px`} onChange={(padding) => onUpdate({ padding })} />
-          <AdvancedSlider label="Ecken" value={element.borderRadius ?? 0} min={0} max={40} displayValue={`${element.borderRadius ?? 0} px`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
-          <ToolbarColor label="Kontur" value={element.strokeColor ?? '#111116'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
-          <AdvancedSlider label="Konturstärke" value={element.strokeWidth ?? 0} min={0} max={3} step={0.25} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
-          <AdvancedSlider label="Textschatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
-          <ToolbarColor label="Schattenfarbe" value={element.shadowColor ?? '#000000'} onChange={(shadowColor) => onUpdate({ shadowColor })} />
-        </div>
-      )}
-
-      {element.type === 'shape' && (
-        <div className="toolbar-popover-section">
-          <strong className="toolbar-popover-heading">Formdetails</strong>
-          <ToolbarColor label="Kontur" value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
-          <AdvancedSlider label="Konturstärke" value={element.strokeWidth ?? 0} min={0} max={12} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
-          <AdvancedSlider label="Schatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
-        </div>
-      )}
-
-      {element.type === 'image' && (
-        <div className="toolbar-popover-section">
-          <strong className="toolbar-popover-heading">Bilddetails</strong>
-          <AdvancedSlider label="Ecken" value={element.borderRadius} min={0} max={50} displayValue={`${element.borderRadius}%`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
-          <AdvancedSlider label="Schatten" value={element.shadow ?? 32} min={0} max={100} displayValue={`${element.shadow ?? 32}%`} onChange={(shadow) => onUpdate({ shadow })} />
-        </div>
-      )}
-
-      {element.type === 'device' && (
-        <div className="toolbar-popover-section">
-          <strong className="toolbar-popover-heading">Perspektive</strong>
-          <AdvancedSlider label="Seitliche Neigung" value={element.tiltY} min={-18} max={18} displayValue={`${element.tiltY}°`} onChange={(tiltY) => onUpdate({ tiltY })} />
-          <AdvancedSlider label="Vertikale Neigung" value={element.tiltX} min={-12} max={12} displayValue={`${element.tiltX}°`} onChange={(tiltX) => onUpdate({ tiltX })} />
-          <AdvancedSlider label="Schatten" value={element.shadow} min={0} max={100} displayValue={`${element.shadow}%`} onChange={(shadow) => onUpdate({ shadow })} />
-        </div>
-      )}
+      <BaseSettings element={element} onUpdate={onUpdate} />
+      <ElementSpecificSettings element={element} onUpdate={onUpdate} />
     </PopoverContent>
   </Popover>
 )

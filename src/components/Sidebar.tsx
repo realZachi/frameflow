@@ -174,13 +174,81 @@ const backgroundPatterns: Array<{ id: BackgroundPattern; label: string }> = [
   { id: 'waves', label: 'Wellen' },
 ]
 
-const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: {
+const BackgroundFillControls = ({
+  background,
+  uploads,
+  onUpdate,
+  onUploadBackground,
+}: {
   background: Background
   uploads: UploadAsset[]
   onUpdate: (patch: Partial<Background>) => void
   onUploadBackground: (file: File) => void
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <Section title="Füllung">
+      <div className="choice-row choice-row--four">
+        <button className={background.type === 'solid' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'solid' })}>Fläche</button>
+        <button className={background.type === 'gradient' && background.gradientKind !== 'radial' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'gradient', gradientKind: 'linear' })}>Linear</button>
+        <button className={background.type === 'gradient' && background.gradientKind === 'radial' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'gradient', gradientKind: 'radial' })}>Radial</button>
+        <button className={background.type === 'image' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'image' })}>Bild</button>
+      </div>
+      {background.type !== 'image' && (
+        <>
+          <ColorField value={background.color1} onChange={(color1) => onUpdate({ color1 })} label={background.type === 'gradient' ? 'Start' : 'Farbe'} />
+          {background.type === 'gradient' && (
+            <>
+              <ColorField value={background.color2} onChange={(color2) => onUpdate({ color2 })} label="Ende" />
+              {background.gradientKind !== 'radial' && <div className="range-stack"><FieldLabel value={`${background.angle}°`}>Winkel</FieldLabel><input type="range" min="0" max="360" value={background.angle} onChange={(event) => onUpdate({ angle: Number(event.target.value) })} /></div>}
+            </>
+          )}
+        </>
+      )}
+      {background.type === 'image' && (
+        <div className="background-image-controls">
+          <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => event.target.files?.[0] && onUploadBackground(event.target.files[0])} />
+          <button className="upload-drop background-upload" onClick={() => inputRef.current?.click()}>
+            {background.image ? <img src={background.image} alt="Aktueller Hintergrund" /> : <ImagePlus size={20} />}
+            <span><strong>{background.image ? 'Hintergrund ersetzen' : 'Hintergrund hochladen'}</strong><small>PNG, JPG oder WebP</small></span>
+          </button>
+          {uploads.length > 0 && (
+            <div className="background-asset-grid">
+              {uploads.slice(0, 8).map((asset) => <button key={asset.id} className={background.image === asset.src ? 'is-selected' : ''} onClick={() => onUpdate({ type: 'image', image: asset.src })}><img src={asset.src} alt={asset.name} /></button>)}
+            </div>
+          )}
+          <FieldLabel>Bildanpassung</FieldLabel>
+          <div className="choice-row">
+            <button className={(background.imageFit ?? 'cover') === 'cover' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'cover' })}>Füllen</button>
+            <button className={background.imageFit === 'contain' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'contain' })}>Einpassen</button>
+          </div>
+          <FieldLabel>Position</FieldLabel>
+          <label className="select-field">
+            <select value={background.imagePosition ?? 'center'} onChange={(event) => onUpdate({ imagePosition: event.target.value as Background['imagePosition'] })}>
+              <option value="top">Oben</option>
+              <option value="center">Mitte</option>
+              <option value="bottom">Unten</option>
+            </select>
+            <ChevronDown size={15} />
+          </label>
+          <ColorField value={background.overlayColor ?? '#111116'} onChange={(overlayColor) => onUpdate({ overlayColor })} label="Overlay" />
+          <div className="range-stack">
+            <FieldLabel value={`${Math.round((background.overlayOpacity ?? 0.18) * 100)}%`}>Overlay-Deckkraft</FieldLabel>
+            <input type="range" min="0" max="0.9" step="0.01" value={background.overlayOpacity ?? 0.18} onChange={(event) => onUpdate({ overlayOpacity: Number(event.target.value) })} />
+          </div>
+        </div>
+      )}
+    </Section>
+  )
+}
+
+const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: {
+  background: Background
+  uploads: UploadAsset[]
+  onUpdate: (patch: Partial<Background>) => void
+  onUploadBackground: (file: File) => void
+}) => {
   const pattern = background.pattern ?? 'none'
   const previewStyle = { ...getBackgroundStyle(background), ...getBackgroundPatternStyle(background) }
 
@@ -188,58 +256,12 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
     <>
       <div className="panel-heading"><div><span>FLÄCHE</span><h2>Hintergrund</h2></div><p>Farbe, Verläufe, Fotos und grafische Muster für den gesamten Screen.</p></div>
       <div className={`background-preview pattern-surface pattern--${pattern}`} style={previewStyle}><Blend size={20} /></div>
-      <Section title="Füllung">
-        <div className="choice-row choice-row--four">
-          <button className={background.type === 'solid' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'solid' })}>Fläche</button>
-          <button className={background.type === 'gradient' && background.gradientKind !== 'radial' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'gradient', gradientKind: 'linear' })}>Linear</button>
-          <button className={background.type === 'gradient' && background.gradientKind === 'radial' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'gradient', gradientKind: 'radial' })}>Radial</button>
-          <button className={background.type === 'image' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'image' })}>Bild</button>
-        </div>
-        {background.type !== 'image' && (
-          <>
-            <ColorField value={background.color1} onChange={(color1) => onUpdate({ color1 })} label={background.type === 'gradient' ? 'Start' : 'Farbe'} />
-            {background.type === 'gradient' && (
-              <>
-                <ColorField value={background.color2} onChange={(color2) => onUpdate({ color2 })} label="Ende" />
-                {background.gradientKind !== 'radial' && <div className="range-stack"><FieldLabel value={`${background.angle}°`}>Winkel</FieldLabel><input type="range" min="0" max="360" value={background.angle} onChange={(event) => onUpdate({ angle: Number(event.target.value) })} /></div>}
-              </>
-            )}
-          </>
-        )}
-        {background.type === 'image' && (
-          <div className="background-image-controls">
-            <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => event.target.files?.[0] && onUploadBackground(event.target.files[0])} />
-            <button className="upload-drop background-upload" onClick={() => inputRef.current?.click()}>
-              {background.image ? <img src={background.image} alt="Aktueller Hintergrund" /> : <ImagePlus size={20} />}
-              <span><strong>{background.image ? 'Hintergrund ersetzen' : 'Hintergrund hochladen'}</strong><small>PNG, JPG oder WebP</small></span>
-            </button>
-            {uploads.length > 0 && (
-              <div className="background-asset-grid">
-                {uploads.slice(0, 8).map((asset) => <button key={asset.id} className={background.image === asset.src ? 'is-selected' : ''} onClick={() => onUpdate({ type: 'image', image: asset.src })}><img src={asset.src} alt={asset.name} /></button>)}
-              </div>
-            )}
-            <FieldLabel>Bildanpassung</FieldLabel>
-            <div className="choice-row">
-              <button className={(background.imageFit ?? 'cover') === 'cover' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'cover' })}>Füllen</button>
-              <button className={background.imageFit === 'contain' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'contain' })}>Einpassen</button>
-            </div>
-            <FieldLabel>Position</FieldLabel>
-            <label className="select-field">
-              <select value={background.imagePosition ?? 'center'} onChange={(event) => onUpdate({ imagePosition: event.target.value as Background['imagePosition'] })}>
-                <option value="top">Oben</option>
-                <option value="center">Mitte</option>
-                <option value="bottom">Unten</option>
-              </select>
-              <ChevronDown size={15} />
-            </label>
-            <ColorField value={background.overlayColor ?? '#111116'} onChange={(overlayColor) => onUpdate({ overlayColor })} label="Overlay" />
-            <div className="range-stack">
-              <FieldLabel value={`${Math.round((background.overlayOpacity ?? 0.18) * 100)}%`}>Overlay-Deckkraft</FieldLabel>
-              <input type="range" min="0" max="0.9" step="0.01" value={background.overlayOpacity ?? 0.18} onChange={(event) => onUpdate({ overlayOpacity: Number(event.target.value) })} />
-            </div>
-          </div>
-        )}
-      </Section>
+      <BackgroundFillControls
+        background={background}
+        uploads={uploads}
+        onUpdate={onUpdate}
+        onUploadBackground={onUploadBackground}
+      />
       <Section title="Paletten" compact>
         <div className="palette-grid palette-grid--wide">
           {[
