@@ -7,6 +7,7 @@ coverage/
 .eslintcache
 playwright-report/
 test-results/
+.claude/
 
 # Environment and local configuration
 .env
