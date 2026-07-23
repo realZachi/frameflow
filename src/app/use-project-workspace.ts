@@ -1,0 +1,329 @@
+import { useCallback, useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
+import { createInitialSlides } from '../data'
+import {
+  deleteProject,
+  loadProject,
+  loadProjectWorkspace,
+  removeLegacyProject,
+  saveProject,
+  setActiveProjectId,
+  type PersistedProject,
+  type ProjectSummary,
+} from '../persistence'
+import type { Slide, UploadAsset } from '../types'
+import { uid } from '../utils'
+import { DEFAULT_PROJECT_NAME, getUniqueProjectName, upsertProjectSummary } from './project-utils'
+import type { SaveStatus } from './project-types'
+
+type ProjectWorkspaceOptions = {
+  initialProjectName: string
+  slides: Slide[]
+  setSlides: Dispatch<SetStateAction<Slide[]>>
+  slidesRef: MutableRefObject<Slide[]>
+  uploads: UploadAsset[]
+  setUploads: Dispatch<SetStateAction<UploadAsset[]>>
+  uploadsRef: MutableRefObject<UploadAsset[]>
+  onProjectReplaced: (project: PersistedProject) => void
+  setToast: Dispatch<SetStateAction<string | null>>
+}
+
+const makeNewProject = (
+  projectName: string,
+  slides: Slide[],
+  uploads: UploadAsset[],
+): PersistedProject => {
+  const now = Date.now()
+  return {
+    id: uid('project'),
+    projectName,
+    slides,
+    uploads,
+    createdAt: now,
+    savedAt: now,
+  }
+}
+
+export function useProjectWorkspace({
+  initialProjectName,
+  slides,
+  setSlides,
+  slidesRef,
+  uploads,
+  setUploads,
+  uploadsRef,
+  onProjectReplaced,
+  setToast,
+}: ProjectWorkspaceOptions) {
+  const [projectName, setProjectNameState] = useState(initialProjectName)
+  const projectNameRef = useRef(initialProjectName)
+  const [currentProjectId, setCurrentProjectId] = useState('current')
+  const currentProjectIdRef = useRef('current')
+  const currentProjectCreatedAtRef = useRef(0)
+  const [projects, setProjects] = useState<ProjectSummary[]>([])
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingProject, setDeletingProject] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('loading')
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
+  const [persistenceReady, setPersistenceReady] = useState(false)
+  const persistenceReadyRef = useRef(false)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const changeRevisionRef = useRef(0)
+  const saveAttemptRef = useRef(0)
+  const skipNextAutoSaveRef = useRef(false)
+  const projectTransitionRef = useRef(false)
+
+  useEffect(() => {
+    slidesRef.current = slides
+  }, [slides, slidesRef])
+
+  useEffect(() => {
+    uploadsRef.current = uploads
+  }, [uploads, uploadsRef])
+
+  const setProjectName = useCallback((name: string) => {
+    projectNameRef.current = name
+    setProjectNameState(name)
+  }, [])
+
+  const replaceProject = useCallback((project: PersistedProject) => {
+    currentProjectIdRef.current = project.id
+    currentProjectCreatedAtRef.current = project.createdAt
+    projectNameRef.current = project.projectName
+    slidesRef.current = project.slides
+    uploadsRef.current = project.uploads
+    setCurrentProjectId(project.id)
+    setProjectNameState(project.projectName)
+    setSlides(project.slides)
+    setUploads(project.uploads)
+    setLastSavedAt(project.savedAt)
+    onProjectReplaced(project)
+  }, [onProjectReplaced, setSlides, setUploads, slidesRef, uploadsRef])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const hydrateProject = async () => {
+      try {
+        const workspace = await loadProjectWorkspace()
+        if (cancelled) return
+
+        const project = workspace.activeProject ?? makeNewProject(
+          projectNameRef.current,
+          slidesRef.current,
+          uploadsRef.current,
+        )
+        if (!workspace.activeProject) await saveProject(project)
+        await setActiveProjectId(project.id)
+        if (cancelled) return
+
+        replaceProject(project)
+        setProjects(workspace.activeProject
+          ? workspace.projects
+          : upsertProjectSummary([], project))
+        removeLegacyProject()
+        skipNextAutoSaveRef.current = true
+        setSaveStatus('saved')
+      } catch {
+        if (!cancelled) setSaveStatus('error')
+      } finally {
+        if (!cancelled) {
+          persistenceReadyRef.current = true
+          setPersistenceReady(true)
+        }
+      }
+    }
+
+    void hydrateProject()
+    return () => {
+      cancelled = true
+    }
+  }, [replaceProject, slidesRef, uploadsRef])
+
+  const saveCurrentProject = useCallback(async (showConfirmation = false) => {
+    if (!persistenceReadyRef.current || projectTransitionRef.current) return false
+
+    const savedAt = Date.now()
+    const revision = changeRevisionRef.current
+    const attempt = ++saveAttemptRef.current
+    const snapshot: PersistedProject = {
+      id: currentProjectIdRef.current,
+      projectName: projectNameRef.current.trim() || DEFAULT_PROJECT_NAME,
+      slides: slidesRef.current,
+      uploads: uploadsRef.current,
+      createdAt: currentProjectCreatedAtRef.current,
+      savedAt,
+    }
+
+    setSaveStatus('saving')
+    const saveRequest = saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => saveProject(snapshot))
+    saveQueueRef.current = saveRequest
+
+    try {
+      await saveRequest
+      removeLegacyProject()
+      if (attempt === saveAttemptRef.current && revision === changeRevisionRef.current) {
+        setSaveStatus('saved')
+        setLastSavedAt(savedAt)
+      }
+      setProjects((current) => upsertProjectSummary(current, snapshot))
+      if (showConfirmation) setToast('Projekt lokal gespeichert')
+      return true
+    } catch {
+      if (attempt === saveAttemptRef.current && revision === changeRevisionRef.current) {
+        setSaveStatus('error')
+      }
+      if (showConfirmation) setToast('Lokales Speichern fehlgeschlagen')
+      return false
+    }
+  }, [setToast, slidesRef, uploadsRef])
+
+  const runProjectTransition = useCallback(async (
+    operation: () => Promise<PersistedProject>,
+    successMessage: string,
+    errorMessage: string,
+  ) => {
+    if (projectTransitionRef.current) return
+    const saved = await saveCurrentProject()
+    if (!saved) {
+      setToast(errorMessage)
+      return
+    }
+
+    projectTransitionRef.current = true
+    try {
+      const project = await operation()
+      await setActiveProjectId(project.id)
+      skipNextAutoSaveRef.current = true
+      replaceProject(project)
+      setProjects((current) => upsertProjectSummary(current, project))
+      setSaveStatus('saved')
+      setToast(successMessage)
+    } catch {
+      setSaveStatus('error')
+      setToast(errorMessage)
+    } finally {
+      projectTransitionRef.current = false
+    }
+  }, [replaceProject, saveCurrentProject, setToast])
+
+  const openProject = useCallback((projectId: string) => {
+    if (projectId === currentProjectIdRef.current) return
+    void runProjectTransition(async () => {
+      const project = await loadProject(projectId)
+      if (!project) throw new Error('Projekt nicht gefunden')
+      return project
+    }, 'Projekt geöffnet', 'Projekt konnte nicht geöffnet werden')
+  }, [runProjectTransition])
+
+  const createNewProject = useCallback(() => {
+    const project = makeNewProject(
+      getUniqueProjectName(projects, 'Neues Projekt'),
+      createInitialSlides(),
+      [],
+    )
+    void runProjectTransition(async () => {
+      await saveProject(project)
+      return project
+    }, 'Neues Projekt angelegt', 'Neues Projekt konnte nicht angelegt werden')
+  }, [projects, runProjectTransition])
+
+  const duplicateCurrentProject = useCallback(() => {
+    const project = makeNewProject(
+      getUniqueProjectName(
+        projects,
+        `${projectNameRef.current.trim() || DEFAULT_PROJECT_NAME} Kopie`,
+      ),
+      structuredClone(slidesRef.current),
+      structuredClone(uploadsRef.current),
+    )
+    void runProjectTransition(async () => {
+      await saveProject(project)
+      return project
+    }, 'Projekt dupliziert', 'Projekt konnte nicht dupliziert werden')
+  }, [projects, runProjectTransition, slidesRef, uploadsRef])
+
+  const deleteCurrentProject = useCallback(async () => {
+    if (projects.length <= 1 || projectTransitionRef.current) return
+
+    projectTransitionRef.current = true
+    setDeletingProject(true)
+    try {
+      await saveQueueRef.current.catch(() => undefined)
+      const nextSummary = projects.find((project) => project.id !== currentProjectIdRef.current)
+      if (!nextSummary) throw new Error('Kein Ersatzprojekt gefunden')
+      const nextProject = await loadProject(nextSummary.id)
+      if (!nextProject) throw new Error('Ersatzprojekt nicht gefunden')
+
+      await deleteProject(currentProjectIdRef.current)
+      await setActiveProjectId(nextProject.id)
+      skipNextAutoSaveRef.current = true
+      replaceProject(nextProject)
+      setProjects((current) => current.filter((project) => project.id !== currentProjectIdRef.current))
+      setSaveStatus('saved')
+      setDeleteDialogOpen(false)
+      setToast('Projekt lokal gelöscht')
+    } catch {
+      setSaveStatus('error')
+      setToast('Projekt konnte nicht gelöscht werden')
+    } finally {
+      projectTransitionRef.current = false
+      setDeletingProject(false)
+    }
+  }, [projects, replaceProject, setToast])
+
+  useEffect(() => {
+    if (!persistenceReady) return
+    if (skipNextAutoSaveRef.current) {
+      skipNextAutoSaveRef.current = false
+      return
+    }
+
+    changeRevisionRef.current += 1
+    setSaveStatus('dirty')
+    const timer = window.setTimeout(() => {
+      void saveCurrentProject()
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [persistenceReady, projectName, saveCurrentProject, slides, uploads])
+
+  useEffect(() => {
+    const handleSaveShortcut = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 's') return
+      event.preventDefault()
+      void saveCurrentProject(true)
+    }
+
+    const flushPendingChanges = () => {
+      if (document.visibilityState === 'hidden') void saveCurrentProject()
+    }
+
+    window.addEventListener('keydown', handleSaveShortcut)
+    document.addEventListener('visibilitychange', flushPendingChanges)
+    window.addEventListener('pagehide', flushPendingChanges)
+    return () => {
+      window.removeEventListener('keydown', handleSaveShortcut)
+      document.removeEventListener('visibilitychange', flushPendingChanges)
+      window.removeEventListener('pagehide', flushPendingChanges)
+    }
+  }, [saveCurrentProject])
+
+  return {
+    projectName,
+    setProjectName,
+    currentProjectId,
+    projects,
+    saveStatus,
+    lastSavedAt,
+    persistenceReady,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    deletingProject,
+    saveCurrentProject,
+    openProject,
+    createNewProject,
+    duplicateCurrentProject,
+    deleteCurrentProject,
+  }
+}
