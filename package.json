@@ -1,6 +1,6 @@
 {
   "name": "frameflow",
-  "description": "A browser-based studio for designing and exporting App Store screenshots.",
+  "description": "An AI-first, local-first canvas editor for editable App Store screenshot sets.",
   "private": true,
   "version": "0.1.0",
   "license": "MIT",

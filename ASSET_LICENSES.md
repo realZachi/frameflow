@@ -15,6 +15,12 @@ The following overlays were added by the original Frameflow contributors. Git hi
 
 Before making the repository public, a maintainer should confirm that the project has the right to redistribute these PSD-derived overlays under MIT. If any overlay came from a third-party template, replace the entry above with the original creator, source URL, license, required attribution, and modification details. Remove or replace an asset if its license does not allow redistribution in an open-source repository.
 
+## Documentation media
+
+| Files | Creator and source | License | Modifications and attribution |
+| --- | --- | --- | --- |
+| `docs/assets/demos/frameflow-overview.gif`, `docs/assets/demos/ai-screen-edit.gif` | Frameflow maintainer; project screen recordings supplied for this repository | MIT | Downscaled, frame-rate reduced, and palette-optimized with FFmpeg. No external attribution required. |
+
 ## Adding an asset
 
 Every asset pull request must add or update a row with:

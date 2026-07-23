@@ -1,13 +1,15 @@
 # Frameflow
 
-An AI-first, browser-based editor for App Store screenshot sets — the AI doesn't generate images, it builds real, editable designs.
+An AI-first, local-first canvas editor for creating complete iOS App Store screenshot sets in the browser. The AI agent builds real, editable designs instead of flattening your ideas into generated images.
 
+[![CI](https://github.com/realZachi/frameflow/actions/workflows/ci.yml/badge.svg)](https://github.com/realZachi/frameflow/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/realZachi/frameflow?display_name=tag&sort=semver)](https://github.com/realZachi/frameflow/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2563eb.svg)](LICENSE)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-16a34a.svg)](CONTRIBUTING.md)
 
 Describe your app, upload raw screenshots, and an AI agent designs the full set — not as opaque bitmaps, but by driving the same editor operations you'd use by hand. Every text layer, gradient, shape, and device mockup it places stays a real canvas element: select it, restyle it, move it, or redo it manually. Then export every artboard at exact store resolutions.
 
-![The Frameflow editor showing a five-screen App Store screenshot set, with a text layer selected for inline editing](docs/assets/editor-screenshot.png)
+![Frameflow's AI agent generating a complete, editable App Store screenshot set](docs/assets/demos/frameflow-overview.gif)
 
 Projects live entirely in your browser — no account, no backend. The editor itself works without any API key; bring your own key only for AI generation.
 
@@ -20,6 +22,12 @@ Projects live entirely in your browser — no account, no backend. The editor it
 - **Perspective device mockups** — drop a raw screenshot into a device frame with correct 3D geometry.
 - **Local-first** — projects and uploads are stored in IndexedDB in your browser.
 - **Store-ready export** — download the whole set as `1290 × 2796` or `1242 × 2688` PNGs in one ZIP.
+
+## Refine one screen with AI
+
+Select any artboard, describe the change, and let the AI agent revise just that screen. The result uses the same editor operations as the full-set generator and stays fully editable.
+
+![Frameflow revising a single App Store screenshot with the AI editing action](docs/assets/demos/ai-screen-edit.gif)
 
 ## Quick start
 
