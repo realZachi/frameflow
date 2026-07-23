@@ -1,10 +1,12 @@
 import {
+  Add01Icon,
   AlignCenter as AlignCenterIcon,
   AlignLeft as AlignLeftIcon,
   AlignRight as AlignRightIcon,
   AlertCircleIcon,
   ArrowDown as ArrowDownIcon,
   ArrowUp as ArrowUpIcon,
+  BatteryFullIcon,
   Blend as BlendIcon,
   Bold as BoldIcon,
   Check as CheckIcon,
@@ -15,6 +17,7 @@ import {
   Copy as CopyIcon,
   CursorMagicSelection02Icon,
   Download as DownloadIcon,
+  Home01Icon,
   ImagePlus as ImagePlusIcon,
   Italic as ItalicIcon,
   Layers as Layers3Icon,
@@ -23,12 +26,16 @@ import {
   LockOpen as LockOpenIcon,
   Minus as MinusIcon,
   MonitorSmartphone as MonitorSmartphoneIcon,
+  MoreHorizontalIcon,
   Palette as PaletteIcon,
   Plus as PlusIcon,
   Redo2 as Redo2Icon,
   SaveIcon,
+  Search01Icon,
   Shapes as ShapesIcon,
+  SignalIcon,
   SlidersHorizontalIcon,
+  SparklesIcon,
   StartUp02Icon,
   Strikethrough as StrikethroughIcon,
   Trash2 as Trash2Icon,
@@ -36,6 +43,8 @@ import {
   Underline as UnderlineIcon,
   Undo2 as Undo2Icon,
   Upload as UploadIcon,
+  UserCircleIcon,
+  Wifi01Icon,
   X as XIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
@@ -48,11 +57,13 @@ const createIcon = (icon: IconSvgElement) => (props: IconProps) => (
 )
 
 export const AlignCenter = createIcon(AlignCenterIcon)
+export const Add01 = createIcon(Add01Icon)
 export const AlignLeft = createIcon(AlignLeftIcon)
 export const AlignRight = createIcon(AlignRightIcon)
 export const AlertCircle = createIcon(AlertCircleIcon)
 export const ArrowDown = createIcon(ArrowDownIcon)
 export const ArrowUp = createIcon(ArrowUpIcon)
+export const BatteryFull = createIcon(BatteryFullIcon)
 export const Blend = createIcon(BlendIcon)
 export const Bold = createIcon(BoldIcon)
 export const Check = createIcon(CheckIcon)
@@ -63,6 +74,7 @@ export const Cloud = createIcon(CloudIcon)
 export const Copy = createIcon(CopyIcon)
 export const CursorMagicSelection02 = createIcon(CursorMagicSelection02Icon)
 export const Download = createIcon(DownloadIcon)
+export const Home01 = createIcon(Home01Icon)
 export const ImagePlus = createIcon(ImagePlusIcon)
 export const Italic = createIcon(ItalicIcon)
 export const Layers3 = createIcon(Layers3Icon)
@@ -71,12 +83,16 @@ export const LockKeyhole = createIcon(LockKeyholeIcon)
 export const LockOpen = createIcon(LockOpenIcon)
 export const Minus = createIcon(MinusIcon)
 export const MonitorSmartphone = createIcon(MonitorSmartphoneIcon)
+export const MoreHorizontal = createIcon(MoreHorizontalIcon)
 export const Palette = createIcon(PaletteIcon)
 export const Plus = createIcon(PlusIcon)
 export const Redo2 = createIcon(Redo2Icon)
 export const Save = createIcon(SaveIcon)
+export const Search01 = createIcon(Search01Icon)
 export const Shapes = createIcon(ShapesIcon)
+export const Signal = createIcon(SignalIcon)
 export const SlidersHorizontal = createIcon(SlidersHorizontalIcon)
+export const Sparkles = createIcon(SparklesIcon)
 export const StartUp02 = createIcon(StartUp02Icon)
 export const Strikethrough = createIcon(StrikethroughIcon)
 export const Trash2 = createIcon(Trash2Icon)
@@ -84,4 +100,6 @@ export const Type = createIcon(TypeIcon)
 export const Underline = createIcon(UnderlineIcon)
 export const Undo2 = createIcon(Undo2Icon)
 export const Upload = createIcon(UploadIcon)
+export const UserCircle = createIcon(UserCircleIcon)
+export const Wifi01 = createIcon(Wifi01Icon)
 export const X = createIcon(XIcon)

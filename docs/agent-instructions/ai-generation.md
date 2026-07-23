@@ -26,6 +26,7 @@ The model mutates the editor only through the tools composed by `src/ai/tools.ts
 - Add new element fields to the type, defaults, renderer, controller whitelist, and `update_element` as applicable.
 - Emit `AiToolActivity` for visible mutations.
 - Return real DOM measurements after element mutations.
+- Icons: the model places Hugeicons via `add_icon` and updates them via `update_element` (fields: `icon`, `color`, `strokeWidth`, `shadow`). The curated icon library lives in `src/icons.ts`. The model must NEVER use emoji characters on canvas; always use `add_icon` instead.
 - Keep `inspect_slide` and `render_slide_preview` as the visual correction loop.
 - Keep edit mode scoped to its target slide.
 

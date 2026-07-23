@@ -3,6 +3,7 @@ import { templateMeta } from '../data'
 import { deviceOptions } from '../mockups/catalog'
 import { shapeCatalog } from '../shapes'
 import { getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
+import { IconPicker } from './IconPicker'
 import {
   Blend,
   ChevronDown,
@@ -12,6 +13,7 @@ import {
   Palette,
   Plus,
   Shapes,
+  Sparkles,
   StartUp02,
   Type,
   Upload,
@@ -23,6 +25,7 @@ const tools: { id: ToolId; label: string; icon: ReactNode }[] = [
   { id: 'templates', label: 'Templates', icon: <StartUp02 size={19} /> },
   { id: 'device', label: 'Mockups', icon: <MonitorSmartphone size={19} /> },
   { id: 'elements', label: 'Elements', icon: <Shapes size={19} /> },
+  { id: 'icons', label: 'Icons', icon: <Sparkles size={19} /> },
   { id: 'text', label: 'Text', icon: <Type size={19} /> },
   { id: 'background', label: 'Background', icon: <Palette size={19} /> },
   { id: 'uploads', label: 'Uploads', icon: <Upload size={19} /> },
@@ -143,6 +146,16 @@ const ElementsPanel = ({ onAddShape }: {
       ))}
     </div>
     <p className="panel-hint">Click a shape to add it to the active screen.</p>
+  </>
+)
+
+const IconsPanel = ({ onAddIcon }: {
+  onAddIcon: (iconId: string) => void
+}) => (
+  <>
+    <div className="panel-heading"><div><span>VECTORS</span><h2>Icons</h2></div><p>Crisp Hugeicons for features, ratings, and accents.</p></div>
+    <IconPicker onSelect={onAddIcon} />
+    <p className="panel-hint">Click an icon to add it to the active screen.</p>
   </>
 )
 
@@ -333,6 +346,7 @@ type PropertiesPanelProps = {
   onAddText: (preset: TextPreset) => void
   onAddDevice: (style: Extract<CanvasElement, { type: 'device' }>['deviceStyle']) => void
   onAddShape: (shape: ShapeElement['shape']) => void
+  onAddIcon: (iconId: string) => void
   onUpdateBackground: (patch: Partial<Background>) => void
   onUploadFiles: (files: FileList) => void
   onUploadBackground: (file: File) => void
@@ -340,11 +354,12 @@ type PropertiesPanelProps = {
   onSetDeviceImage: (asset: UploadAsset) => void
 }
 
-export const PropertiesPanel = ({ activeTool, activeSlide, uploads, onApplyTemplate, onAddText, onAddDevice, onAddShape, onUpdateBackground, onUploadFiles, onUploadBackground, onAddImage, onSetDeviceImage }: PropertiesPanelProps) => (
+export const PropertiesPanel = ({ activeTool, activeSlide, uploads, onApplyTemplate, onAddText, onAddDevice, onAddShape, onAddIcon, onUpdateBackground, onUploadFiles, onUploadBackground, onAddImage, onSetDeviceImage }: PropertiesPanelProps) => (
   <aside className="properties-panel" id="properties-panel">
     <div className="panel-scroll">
       {activeTool === 'templates' && <TemplatesPanel onApplyTemplate={onApplyTemplate} />}
       {activeTool === 'elements' && <ElementsPanel onAddShape={onAddShape} />}
+      {activeTool === 'icons' && <IconsPanel onAddIcon={onAddIcon} />}
       {activeTool === 'text' && (
         <>
           <div className="panel-heading"><div><span>TYPE</span><h2>Text</h2></div><p>Expressive hierarchy, labels, and quotes for App Store screens.</p></div>

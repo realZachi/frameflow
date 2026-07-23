@@ -1,3 +1,4 @@
+import { createAddIconTool } from './icon-tool'
 import { createInspectionTools } from './inspection-tools'
 import { createMediaTools } from './media-tools'
 import { createSlideTools } from './slide-tools'
@@ -29,6 +30,7 @@ export function createEditorTools(
   const editTools = {
     ...editableSlideTools,
     add_text: createAddTextTool(context),
+    add_icon: createAddIconTool(context),
     ...createMediaTools(context),
     update_element: createUpdateElementTool(context),
     ...createInspectionTools(context),

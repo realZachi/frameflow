@@ -17,12 +17,15 @@ import {
   MonitorSmartphone,
   Shapes,
   SlidersHorizontal,
+  Sparkles,
   Strikethrough,
   Trash2,
   Type,
   Underline,
   Upload,
 } from './icons'
+import { IconControls, IconSettings } from './IconToolbarControls'
+import { percentPresets, type ToolbarPreset } from './toolbar-shared'
 import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from './ui/popover'
 import {
@@ -38,7 +41,7 @@ import { Separator } from './ui/separator'
 import { Slider } from './ui/slider'
 import type { CanvasElement } from '../types'
 
-type Props = {
+export type Props = {
   element: CanvasElement
   onUpdate: (patch: Partial<CanvasElement>) => void
   onUploadToDevice: (file: File) => void
@@ -53,22 +56,10 @@ const elementMeta: Record<CanvasElement['type'], { label: string; icon: ReactNod
   device: { label: 'Mockup', icon: <MonitorSmartphone size={16} /> },
   shape: { label: 'Shape', icon: <Shapes size={16} /> },
   image: { label: 'Image', icon: <ImagePlus size={16} /> },
+  icon: { label: 'Icon', icon: <Sparkles size={16} /> },
 }
 
-type ToolbarPreset = {
-  label: string
-  value: number
-}
-
-const percentPresets: ToolbarPreset[] = [
-  { label: 'None', value: 0 },
-  { label: 'Light', value: 25 },
-  { label: 'Medium', value: 50 },
-  { label: 'Strong', value: 75 },
-  { label: 'Max', value: 100 },
-]
-
-const ToolbarRange = ({ label, value, min, max, step = 1, displayValue, triggerValue, presets, className, onChange }: {
+export const ToolbarRange = ({ label, value, min, max, step = 1, displayValue, triggerValue, presets, className, onChange }: {
   label: string
   value: number
   min: number
@@ -149,7 +140,7 @@ const colorPresets = [
   '#f43f5e',
 ]
 
-const ToolbarColor = ({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) => (
+export const ToolbarColor = ({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) => (
   <Popover>
     <PopoverTrigger render={<Button variant="outline" size="sm" className="toolbar-color" aria-label={`${label}: ${value}`} />}>
       <span className="toolbar-color-swatch" style={{ backgroundColor: value }} />
@@ -276,6 +267,7 @@ const ElementSpecificSettings = ({ element, onUpdate }: Pick<Props, 'element' | 
   if (element.type === 'text') return <TextSettings element={element} onUpdate={onUpdate} />
   if (element.type === 'shape') return <ShapeSettings element={element} onUpdate={onUpdate} />
   if (element.type === 'image') return <ImageSettings element={element} onUpdate={onUpdate} />
+  if (element.type === 'icon') return <IconSettings element={element} onUpdate={onUpdate} />
   return <DeviceSettings element={element} onUpdate={onUpdate} />
 }
 
@@ -487,6 +479,7 @@ export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicat
           </>
         )}
         {element.type === 'device' && <DeviceControls element={element} onUpdate={onUpdate} onUpload={onUploadToDevice} />}
+        {element.type === 'icon' && <IconControls element={element} onUpdate={onUpdate} />}
         <MoreSettings element={element} onUpdate={onUpdate} />
       </div>
       <div ref={actionsRef} className="context-toolbar-actions">

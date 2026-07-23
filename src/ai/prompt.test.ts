@@ -46,3 +46,19 @@ describe('AI prompt branding', () => {
     expect(message).toContain('upload-1 — home.png')
   })
 })
+
+describe('AI prompt icons', () => {
+  it('instructs the model to use Hugeicons and never emoji', () => {
+    const instructions = buildInstructions()
+
+    expect(instructions).toContain('add_icon')
+    expect(instructions).toContain('NEVER use emoji')
+    expect(instructions).toContain('Hugeicons')
+  })
+
+  it('includes the no-emoji rule in edit mode', () => {
+    const instructions = buildInstructions({ targetSlideId: 'slide-1' })
+
+    expect(instructions).toContain('NEVER use emoji')
+  })
+})

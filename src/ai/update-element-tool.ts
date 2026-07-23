@@ -33,6 +33,7 @@ import {
   deviceStyleSchema,
   fontFamilySchema,
   highlightsSchema,
+  iconSchema,
   MEASUREMENT_NOTE,
   screenThemeSchema,
   shapeSchema,
@@ -74,6 +75,7 @@ const updateElementSchema = z.object({
   shadow: z.number().optional().describe('Text, device, image, or shape elements, 0-100.'),
   borderRadius: z.number().optional().describe('Text elements 0-40; image elements 0-100.'),
   shape: shapeSchema.optional().describe('Shape elements only.'),
+  icon: iconSchema.optional().describe('Icon elements only.'),
 })
 
 type UpdateElementInput = z.infer<typeof updateElementSchema>
@@ -173,6 +175,16 @@ const addTypeFields = (
       ['borderRadius', fields.borderRadius === undefined
         ? undefined
         : clampBorderRadius(fields.borderRadius)],
+    ])
+  }
+  if (elementType === 'icon') {
+    assignDefined(patch, [
+      ['icon', fields.icon],
+      ['color', fields.color],
+      ['strokeWidth', fields.strokeWidth === undefined
+        ? undefined
+        : clamp(fields.strokeWidth, 1, 3)],
+      ['shadow', fields.shadow === undefined ? undefined : clampShadow(fields.shadow)],
     ])
   }
 }

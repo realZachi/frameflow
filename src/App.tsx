@@ -113,6 +113,7 @@ export default function App() {
     if (element?.type === 'text') setActiveTool('text')
     if (element?.type === 'device') setActiveTool('device')
     if (element?.type === 'shape') setActiveTool('elements')
+    if (element?.type === 'icon') setActiveTool('icons')
     if (element?.type === 'image') setActiveTool('uploads')
   }, [clearSelection, resolvedActiveSlideId])
 
@@ -256,6 +257,7 @@ export default function App() {
             onAddText={actions.addText}
             onAddDevice={actions.addDevice}
             onAddShape={actions.addShape}
+            onAddIcon={actions.addIcon}
             onUpdateBackground={actions.updateBackground}
             onUploadFiles={(files) => {
               void actions.uploadFiles(files)

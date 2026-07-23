@@ -1,4 +1,4 @@
-export type ToolId = 'templates' | 'device' | 'elements' | 'text' | 'background' | 'uploads'
+export type ToolId = 'templates' | 'device' | 'elements' | 'text' | 'background' | 'uploads' | 'icons'
 
 export type BackgroundPattern = 'none' | 'dots' | 'grid' | 'diagonal' | 'waves'
 
@@ -102,7 +102,15 @@ export type ShapeElement = BaseElement & {
   shadow?: number
 }
 
-export type CanvasElement = TextElement | DeviceElement | ImageElement | ShapeElement
+export type IconElement = BaseElement & {
+  type: 'icon'
+  icon: string
+  color: string
+  strokeWidth?: number
+  shadow?: number
+}
+
+export type CanvasElement = TextElement | DeviceElement | ImageElement | ShapeElement | IconElement
 
 export type Slide = {
   id: string

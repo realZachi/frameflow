@@ -198,6 +198,23 @@ export function useEditorActions({
     }, 'elements')
   }, [addElement])
 
+  const addIcon = useCallback((iconId: string) => {
+    const width = 12
+    addElement({
+      id: uid('icon'),
+      type: 'icon',
+      x: 50 - width / 2,
+      y: 38,
+      width,
+      rotation: 0,
+      opacity: 1,
+      icon: iconId,
+      color: '#ffffff',
+      strokeWidth: 1.5,
+      shadow: 0,
+    }, 'icons')
+  }, [addElement])
+
   const addDevice = useCallback((deviceStyle: DeviceElement['deviceStyle']) => {
     addElement(createDeviceElement(deviceStyle), 'device')
   }, [addElement])
@@ -396,6 +413,7 @@ export function useEditorActions({
     updateSelected,
     addText,
     addShape,
+    addIcon,
     addDevice,
     addImage,
     setDeviceImage,

@@ -9,14 +9,15 @@ import {
 } from 'react'
 import { photoMockups, type PhotoMockupDefinition } from '../mockups/catalog'
 import { hexToRgba, richTextHasFormatting, richTextToPlain, sanitizeRichText } from '../utils'
-import { Bold, Italic, LockKeyhole, Underline } from './icons'
+import { IconGraphic } from './IconGraphic'
+import { Bold, Home01, Italic, LockKeyhole, MoreHorizontal, Search01, Signal, Underline, UserCircle, Wifi01, BatteryFull, Add01 } from './icons'
 import { ShapeGraphic } from './ShapeGraphic'
 import type { CanvasElement } from '../types'
 
 const FakeScreen = ({ theme }: { theme: Extract<CanvasElement, { type: 'device' }>['screenTheme'] }) => (
   <div className={`fake-screen fake-screen--${theme}`}>
-    <div className="fake-status"><span>9:41</span><span>● ● ◒</span></div>
-    <div className="fake-appbar"><span className="fake-avatar" /><strong>Northstar</strong><span className="fake-more">•••</span></div>
+    <div className="fake-status"><span>9:41</span><span className="fake-status-icons"><Signal size={9} /><Wifi01 size={9} /><BatteryFull size={11} /></span></div>
+    <div className="fake-appbar"><span className="fake-avatar" /><strong>Northstar</strong><span className="fake-more"><MoreHorizontal size={14} /></span></div>
     <div className="fake-hero">
       <span className="fake-kicker">WEEKLY FOCUS</span>
       <strong>{theme === 'night' ? 'Move with intention.' : theme === 'sun' ? 'Your day, at a glance.' : theme === 'mint' ? 'Calm starts here.' : 'Make space for joy.'}</strong>
@@ -30,7 +31,7 @@ const FakeScreen = ({ theme }: { theme: Extract<CanvasElement, { type: 'device' 
       <div><small>PROGRESS</small><b>84%</b></div>
       <div><small>STREAK</small><b>12d</b></div>
     </div>
-    <div className="fake-tabs"><span>⌂</span><span>◇</span><span>＋</span><span>◎</span></div>
+    <div className="fake-tabs"><span><Home01 size={14} /></span><span><Search01 size={14} /></span><span><Add01 size={14} /></span><span><UserCircle size={14} /></span></div>
   </div>
 )
 
@@ -213,6 +214,8 @@ export const ElementContent = ({ element }: { element: CanvasElement }) => {
       />
     )
   }
+
+  if (element.type === 'icon') return <IconGraphic element={element} />
 
   return <ShapeGraphic element={element} />
 }

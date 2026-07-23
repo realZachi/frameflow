@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { iconIds } from '../icons'
 
 export const COORDINATE_NOTE = 'Percent of the 1290x2796 canvas. x/y is the top-left corner of the element, width is percent of canvas width; height is automatic. x/y may be negative (down to -35) and width may exceed 100 (up to 140), so elements can deliberately bleed off the canvas edges for cropped, dynamic compositions.'
 
@@ -39,6 +40,12 @@ export const shapeSchema = z.enum([
   'arrow',
   'wave',
 ])
+
+export const iconSchema = z
+  .enum(iconIds)
+  .describe(
+    'Hugeicons icon id. Pick from the curated library: Status (check, check-circle, cancel, cancel-circle, alert, info, help, ban), Social Proof (star, heart, thumbs-up, smile, award, medal, crown, badge-check, certificate), Arrows (arrow-up, arrow-right, arrow-down, arrow-left, arrow-up-right, compass, navigation), Communication (bell, mail, message, chat, notification, phone, call), Media (camera, image, play, video, music, mic, headphones, view, pen, edit), Business (chart, bar-chart, pie-chart, analytics-up, dollar, percent, wallet, coins, shopping-bag, cart, store, tag), Security (lock, shield, key, cloud, download, wifi, power), Time & Location (alarm, stopwatch, timer, calendar, map-pin, location, route), Nature (sun, moon, leaf, snow, droplet, fire, bulb), Accent (sparkles, zap, flash, rocket, target, globe, diamond, flag, gift, search, settings, home). NEVER use emoji characters on canvas — always use an icon from this library instead.',
+  )
 
 export const backgroundPatternSchema = z.enum([
   'none',
