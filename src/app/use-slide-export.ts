@@ -39,7 +39,7 @@ export function useSlideExport({
         ? document.getElementById(`artboard-${firstSlide.id}`)
         : null
       const fontEmbedCSS = firstNode
-        ? await getFontEmbedCSS(firstNode, { preferredFontFormat: 'woff2' })
+        ? await getFontEmbedCSS(firstNode)
         : null
 
       for (const [index, slide] of slides.entries()) {
@@ -53,7 +53,6 @@ export function useSlideExport({
           canvasHeight: format.height,
           backgroundColor: slide.background.color1,
           ...(fontEmbedCSS ? { fontEmbedCSS } : {}),
-          preferredFontFormat: 'woff2',
           filter: (candidate) =>
             !(candidate instanceof HTMLElement && candidate.dataset['aiOverlay']),
         })
