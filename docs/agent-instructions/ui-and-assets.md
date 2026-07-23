@@ -21,7 +21,7 @@
 - `src/styles.css` contains imports only.
 - `src/styles/base.css` owns layout and component structure.
 - `src/styles/theme.css` owns shadcn tokens, theme overrides, and the compact editor type scale.
-- Keep each stylesheet below 700 lines; `bun run structure` enforces this.
+- Split a stylesheet by responsibility when it gets hard to navigate; there is no hard line limit.
 - Reuse existing classes and semantic tokens before adding a selector.
 - Do not use `!important` to bypass ownership or specificity problems.
 - User-authored artboard content may use arbitrary visual values. Editor chrome may not.

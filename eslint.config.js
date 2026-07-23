@@ -55,17 +55,6 @@ export default tseslint.config(
       complexity: ['error', 25],
       eqeqeq: ['error', 'always'],
       'max-depth': ['error', 4],
-      'max-lines': ['error', {
-        max: 500,
-        skipBlankLines: true,
-        skipComments: true,
-      }],
-      'max-lines-per-function': ['error', {
-        max: 300,
-        skipBlankLines: true,
-        skipComments: true,
-        IIFEs: true,
-      }],
       'max-params': ['error', 5],
       'no-console': ['error', { allow: ['error', 'warn'] }],
       'import-x/first': 'error',

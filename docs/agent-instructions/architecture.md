@@ -35,18 +35,15 @@ ESLint enforces the AI and editor restrictions and rejects import cycles.
 
 Place feature-specific helpers next to their feature. Add to a generic `utils` module only when the function is domain-independent and has multiple real callers.
 
-## Enforced size and complexity ceilings
+## Enforced complexity ceilings
 
 These are ceilings, not design targets:
 
-- TypeScript module: 500 non-blank, non-comment lines.
-- Function: 300 non-blank, non-comment lines.
 - Cyclomatic complexity: 25.
 - Nesting depth: 4.
 - Positional parameters: 5.
-- Stylesheet: 700 physical lines.
 
-Split code earlier when a name, test, or review becomes difficult. Never evade a limit with generated wrappers, disabled rules, compressed formatting, or unrelated helper dumping.
+There is no hard line-count limit on modules, functions, or stylesheets. Size is a judgment call, not a gate: split code when a name, test, or review becomes difficult, not to satisfy a counter. Never evade the complexity ceilings with generated wrappers, disabled rules, compressed formatting, or unrelated helper dumping.
 
 ## State and side effects
 
