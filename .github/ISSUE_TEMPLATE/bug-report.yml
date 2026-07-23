@@ -1,0 +1,93 @@
+name: Bug report
+description: Report reproducible behavior that is not working as expected.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Frameflow. Search existing issues first, and remove API keys, private screenshots, and customer data from everything you submit.
+
+        Do not report security vulnerabilities here. Follow `SECURITY.md` instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Which release, branch, or commit are you using?
+      placeholder: main at abc1234
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include your operating system and browser with version.
+      placeholder: macOS 15.5, Chrome 138
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Canvas and element editing
+        - Project persistence
+        - Uploads and device mockups
+        - Export
+        - AI generation
+        - Setup or build
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Give the smallest reliable sequence that demonstrates the problem.
+      placeholder: |
+        1. Open ...
+        2. Add ...
+        3. Click ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, recording, or logs
+      description: Optional. Use non-sensitive sample content and redact secrets.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Share any other detail that may help reproduce or diagnose the issue.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for duplicates.
+          required: true
+        - label: I removed API keys and private or copyrighted user content.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
