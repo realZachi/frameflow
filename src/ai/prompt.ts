@@ -43,6 +43,7 @@ The canvas is a portrait artboard, 1290x2796 px. Every position and size you pas
 - x/y are the top-left corner of an element, as a percent of canvas width/height.
 - width is a percent of canvas width. Height is always automatic (derived from content or aspect ratio).
 - x and y may be NEGATIVE (down to -35) and width may go up to 140. Elements may deliberately bleed off the canvas: a device at width 125 / x -18 reads as a dramatic close-up crop, a shape at x 88 pokes in from the right edge. Strong sets crop devices at the frame instead of always floating a complete phone in the middle.
+- When a device bleeds off the canvas, its APP SCREEN CONTENT is the subject and must stay substantially visible. Cropping is only allowed to trim the device frame/bezel and empty edges; it must never hide the primary content of the screenshot (the main heading, hero image, or focal UI the screen is meant to show). Aim to keep at least ~70% of the screen area on-canvas, and always keep the focal part of the screenshot fully inside the frame. If a large slice of the screen content or its focal point falls off the edge, that is a real defect - scale the device down or shift it inward until the important part reads clearly.
 - fontSize is different: it is a raw px value on the artboard's internal 330px-wide base, NOT a percent and NOT px at the 1290px export size. Hero headlines are roughly 32-46, sub-headlines 18-24, body/supporting copy 13-17, small labels 9-12. Values above ~52 are almost always a mistake.
 - Text height is automatic and depends on font, line breaks, and wrapping - you cannot predict it exactly. ALWAYS verify actual text height with the bounding boxes and warnings the tools return.
 - Paint order follows creation order: elements you add later render on top of elements added earlier. Build each slide back to front: background shapes first, then devices, then text.
@@ -67,12 +68,12 @@ ${layoutContext}
 Every mutating tool (add_text, add_device, add_shape, add_image, set_device_screenshot, update_element) returns the element's real rendered bounding box plus slide-wide layout warnings. Read them after every call - they describe the actual rendered layout, not your guess at it.
 
 Treat warnings as evidence, not commands:
-- Real defects - fix immediately: text clipped by a canvas edge (it will be cut off in export), text overlapping other text, collisions your archetype did not intend, unreadable contrast.
-- Intentional design - keep it: devices or shapes bleeding off the canvas, text deliberately overlapping a device (TEXT OVER DEVICE, GIANT CROP, BOTTOM ANCHOR). The rendered preview is the judge: if the image looks clean and every word is legible, the warning is satisfied.
+- Real defects - fix immediately: text clipped by a canvas edge (it will be cut off in export), text overlapping other text, collisions your archetype did not intend, unreadable contrast, and a device cropped so hard that its focal screen content is cut off (see the bleed rule under Canvas).
+- Intentional design - keep it: devices or shapes bleeding off the canvas WHILE their focal screen content stays on-canvas, text deliberately overlapping a device (TEXT OVER DEVICE, GIANT CROP, BOTTOM ANCHOR). The rendered preview is the judge: if the image looks clean, every word is legible, and the important part of each screenshot is fully visible, the warning is satisfied.
 
 After composing each slide:
 1. Fix real defects; for intentional overlaps, confirm legibility in the preview instead of "fixing" them away.
-2. Call render_slide_preview and actually study the returned image: does the headline fit without clipping, is every word legible against what is behind it, does the composition have energy, does the slide feel like part of the same set as the others?
+2. Call render_slide_preview and actually study the returned image: does the headline fit without clipping, is every word legible against what is behind it, is the device's focal screen content fully visible (not cropped away by a canvas edge), does the composition have energy, does the slide feel like part of the same set as the others?
 3. If you spot issues, fix them with update_element and re-render. Allow at most 2 repair rounds per slide, then move on - do not get stuck perfecting a single screen.
 
 ${finalReview}
