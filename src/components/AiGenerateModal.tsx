@@ -355,6 +355,9 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
                 availability={AI_PROVIDER_AVAILABILITY}
                 onProviderChange={handleProviderChange}
                 onModelChange={(model) => setSelection((current) => ({ ...current, model }))}
+                onReasoningEffortChange={(reasoningEffort) => {
+                  setSelection((current) => ({ ...current, reasoningEffort }))
+                }}
               />
               <IdleContent
                 isEditMode={isEditMode}

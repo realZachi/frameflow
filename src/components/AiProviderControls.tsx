@@ -1,10 +1,12 @@
 import {
   AI_PROVIDERS,
+  AI_REASONING_EFFORT_LABELS,
   getAiModel,
   getAiProvider,
   isAiProviderId,
   type AiModelSelection,
   type AiProviderId,
+  type AiReasoningEffort,
 } from '../ai/provider-catalog'
 import { AlertCircle } from './icons'
 import {
@@ -21,6 +23,7 @@ export type AiProviderControlsProps = {
   availability: AiProviderAvailability
   onProviderChange: (providerId: AiProviderId) => void
   onModelChange: (modelId: string) => void
+  onReasoningEffortChange: (reasoningEffort: AiReasoningEffort) => void
 }
 
 export const AiProviderControls = ({
@@ -28,14 +31,16 @@ export const AiProviderControls = ({
   availability,
   onProviderChange,
   onModelChange,
+  onReasoningEffortChange,
 }: AiProviderControlsProps) => {
   const provider = getAiProvider(selection.provider)
   const model = getAiModel(selection)
   const isConfigured = availability[selection.provider]
+  const reasoningEffort = selection.reasoningEffort ?? 'provider-default'
 
   return (
     <div className="ai-provider-controls">
-      <div className="ai-provider-grid">
+      <div className={`ai-provider-grid${model.reasoningEfforts ? ' ai-provider-grid--with-effort' : ''}`}>
         <div className="ai-modal-field ai-modal-field--compact">
           <label htmlFor="ai-provider-trigger">Provider</label>
           <Select
@@ -85,6 +90,35 @@ export const AiProviderControls = ({
             </SelectContent>
           </Select>
         </div>
+        {model.reasoningEfforts && (
+          <div className="ai-modal-field ai-modal-field--compact">
+            <label htmlFor="ai-effort-trigger">Effort</label>
+            <Select
+              value={reasoningEffort}
+              onValueChange={(value) => {
+                const supportedEffort = model.reasoningEfforts?.find(
+                  (option) => option === value,
+                )
+                if (supportedEffort) onReasoningEffortChange(supportedEffort)
+              }}
+            >
+              <SelectTrigger
+                id="ai-effort-trigger"
+                className="ai-provider-trigger"
+                aria-label="Reasoning effort"
+              >
+                <SelectValue>{AI_REASONING_EFFORT_LABELS[reasoningEffort]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" className="ai-modal-select-content">
+                {model.reasoningEfforts.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {AI_REASONING_EFFORT_LABELS[option]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       <small className="ai-provider-description">{model.description}</small>
       {!isConfigured && (

@@ -38,7 +38,7 @@ The `"private": true` package flag only prevents accidental publication to a pac
 
 ## Enable AI generation
 
-AI generation is optional. The provider and model can be selected in the generation dialog. The existing Moonshot integration remains available alongside Google Gemini, Alibaba Qwen, OpenAI GPT, and Anthropic Claude models that support both screenshots and editor tool calls.
+AI generation is optional. The provider and model can be selected in the generation dialog. Models with configurable reasoning also expose their supported effort levels there; leaving the value at **Provider default** preserves the provider's normal behavior. The existing Moonshot integration remains available alongside Google Gemini, Alibaba Qwen, OpenAI GPT, and Anthropic Claude models that support both screenshots and editor tool calls.
 
 1. Create an API key for at least one supported provider.
 2. Copy the environment template:

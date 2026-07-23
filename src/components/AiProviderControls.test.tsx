@@ -27,6 +27,7 @@ describe('AI provider controls', () => {
         }}
         onProviderChange={() => undefined}
         onModelChange={() => undefined}
+        onReasoningEffortChange={() => undefined}
       />,
     )
 
@@ -48,9 +49,58 @@ describe('AI provider controls', () => {
         }}
         onProviderChange={() => undefined}
         onModelChange={() => undefined}
+        onReasoningEffortChange={() => undefined}
       />,
     )
 
     expect(markup).not.toContain('API key missing.')
+  })
+
+  it('shows model-specific reasoning efforts and omits them for Moonshot', () => {
+    const openAiMarkup = renderToStaticMarkup(
+      <AiProviderControls
+        selection={{
+          provider: 'openai',
+          model: 'gpt-5.6-sol',
+          reasoningEffort: 'high',
+        }}
+        availability={{
+          moonshot: false,
+          google: false,
+          qwen: false,
+          openai: true,
+          anthropic: false,
+        }}
+        onProviderChange={() => undefined}
+        onModelChange={() => undefined}
+        onReasoningEffortChange={() => undefined}
+      />,
+    )
+
+    expect(openAiMarkup).toContain('Reasoning effort')
+    expect(openAiMarkup).toContain('Provider default')
+    expect(openAiMarkup).toContain('Low')
+    expect(openAiMarkup).toContain('Medium')
+    expect(openAiMarkup).toContain('High')
+    expect(openAiMarkup).toContain('XHigh')
+
+    const moonshotMarkup = renderToStaticMarkup(
+      <AiProviderControls
+        selection={{ provider: 'moonshot', model: 'kimi-k3' }}
+        availability={{
+          moonshot: true,
+          google: false,
+          qwen: false,
+          openai: false,
+          anthropic: false,
+        }}
+        onProviderChange={() => undefined}
+        onModelChange={() => undefined}
+        onReasoningEffortChange={() => undefined}
+      />,
+    )
+
+    expect(moonshotMarkup).not.toContain('Reasoning effort')
+    expect(moonshotMarkup).not.toContain('Provider default')
   })
 })
