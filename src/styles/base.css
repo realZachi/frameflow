@@ -425,8 +425,8 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .editor-empty-state { min-height: 100%; display: grid; place-items: center; padding: 48px; position: relative; z-index: 2; }
 .editor-empty-state-content { width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; color: var(--foreground); text-align: center; }
 .editor-empty-state-icon { width: 46px; height: 46px; display: grid; place-items: center; margin-bottom: 18px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--background); box-shadow: 0 4px 14px oklch(0 0 0 / 7%); }
-.editor-empty-state h1 { margin: 0; font-family: 'Bricolage Grotesque Variable', sans-serif; font-size: 25px; line-height: 1.05; letter-spacing: -.7px; }
-.editor-empty-state p { max-width: 360px; margin: 10px 0 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.editor-empty-state h1 { margin: 0; line-height: 1.05; }
+.editor-empty-state p { max-width: 360px; margin: 10px 0 0; color: var(--muted-foreground); font-size: var(--editor-text-md); line-height: 1.5; }
 .editor-empty-state-actions { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 22px; }
 .editor-empty-state-actions [data-slot='button'] { min-width: 142px; }
 .editor-empty-state-actions .editor-empty-state-primary { color: var(--primary-foreground); }

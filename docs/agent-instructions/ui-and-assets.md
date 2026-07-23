@@ -10,6 +10,8 @@
 - Never initialize another preset or add another component or icon library without approval.
 - Use wrappers from `src/components/icons.tsx`.
 - Use semantic theme tokens for editor chrome. Do not hard-code a competing palette.
+- Keep editor chrome on the shared `--editor-text-*` scale. The app shell
+  normalizes shadcn controls globally; do not add per-feature font-size fixes.
 - Preserve focus, hover, disabled, spacing, radius, typography, and motion conventions.
 
 `src/components/ui/` is generated code. Do not manually reformat, reorganize, or patch it. It is exempt from the handwritten quote/semicolon style but still receives correctness and type checks.

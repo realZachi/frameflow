@@ -99,7 +99,14 @@ select:focus-visible {
 .app-shell {
   background: var(--muted);
   color: var(--foreground);
+  font-size: var(--editor-text-md);
 }
+
+.app-shell :is([data-slot='button'], [data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'], [data-slot='select-item'], [data-slot='select-label'], [data-slot='dropdown-menu-item'], [data-slot='dropdown-menu-label'], [data-slot='popover-content']) {
+  font-size: var(--editor-text-md);
+}
+:is([data-slot='select-content'], [data-slot='dropdown-menu-content'], [data-slot='popover-content']) { font-size: var(--editor-text-md); }
+:is([data-slot='select-content'], [data-slot='dropdown-menu-content'], [data-slot='popover-content']) :is([data-slot='select-item'], [data-slot='select-label'], [data-slot='dropdown-menu-item'], [data-slot='dropdown-menu-label']) { font-size: var(--editor-text-md); }
 
 .topbar {
   background: var(--background);
@@ -111,6 +118,7 @@ select:focus-visible {
 .brand-lockup > strong,
 .panel-heading h2,
 .ai-modal-title h2,
+.editor-empty-state h1,
 .mobile-blocker h1 {
   font-family: 'Geist Variable', sans-serif;
   letter-spacing: -.03em;
@@ -599,7 +607,8 @@ select:focus-visible {
    untouched because their typography is part of the exported design. */
 .brand-lockup > strong,
 .panel-heading h2,
-.ai-modal-title h2 {
+.ai-modal-title h2,
+.editor-empty-state h1 {
   font-size: var(--editor-text-title);
 }
 
@@ -658,11 +667,6 @@ select:focus-visible {
 .ai-generate-button,
 .export-button,
 .context-toolbar-identity strong,
-.context-toolbar [data-slot='button'],
-.context-toolbar [data-slot='select-trigger'],
-.ai-provider-trigger,
-[data-slot='select-content'] [data-slot='select-item'],
-[data-slot='select-content'] [data-slot='select-label'],
 .element-settings-popover,
 .panel-heading p,
 .panel-section h3,
