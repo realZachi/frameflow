@@ -191,6 +191,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [historyState, setHistoryState] = useState({ undo: false, redo: false })
   const [aiOpen, setAiOpen] = useState(false)
+  const [aiTargetSlideId, setAiTargetSlideId] = useState<string | null>(null)
   const [aiActivity, setAiActivity] = useState<(AiToolActivity & { seq: number }) | null>(null)
   const aiActivitySeqRef = useRef(0)
   const past = useRef<Slide[][]>([])
@@ -524,6 +525,7 @@ export default function App() {
 
   const activeSlide = slides.find((slide) => slide.id === activeSlideId) ?? slides[0]
   const selectedElement = activeSlide?.elements.find((element) => element.id === selectedElementId)
+  const aiTargetSlide = aiTargetSlideId ? slides.find((slide) => slide.id === aiTargetSlideId) : undefined
 
   const commit = useCallback((updater: (current: Slide[]) => Slide[]) => {
     const current = slidesRef.current
@@ -904,9 +906,32 @@ export default function App() {
     return prepared
   }
 
+  const openAiGenerator = () => {
+    setAiTargetSlideId(null)
+    setAiOpen(true)
+  }
+
+  const openAiEditor = (slideId: string) => {
+    setActiveSlideId(slideId)
+    setSelectedElementId(null)
+    setAiTargetSlideId(slideId)
+    setAiOpen(true)
+  }
+
+  const closeAiModal = () => {
+    setAiOpen(false)
+    setAiTargetSlideId(null)
+  }
+
   const handleAiFinished = (slidesCreated: number) => {
-    setToast(`${slidesCreated} Screens mit AI erstellt`)
     setAiActivity(null)
+    if (aiTargetSlideId) {
+      setToast('Screen mit AI bearbeitet')
+      setActiveSlideId(aiTargetSlideId)
+      setSelectedElementId(null)
+      return
+    }
+    setToast(`${slidesCreated} Screens mit AI erstellt`)
     const firstNewSlide = slidesRef.current.find((slide) => !preAiSlideIdsRef.current.has(slide.id))
     if (firstNewSlide) {
       setActiveSlideId(firstNewSlide.id)
@@ -1025,8 +1050,8 @@ export default function App() {
             className="ai-generate-button"
             variant="secondary"
             size="default"
-            onClick={() => setAiOpen(true)}
-            disabled={exporting || !aiController}
+            onClick={openAiGenerator}
+            disabled={exporting || !aiController || aiOpen}
           >
             <span className="ai-generate-button-mark" aria-hidden="true"><Sparkles size={14} /></span>
             <span>AI erstellen</span>
@@ -1107,6 +1132,8 @@ export default function App() {
           onDuplicateSlide={duplicateSlide}
           onDeleteSlide={deleteSlide}
           onMoveSlide={moveSlide}
+          onEditSlideWithAi={openAiEditor}
+          aiActionsDisabled={exporting || !aiController || aiOpen}
         />
         <div className="zoom-control">
           <button onClick={() => setZoom((value) => Math.max(0.65, Number((value - 0.1).toFixed(2))))} disabled={zoom <= 0.65}><Minus size={14} /></button>
@@ -1138,11 +1165,12 @@ export default function App() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {aiController && (
+      {aiController && aiOpen && (
         <AiGenerateModal
           open={aiOpen}
-          onClose={() => setAiOpen(false)}
+          onClose={closeAiModal}
           controller={aiController}
+          targetSlide={aiTargetSlide}
           onPrepareRun={prepareAiRun}
           onFinished={handleAiFinished}
           onActivity={handleAiActivity}

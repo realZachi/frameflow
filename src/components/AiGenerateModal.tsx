@@ -12,12 +12,13 @@ export type AiGenerateModalProps = {
   open: boolean
   onClose: () => void
   controller: AiEditorController
+  targetSlide?: { id: string; name: string }
   onPrepareRun: (files: Array<{ name: string; dataUrl: string }>) => Array<{ assetId: string; name: string; dataUrl: string }>
   onFinished: (slidesCreated: number) => void
   onActivity?: (activity: AiToolActivity | null) => void
 }
 
-export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
+export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
   const [description, setDescription] = useState('')
   const [screenshots, setScreenshots] = useState<ScreenshotDraft[]>([])
   const [phase, setPhase] = useState<RunPhase>('idle')
@@ -57,7 +58,8 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
 
   if (!open) return null
 
-  const canGenerate = Boolean(description.trim()) && screenshots.length > 0
+  const isEditMode = Boolean(targetSlide)
+  const canGenerate = Boolean(description.trim()) && (isEditMode || screenshots.length > 0)
 
   const handleFiles = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -78,7 +80,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
     if (cancelledRef.current) return
     if (event.type === 'status') setLog((current) => [...current, { kind: 'status', text: event.message }])
     else if (event.type === 'tool') {
-      setLog((current) => [...current, { kind: 'tool', text: `${event.name} — ${event.detail}` }])
+      setLog((current) => [...current, { kind: 'tool', text: `${event.name}: ${event.detail}` }])
       setReasoningTail('')
     } else if (event.type === 'text') {
       setAssistantText((current) => current + event.delta)
@@ -114,6 +116,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
       description,
       screenshots: prepared,
       controller,
+      targetSlideId: targetSlide?.id,
       signal: abortController.signal,
       onEvent: handleEvent,
       onActivity,
@@ -137,9 +140,15 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
       className={`ai-modal-overlay${phase !== 'idle' ? ' ai-modal-overlay--live' : ''}`}
       onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose() }}
     >
-      <div className="ai-modal-card" role="dialog" aria-modal="true" aria-label="Mit AI generieren">
+      <div className="ai-modal-card" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Screen mit AI bearbeiten' : 'Mit AI generieren'}>
         <div className="ai-modal-header">
-          <div className="ai-modal-title"><Sparkles size={16} /><h2>Mit AI generieren</h2></div>
+          <div className="ai-modal-title">
+            <Sparkles size={16} />
+            <div>
+              <h2>{isEditMode ? 'Screen mit AI bearbeiten' : 'Mit AI generieren'}</h2>
+              {targetSlide && <span>{targetSlide.name}</span>}
+            </div>
+          </div>
           <button className="ai-modal-close" onClick={requestClose} disabled={phase === 'running'} aria-label="Schließen"><X size={16} /></button>
         </div>
 
@@ -147,21 +156,24 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
           {phase === 'idle' && (
             <>
               <div className="ai-modal-field">
-                <label htmlFor="ai-modal-description">Worum geht es in deiner App?</label>
+                <label htmlFor="ai-modal-description">{isEditMode ? 'Was soll sich ändern?' : 'Worum geht es in deiner App?'}</label>
                 <textarea
                   id="ai-modal-description"
                   rows={4}
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Beschreibe deine App: Zielgruppe, Kernfeatures, Tonalität …"
+                  placeholder={isEditMode
+                    ? 'Zum Beispiel: Überschrift kürzen, Gerät größer machen und Kontrast erhöhen …'
+                    : 'Beschreibe deine App: Zielgruppe, Kernfeatures, Tonalität …'}
                 />
               </div>
               <div className="ai-modal-field">
-                <label>Screenshots</label>
+                <label>{isEditMode ? 'Screenshots (optional)' : 'Screenshots'}</label>
                 <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={handleFiles} />
                 <button type="button" className="ai-modal-dropzone" onClick={() => fileInputRef.current?.click()}>
-                  <Upload size={16} /><span>Screenshots auswählen</span>
+                  <Upload size={16} /><span>{isEditMode ? 'Screenshot hinzufügen' : 'Screenshots auswählen'}</span>
                 </button>
+                {isEditMode && <small className="ai-modal-hint">Nur nötig, wenn du ein neues Motiv oder einen neuen App-Screenshot verwenden möchtest.</small>}
                 {screenshots.length > 0 && (
                   <div className="ai-modal-thumbs">
                     {screenshots.map((shot) => (
@@ -193,7 +205,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
 
           {phase === 'done' && doneInfo && (
             <div className="ai-modal-result ai-modal-result--done">
-              <p>Fertig — {doneInfo.slidesCreated} Screens erstellt.</p>
+              <p>{isEditMode ? 'Screen bearbeitet.' : `Fertig: ${doneInfo.slidesCreated} Screens erstellt.`}</p>
               {(doneInfo.summary || assistantText) && <p className="ai-modal-assistant-text">{doneInfo.summary || assistantText}</p>}
             </div>
           )}
@@ -208,7 +220,7 @@ export const AiGenerateModal = ({ open, onClose, controller, onPrepareRun, onFin
         <div className="ai-modal-footer">
           {phase === 'idle' && (
             <button className="export-button ai-modal-generate" onClick={handleGenerate} disabled={!canGenerate}>
-              <Sparkles size={16} /><b>Generieren</b>
+              <Sparkles size={16} /><b>{isEditMode ? 'Bearbeiten' : 'Generieren'}</b>
             </button>
           )}
           {phase === 'running' && (

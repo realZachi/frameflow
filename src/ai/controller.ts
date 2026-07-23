@@ -200,3 +200,27 @@ export function createAiController(io: {
     getAssetSrc,
   }
 }
+
+export function scopeAiControllerToSlide(controller: AiEditorController, targetSlideId: string): AiEditorController {
+  const isTarget = (slideId: string) => slideId === targetSlideId
+
+  return {
+    snapshot: () => {
+      const snapshot = controller.snapshot()
+      return {
+        ...snapshot,
+        slides: snapshot.slides.filter((slide) => slide.id === targetSlideId),
+      }
+    },
+    // Slide creation and deletion are not exposed in edit mode. These guards
+    // keep the scoped controller safe if that tool boundary changes later.
+    addSlide: () => '',
+    renameSlide: (slideId, name) => isTarget(slideId) && controller.renameSlide(slideId, name),
+    setSlideBackground: (slideId, patch) => isTarget(slideId) && controller.setSlideBackground(slideId, patch),
+    deleteSlide: () => false,
+    addElement: (slideId, element) => isTarget(slideId) ? controller.addElement(slideId, element) : null,
+    updateElement: (slideId, elementId, patch) => isTarget(slideId) && controller.updateElement(slideId, elementId, patch),
+    deleteElement: (slideId, elementId) => isTarget(slideId) && controller.deleteElement(slideId, elementId),
+    getAssetSrc: (assetId) => controller.getAssetSrc(assetId),
+  }
+}

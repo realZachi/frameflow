@@ -1,10 +1,11 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ChevronLeft, ChevronRight, Copy, Plus, Trash2 } from './icons'
+import { ChevronLeft, ChevronRight, Copy, Plus, Sparkles, Trash2 } from './icons'
 import type { CanvasElement, Slide } from '../types'
 import { clamp, getBackgroundPatternStyle, getBackgroundStyle } from '../utils'
 import { CanvasItem } from './CanvasElementView'
 import { AiCursorOverlay } from './AiCursorOverlay'
 import { photoMockups } from '../mockups/catalog'
+import { Button } from './ui/button'
 
 type AiActivity = { tool: string; slideId?: string; x?: number; y?: number; seq: number }
 
@@ -54,6 +55,8 @@ type Props = {
   onDuplicateSlide: (id: string) => void
   onDeleteSlide: (id: string) => void
   onMoveSlide: (id: string, direction: -1 | 1) => void
+  onEditSlideWithAi: (id: string) => void
+  aiActionsDisabled?: boolean
 }
 
 export const EditorCanvas = ({
@@ -72,6 +75,8 @@ export const EditorCanvas = ({
   onDuplicateSlide,
   onDeleteSlide,
   onMoveSlide,
+  onEditSlideWithAi,
+  aiActionsDisabled = false,
 }: Props) => {
   const interaction = useRef<Interaction | null>(null)
   const [isInteracting, setIsInteracting] = useState(false)
@@ -198,11 +203,24 @@ export const EditorCanvas = ({
               <div className="artboard-actions">
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <strong>{slide.name}</strong>
-                <div>
-                  <button onClick={() => onDuplicateSlide(slide.id)} title="Screen duplizieren"><Copy size={13} /></button>
-                  <button onClick={() => onMoveSlide(slide.id, -1)} disabled={index === 0} title="Nach links"><ChevronLeft size={14} /></button>
-                  <button onClick={() => onMoveSlide(slide.id, 1)} disabled={index === slides.length - 1} title="Nach rechts"><ChevronRight size={14} /></button>
-                  <button onClick={() => onDeleteSlide(slide.id)} disabled={slides.length === 1} title="Screen löschen"><Trash2 size={13} /></button>
+                <div className="artboard-action-group">
+                  <Button
+                    className="artboard-ai-action"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => onEditSlideWithAi(slide.id)}
+                    disabled={aiActionsDisabled}
+                    title={`${slide.name} mit AI bearbeiten`}
+                    aria-label={`${slide.name} mit AI bearbeiten`}
+                  >
+                    <Sparkles size={13} />
+                  </Button>
+                  <div className="artboard-secondary-actions">
+                    <button onClick={() => onDuplicateSlide(slide.id)} title="Screen duplizieren"><Copy size={13} /></button>
+                    <button onClick={() => onMoveSlide(slide.id, -1)} disabled={index === 0} title="Nach links"><ChevronLeft size={14} /></button>
+                    <button onClick={() => onMoveSlide(slide.id, 1)} disabled={index === slides.length - 1} title="Nach rechts"><ChevronRight size={14} /></button>
+                    <button onClick={() => onDeleteSlide(slide.id)} disabled={slides.length === 1} title="Screen löschen"><Trash2 size={13} /></button>
+                  </div>
                 </div>
               </div>
               <div

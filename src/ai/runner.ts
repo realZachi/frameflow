@@ -2,7 +2,7 @@ import { APICallError, isStepCount, streamText } from 'ai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { buildInstructions, buildUserMessage } from './prompt'
 import { createEditorTools } from './tools'
-import type { AiEditorController } from './controller'
+import { scopeAiControllerToSlide, type AiEditorController } from './controller'
 import type { AiToolActivity } from './tools'
 
 export type { AiToolActivity } from './tools'
@@ -76,11 +76,12 @@ export async function runAiGeneration(options: {
   description: string
   screenshots: Array<{ assetId: string; name: string; dataUrl: string }>
   controller: AiEditorController
+  targetSlideId?: string
   signal?: AbortSignal
   onEvent: (event: AiRunEvent) => void
   onActivity?: (activity: AiToolActivity) => void
 }): Promise<void> {
-  const { description, screenshots, controller, signal, onEvent, onActivity } = options
+  const { description, screenshots, controller, targetSlideId, signal, onEvent, onActivity } = options
 
   try {
     // Der Key wird nicht im Browser gehalten: der Vite-Dev-Server proxied
@@ -94,7 +95,14 @@ export async function runAiGeneration(options: {
     const content: Array<
       | { type: 'text'; text: string }
       | { type: 'file'; mediaType: string; data: string }
-    > = [{ type: 'text', text: buildUserMessage(description, screenshots.map(({ assetId, name }) => ({ assetId, name }))) }]
+    > = [{
+      type: 'text',
+      text: buildUserMessage(
+        description,
+        screenshots.map(({ assetId, name }) => ({ assetId, name })),
+        { targetSlideId },
+      ),
+    }]
 
     for (const shot of screenshots) {
       content.push({ type: 'text', text: `Screenshot asset "${shot.assetId}" (${shot.name}):` })
@@ -103,11 +111,12 @@ export async function runAiGeneration(options: {
 
     onEvent({ type: 'status', message: 'Verbinde mit Moonshot AI…' })
 
+    const runController = targetSlideId ? scopeAiControllerToSlide(controller, targetSlideId) : controller
     const result = streamText({
       model: moonshot('kimi-k3'),
-      instructions: buildInstructions(),
+      instructions: buildInstructions({ targetSlideId }),
       messages: [{ role: 'user', content }],
-      tools: createEditorTools(controller, { onActivity }),
+      tools: createEditorTools(runController, { mode: targetSlideId ? 'edit' : 'generate', onActivity }),
       stopWhen: isStepCount(64),
       abortSignal: signal,
     })

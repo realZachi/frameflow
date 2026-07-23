@@ -140,7 +140,10 @@ export type AiToolActivity = {
   y?: number
 }
 
-export function createEditorTools(controller: AiEditorController, options?: { onActivity?: (activity: AiToolActivity) => void }) {
+export function createEditorTools(controller: AiEditorController, options?: {
+  mode?: 'generate' | 'edit'
+  onActivity?: (activity: AiToolActivity) => void
+}) {
   const emit = (activity: AiToolActivity) => {
     try {
       options?.onActivity?.(activity)
@@ -655,12 +658,10 @@ export function createEditorTools(controller: AiEditorController, options?: { on
     },
   })
 
-  return {
+  const editTools = {
     get_canvas_state,
-    add_slide,
     rename_slide,
     set_slide_background,
-    delete_slide,
     add_text,
     add_device,
     add_shape,
@@ -670,6 +671,14 @@ export function createEditorTools(controller: AiEditorController, options?: { on
     delete_element,
     inspect_slide,
     render_slide_preview,
+  }
+
+  if (options?.mode === 'edit') return editTools
+
+  return {
+    ...editTools,
+    add_slide,
+    delete_slide,
   }
 }
 
