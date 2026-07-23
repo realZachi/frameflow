@@ -17,7 +17,7 @@ import type { Slide, ToolId } from './types'
 
 const getActiveSlide = (slides: Slide[], activeSlideId: string) => {
   const slide = slides.find((item) => item.id === activeSlideId) ?? slides[0]
-  if (!slide) throw new Error('Ein Projekt muss mindestens einen Screen enthalten')
+  if (!slide) throw new Error('A project must contain at least one screen')
   return slide
 }
 
@@ -64,7 +64,7 @@ export default function App() {
     slides: Slide[]
   }) => {
     const firstSlide = project.slides[0]
-    if (!firstSlide) throw new Error('Ein Projekt muss mindestens einen Screen enthalten')
+    if (!firstSlide) throw new Error('A project must contain at least one screen')
     setActiveSlideId(firstSlide.id)
     clearSelection()
     handleAiActivity(null)
@@ -319,10 +319,10 @@ export default function App() {
       )}
       <div className="mobile-blocker">
         <div className="brand-symbol"><span>F</span><i /></div>
-        <h1>Mehr Platz für gute Ideen.</h1>
+        <h1>More room for great ideas.</h1>
         <p>
-          Frameflow ist ein Desktop-Studio. Öffne den Editor auf einem größeren
-          Bildschirm, um Screens präzise zu gestalten.
+          Frameflow is a desktop studio. Open the editor on a larger screen to
+          design your screens with precision.
         </p>
       </div>
     </div>

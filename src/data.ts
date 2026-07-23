@@ -224,6 +224,6 @@ export const fontOptions = [
   { name: 'Playfair Display', value: 'Playfair Display', category: 'Serif' },
   { name: 'DM Serif Display', value: 'DM Serif Display', category: 'Serif' },
   { name: 'Space Mono', value: 'Space Mono', category: 'Mono' },
-  { name: 'Caveat', value: 'Caveat', category: 'Handschrift' },
+  { name: 'Caveat', value: 'Caveat', category: 'Handwritten' },
   { name: 'System Sans', value: 'Arial, sans-serif', category: 'Sans' },
 ]

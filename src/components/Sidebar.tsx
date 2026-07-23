@@ -20,16 +20,16 @@ import { ShapeGraphic } from './ShapeGraphic'
 import type { Background, BackgroundPattern, CanvasElement, ShapeElement, Slide, TemplateId, TextPreset, ToolId, UploadAsset } from '../types'
 
 const tools: { id: ToolId; label: string; icon: ReactNode }[] = [
-  { id: 'templates', label: 'Vorlagen', icon: <Sparkles size={19} /> },
+  { id: 'templates', label: 'Templates', icon: <Sparkles size={19} /> },
   { id: 'device', label: 'Mockups', icon: <MonitorSmartphone size={19} /> },
-  { id: 'elements', label: 'Elemente', icon: <Shapes size={19} /> },
+  { id: 'elements', label: 'Elements', icon: <Shapes size={19} /> },
   { id: 'text', label: 'Text', icon: <Type size={19} /> },
-  { id: 'background', label: 'Hintergrund', icon: <Palette size={19} /> },
+  { id: 'background', label: 'Background', icon: <Palette size={19} /> },
   { id: 'uploads', label: 'Uploads', icon: <Upload size={19} /> },
 ]
 
 export const ToolRail = ({ activeTool, isOpen, onChange }: { activeTool: ToolId; isOpen: boolean; onChange: (tool: ToolId) => void }) => (
-  <nav className="tool-rail" aria-label="Editor-Werkzeuge">
+  <nav className="tool-rail" aria-label="Editor tools">
     <div className="rail-tools">
       {tools.map((tool) => (
         <button
@@ -38,7 +38,7 @@ export const ToolRail = ({ activeTool, isOpen, onChange }: { activeTool: ToolId;
           onClick={() => onChange(tool.id)}
           aria-controls="properties-panel"
           aria-expanded={isOpen && activeTool === tool.id}
-          aria-label={`${tool.label} ${isOpen && activeTool === tool.id ? 'schließen' : 'öffnen'}`}
+          aria-label={`${isOpen && activeTool === tool.id ? 'Close' : 'Open'} ${tool.label}`}
           title={tool.label}
         >
           <span>{tool.icon}</span>
@@ -49,7 +49,7 @@ export const ToolRail = ({ activeTool, isOpen, onChange }: { activeTool: ToolId;
     <button
       className="rail-layers"
       onClick={() => onChange('templates')}
-      title="Ebenen"
+      title="Layers"
       aria-controls="properties-panel"
       aria-expanded={isOpen && activeTool === 'templates'}
     >
@@ -89,8 +89,8 @@ const TemplatePreview = ({ id }: { id: TemplateId }) => (
 const TemplatesPanel = ({ onApplyTemplate }: { onApplyTemplate: (id: TemplateId) => void }) => (
   <>
     <div className="panel-heading">
-      <div><span>STARTPUNKT</span><h2>Vorlagen</h2></div>
-      <p>Ein Look, den du in Sekunden zu deinem machst.</p>
+      <div><span>STARTING POINT</span><h2>Templates</h2></div>
+      <p>A look you can make your own in seconds.</p>
     </div>
     <div className="template-grid">
       {templateMeta.map((template) => (
@@ -101,7 +101,7 @@ const TemplatesPanel = ({ onApplyTemplate }: { onApplyTemplate: (id: TemplateId)
         </button>
       ))}
     </div>
-    <p className="panel-hint">Vorlagen werden auf den ausgewählten Screen angewendet. Dein aktueller Inhalt wird dabei ersetzt.</p>
+    <p className="panel-hint">Templates apply to the selected screen and replace its current content.</p>
   </>
 )
 
@@ -109,9 +109,9 @@ const ElementsPanel = ({ onAddShape }: {
   onAddShape: (shape: ShapeElement['shape']) => void
 }) => (
   <>
-    <div className="panel-heading"><div><span>VEKTOREN</span><h2>Elemente</h2></div><p>Formen, Akzente, Pfeile und Linien für klarere Stories.</p></div>
+    <div className="panel-heading"><div><span>VECTORS</span><h2>Elements</h2></div><p>Shapes, accents, arrows, and lines for clearer stories.</p></div>
     <div className="shape-library">
-      {(['Basis', 'Akzent', 'Linien'] as const).map((group) => (
+      {(['Base', 'Accent', 'Lines'] as const).map((group) => (
         <div className="shape-library-group" key={group}>
           <FieldLabel>{group}</FieldLabel>
           <div className="shape-grid">
@@ -131,7 +131,7 @@ const ElementsPanel = ({ onAddShape }: {
                 shadow: 0,
               }
               return (
-                <button key={shape.id} onClick={() => onAddShape(shape.id)} title={`${shape.label} hinzufügen`}>
+                <button key={shape.id} onClick={() => onAddShape(shape.id)} title={`Add ${shape.label}`}>
                   <span><ShapeGraphic element={preview} /></span>
                   <small>{shape.label}</small>
                   <Plus size={12} />
@@ -142,7 +142,7 @@ const ElementsPanel = ({ onAddShape }: {
         </div>
       ))}
     </div>
-    <p className="panel-hint">Klicke auf eine Form, um sie zum aktiven Screen hinzuzufügen.</p>
+    <p className="panel-hint">Click a shape to add it to the active screen.</p>
   </>
 )
 
@@ -150,7 +150,7 @@ const DevicePanel = ({ onAddDevice }: {
   onAddDevice: (style: Extract<CanvasElement, { type: 'device' }>['deviceStyle']) => void
 }) => (
   <>
-    <div className="panel-heading"><div><span>GERÄTE</span><h2>Mockups</h2></div><p>Realistische Rahmen mit sauberer Screenshot-Maske.</p></div>
+    <div className="panel-heading"><div><span>DEVICES</span><h2>Mockups</h2></div><p>Realistic frames with clean screenshot masks.</p></div>
     <div className="device-grid">
       {deviceOptions.map((device) => (
         <button
@@ -162,16 +162,16 @@ const DevicePanel = ({ onAddDevice }: {
         </button>
       ))}
     </div>
-    <p className="panel-hint">Wähle ein Mockup, um es zum aktiven Screen hinzuzufügen.</p>
+    <p className="panel-hint">Choose a mockup to add it to the active screen.</p>
   </>
 )
 
 const backgroundPatterns: { id: BackgroundPattern; label: string }[] = [
-  { id: 'none', label: 'Ohne' },
-  { id: 'dots', label: 'Punkte' },
-  { id: 'grid', label: 'Raster' },
+  { id: 'none', label: 'None' },
+  { id: 'dots', label: 'Dots' },
+  { id: 'grid', label: 'Grid' },
   { id: 'diagonal', label: 'Diagonal' },
-  { id: 'waves', label: 'Wellen' },
+  { id: 'waves', label: 'Waves' },
 ]
 
 const BackgroundFillControls = ({
@@ -188,20 +188,20 @@ const BackgroundFillControls = ({
   const inputRef = useRef<HTMLInputElement>(null)
 
   return (
-    <Section title="Füllung">
+    <Section title="Fill">
       <div className="choice-row choice-row--four">
-        <button className={background.type === 'solid' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'solid' })}>Fläche</button>
+        <button className={background.type === 'solid' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'solid' })}>Solid</button>
         <button className={background.type === 'gradient' && background.gradientKind !== 'radial' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'gradient', gradientKind: 'linear' })}>Linear</button>
         <button className={background.type === 'gradient' && background.gradientKind === 'radial' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'gradient', gradientKind: 'radial' })}>Radial</button>
-        <button className={background.type === 'image' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'image' })}>Bild</button>
+        <button className={background.type === 'image' ? 'is-active' : ''} onClick={() => onUpdate({ type: 'image' })}>Image</button>
       </div>
       {background.type !== 'image' && (
         <>
-          <ColorField value={background.color1} onChange={(color1) => onUpdate({ color1 })} label={background.type === 'gradient' ? 'Start' : 'Farbe'} />
+          <ColorField value={background.color1} onChange={(color1) => onUpdate({ color1 })} label={background.type === 'gradient' ? 'Start' : 'Color'} />
           {background.type === 'gradient' && (
             <>
-              <ColorField value={background.color2} onChange={(color2) => onUpdate({ color2 })} label="Ende" />
-              {background.gradientKind !== 'radial' && <div className="range-stack"><FieldLabel value={`${background.angle}°`}>Winkel</FieldLabel><input type="range" min="0" max="360" value={background.angle} onChange={(event) => onUpdate({ angle: Number(event.target.value) })} /></div>}
+              <ColorField value={background.color2} onChange={(color2) => onUpdate({ color2 })} label="End" />
+              {background.gradientKind !== 'radial' && <div className="range-stack"><FieldLabel value={`${background.angle}°`}>Angle</FieldLabel><input type="range" min="0" max="360" value={background.angle} onChange={(event) => onUpdate({ angle: Number(event.target.value) })} /></div>}
             </>
           )}
         </>
@@ -210,31 +210,31 @@ const BackgroundFillControls = ({
         <div className="background-image-controls">
           <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => event.target.files?.[0] && onUploadBackground(event.target.files[0])} />
           <button className="upload-drop background-upload" onClick={() => inputRef.current?.click()}>
-            {background.image ? <img src={background.image} alt="Aktueller Hintergrund" /> : <ImagePlus size={20} />}
-            <span><strong>{background.image ? 'Hintergrund ersetzen' : 'Hintergrund hochladen'}</strong><small>PNG, JPG oder WebP</small></span>
+            {background.image ? <img src={background.image} alt="Current background" /> : <ImagePlus size={20} />}
+            <span><strong>{background.image ? 'Replace background' : 'Upload background'}</strong><small>PNG, JPG, or WebP</small></span>
           </button>
           {uploads.length > 0 && (
             <div className="background-asset-grid">
               {uploads.slice(0, 8).map((asset) => <button key={asset.id} className={background.image === asset.src ? 'is-selected' : ''} onClick={() => onUpdate({ type: 'image', image: asset.src })}><img src={asset.src} alt={asset.name} /></button>)}
             </div>
           )}
-          <FieldLabel>Bildanpassung</FieldLabel>
+          <FieldLabel>Image fit</FieldLabel>
           <div className="choice-row">
-            <button className={(background.imageFit ?? 'cover') === 'cover' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'cover' })}>Füllen</button>
-            <button className={background.imageFit === 'contain' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'contain' })}>Einpassen</button>
+            <button className={(background.imageFit ?? 'cover') === 'cover' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'cover' })}>Cover</button>
+            <button className={background.imageFit === 'contain' ? 'is-active' : ''} onClick={() => onUpdate({ imageFit: 'contain' })}>Contain</button>
           </div>
           <FieldLabel>Position</FieldLabel>
           <label className="select-field">
             <select value={background.imagePosition ?? 'center'} onChange={(event) => onUpdate({ imagePosition: event.target.value as NonNullable<Background['imagePosition']> })}>
-              <option value="top">Oben</option>
-              <option value="center">Mitte</option>
-              <option value="bottom">Unten</option>
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+              <option value="bottom">Bottom</option>
             </select>
             <ChevronDown size={15} />
           </label>
           <ColorField value={background.overlayColor ?? '#111116'} onChange={(overlayColor) => onUpdate({ overlayColor })} label="Overlay" />
           <div className="range-stack">
-            <FieldLabel value={`${Math.round((background.overlayOpacity ?? 0.18) * 100)}%`}>Overlay-Deckkraft</FieldLabel>
+            <FieldLabel value={`${Math.round((background.overlayOpacity ?? 0.18) * 100)}%`}>Overlay opacity</FieldLabel>
             <input type="range" min="0" max="0.9" step="0.01" value={background.overlayOpacity ?? 0.18} onChange={(event) => onUpdate({ overlayOpacity: Number(event.target.value) })} />
           </div>
         </div>
@@ -254,7 +254,7 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
 
   return (
     <>
-      <div className="panel-heading"><div><span>FLÄCHE</span><h2>Hintergrund</h2></div><p>Farbe, Verläufe, Fotos und grafische Muster für den gesamten Screen.</p></div>
+      <div className="panel-heading"><div><span>BACKGROUND</span><h2>Background</h2></div><p>Colors, gradients, photos, and graphic patterns for the entire screen.</p></div>
       <div className={`background-preview pattern-surface pattern--${pattern}`} style={previewStyle}><Blend size={20} /></div>
       <BackgroundFillControls
         background={background}
@@ -262,7 +262,7 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
         onUpdate={onUpdate}
         onUploadBackground={onUploadBackground}
       />
-      <Section title="Paletten" compact>
+      <Section title="Palettes" compact>
         <div className="palette-grid palette-grid--wide">
           {([
             ['#252435', '#111116'], ['#f2eee5', '#f2eee5'], ['#d8ff55', '#d8ff55'], ['#ff6b4a', '#ffb171'],
@@ -271,7 +271,7 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
           ] as const).map(([a, b]) => <button key={`${a}${b}`} style={{ background: a === b ? a : `linear-gradient(135deg, ${a}, ${b})` }} onClick={() => onUpdate({ type: a === b ? 'solid' : 'gradient', gradientKind: 'linear', color1: a, color2: b })} />)}
         </div>
       </Section>
-      <Section title="Muster" compact>
+      <Section title="Patterns" compact>
         <div className="pattern-grid">
           {backgroundPatterns.map((item) => (
             <button key={item.id} className={pattern === item.id ? 'is-active' : ''} onClick={() => onUpdate({ pattern: item.id })}>
@@ -282,11 +282,11 @@ const BackgroundPanel = ({ background, uploads, onUpdate, onUploadBackground }: 
         </div>
         {pattern !== 'none' && (
           <>
-            <ColorField value={background.patternColor ?? '#ffffff'} onChange={(patternColor) => onUpdate({ patternColor })} label="Muster" />
+            <ColorField value={background.patternColor ?? '#ffffff'} onChange={(patternColor) => onUpdate({ patternColor })} label="Pattern" />
             <div className="range-stack">
-              <FieldLabel value={`${Math.round((background.patternOpacity ?? 0.12) * 100)}%`}>Deckkraft</FieldLabel>
+              <FieldLabel value={`${Math.round((background.patternOpacity ?? 0.12) * 100)}%`}>Opacity</FieldLabel>
               <input type="range" min="0.02" max="0.8" step="0.01" value={background.patternOpacity ?? 0.12} onChange={(event) => onUpdate({ patternOpacity: Number(event.target.value) })} />
-              <FieldLabel value={`${background.patternScale ?? 28} px`}>Skalierung</FieldLabel>
+              <FieldLabel value={`${background.patternScale ?? 28} px`}>Scale</FieldLabel>
               <input type="range" min="10" max="80" step="1" value={background.patternScale ?? 28} onChange={(event) => onUpdate({ patternScale: Number(event.target.value) })} />
             </div>
           </>
@@ -306,21 +306,21 @@ const UploadsPanel = ({ uploads, onUpload, onAddImage, onSetDeviceImage }: {
   const handleFiles = (event: ChangeEvent<HTMLInputElement>) => event.target.files && onUpload(event.target.files)
   return (
     <>
-      <div className="panel-heading"><div><span>MEDIEN</span><h2>Uploads</h2></div><p>App-Screenshots und Motive bleiben lokal in deinem Browser.</p></div>
+      <div className="panel-heading"><div><span>MEDIA</span><h2>Uploads</h2></div><p>App screenshots and images stay local in your browser.</p></div>
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={handleFiles} />
-      <button className="large-upload" onClick={() => inputRef.current?.click()}><span><Upload size={20} /></span><strong>Dateien hochladen</strong><small>PNG, JPG oder WebP · mehrere möglich</small></button>
+      <button className="large-upload" onClick={() => inputRef.current?.click()}><span><Upload size={20} /></span><strong>Upload files</strong><small>PNG, JPG, or WebP · select multiple</small></button>
       {uploads.length
         ? (
             <div className="upload-list">
               {uploads.map((asset) => (
                 <div className="upload-asset" key={asset.id}>
                   <img src={asset.src} alt={asset.name} />
-                  <div><strong>{asset.name}</strong><span><button onClick={() => onSetDeviceImage(asset)}>In Gerät</button><button onClick={() => onAddImage(asset)}>Frei</button></span></div>
+                  <div><strong>{asset.name}</strong><span><button onClick={() => onSetDeviceImage(asset)}>Use in mockup</button><button onClick={() => onAddImage(asset)}>Add to canvas</button></span></div>
                 </div>
               ))}
             </div>
           )
-        : <div className="empty-uploads"><ImagePlus size={24} /><span>Noch keine Dateien</span></div>}
+        : <div className="empty-uploads"><ImagePlus size={24} /><span>No uploads yet</span></div>}
     </>
   )
 }
@@ -347,14 +347,14 @@ export const PropertiesPanel = ({ activeTool, activeSlide, uploads, onApplyTempl
       {activeTool === 'elements' && <ElementsPanel onAddShape={onAddShape} />}
       {activeTool === 'text' && (
         <>
-          <div className="panel-heading"><div><span>TYPE</span><h2>Text</h2></div><p>Ausdrucksstarke Hierarchien, Labels und Zitate für App-Store-Screens.</p></div>
+          <div className="panel-heading"><div><span>TYPE</span><h2>Text</h2></div><p>Expressive hierarchy, labels, and quotes for App Store screens.</p></div>
           <div className="text-presets">
-            <button onClick={() => onAddText('title')}><strong>Aa</strong><span><b>Headline</b><small>Groß & aufmerksam</small></span><Plus size={15} /></button>
-            <button onClick={() => onAddText('subtitle')}><strong className="preset-subtitle">Aa</strong><span><b>Subheadline</b><small>Klarer zweiter Takt</small></span><Plus size={15} /></button>
-            <button onClick={() => onAddText('body')}><strong className="preset-body">Ag</strong><span><b>Fließtext</b><small>Erklärung & Kontext</small></span><Plus size={15} /></button>
-            <button onClick={() => onAddText('label')}><strong className="preset-label">AA</strong><span><b>Label</b><small>Kleine Akzente</small></span><Plus size={15} /></button>
-            <button onClick={() => onAddText('quote')}><strong className="preset-quote">“</strong><span><b>Zitat</b><small>Editorial & menschlich</small></span><Plus size={15} /></button>
-            <button onClick={() => onAddText('stat')}><strong className="preset-stat">98</strong><span><b>Kennzahl</b><small>Zahl als Blickfang</small></span><Plus size={15} /></button>
+            <button onClick={() => onAddText('title')}><strong>Aa</strong><span><b>Headline</b><small>Big & bold</small></span><Plus size={15} /></button>
+            <button onClick={() => onAddText('subtitle')}><strong className="preset-subtitle">Aa</strong><span><b>Subheadline</b><small>A clear second line</small></span><Plus size={15} /></button>
+            <button onClick={() => onAddText('body')}><strong className="preset-body">Ag</strong><span><b>Body copy</b><small>Explanation & context</small></span><Plus size={15} /></button>
+            <button onClick={() => onAddText('label')}><strong className="preset-label">AA</strong><span><b>Label</b><small>Small accents</small></span><Plus size={15} /></button>
+            <button onClick={() => onAddText('quote')}><strong className="preset-quote">“</strong><span><b>Quote</b><small>Editorial & human</small></span><Plus size={15} /></button>
+            <button onClick={() => onAddText('stat')}><strong className="preset-stat">98</strong><span><b>Stat</b><small>A number that stands out</small></span><Plus size={15} /></button>
           </div>
         </>
       )}
@@ -362,6 +362,6 @@ export const PropertiesPanel = ({ activeTool, activeSlide, uploads, onApplyTempl
       {activeTool === 'background' && <BackgroundPanel background={activeSlide.background} uploads={uploads} onUpdate={onUpdateBackground} onUploadBackground={onUploadBackground} />}
       {activeTool === 'uploads' && <UploadsPanel uploads={uploads} onUpload={onUploadFiles} onAddImage={onAddImage} onSetDeviceImage={onSetDeviceImage} />}
     </div>
-    <div className="panel-footer"><span><i /> Auto-save</span><small>Alles bleibt lokal</small></div>
+    <div className="panel-footer"><span><i /> Auto-save</span><small>Everything stays local</small></div>
   </aside>
 )

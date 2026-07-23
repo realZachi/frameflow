@@ -21,7 +21,7 @@ export const fileToDataUrl = (file: File) =>
     const reader = new FileReader()
     reader.onload = () => {
       if (typeof reader.result === 'string') resolve(reader.result)
-      else reject(new Error('Die Datei konnte nicht als Data-URL gelesen werden.'))
+      else reject(new Error('The file could not be read as a data URL.'))
     }
     reader.onerror = reject
     reader.readAsDataURL(file)

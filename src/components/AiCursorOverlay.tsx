@@ -6,22 +6,22 @@ type Props = {
 
 const LABELS: Record<string, string> = {
   add_text: 'Text',
-  add_device: 'Gerät',
-  add_shape: 'Form',
-  add_image: 'Bild',
-  add_slide: 'Neuer Screen',
-  rename_slide: 'Benennen',
-  set_slide_background: 'Hintergrund',
+  add_device: 'Device',
+  add_shape: 'Shape',
+  add_image: 'Image',
+  add_slide: 'New screen',
+  rename_slide: 'Rename',
+  set_slide_background: 'Background',
   set_device_screenshot: 'Screenshot',
-  update_element: 'Feinschliff',
-  delete_element: 'Aufräumen',
-  delete_slide: 'Aufräumen',
-  inspect_slide: 'Layout prüfen',
-  render_slide_preview: 'Vorschau prüfen',
+  update_element: 'Refining',
+  delete_element: 'Cleaning up',
+  delete_slide: 'Cleaning up',
+  inspect_slide: 'Checking layout',
+  render_slide_preview: 'Checking preview',
 }
 
 export const AiCursorOverlay = ({ activity }: Props) => {
-  const label = LABELS[activity.tool] ?? 'arbeitet'
+  const label = LABELS[activity.tool] ?? 'Working'
   return (
     <div className="ai-cursor-layer" data-ai-overlay="true" aria-hidden="true">
       <div className="ai-cursor" style={{ left: `${activity.x ?? 50}%`, top: `${activity.y ?? 30}%` }}>
@@ -35,7 +35,7 @@ export const AiCursorOverlay = ({ activity }: Props) => {
             strokeLinejoin="round"
           />
         </svg>
-        <span className="ai-cursor-label">KI · {label}</span>
+        <span className="ai-cursor-label">AI · {label}</span>
       </div>
     </div>
   )

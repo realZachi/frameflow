@@ -144,11 +144,11 @@ const PhotoMockup = ({ element, definition }: { element: Extract<CanvasElement, 
           style={{ width: mapping.sourceWidth, height: mapping.sourceHeight, transform: mapping.transform, clipPath: screenClip }}
         >
           {element.screenshot
-            ? <img src={element.screenshot} alt="Eingefügter App-Screenshot" draggable={false} />
+            ? <img src={element.screenshot} alt="Inserted app screenshot" draggable={false} />
             : <FakeScreen theme={element.screenTheme} />}
         </div>
       )}
-      <img className="photo-mockup-overlay" src={definition.overlay} alt="Fotorealistisches iPhone-Mockup" draggable={false} />
+      <img className="photo-mockup-overlay" src={definition.overlay} alt="Photorealistic iPhone mockup" draggable={false} />
     </div>
   )
 }
@@ -204,7 +204,7 @@ export const ElementContent = ({ element }: { element: CanvasElement }) => {
       <img
         className="canvas-image"
         src={element.src}
-        alt="Hochgeladenes Motiv"
+        alt="Uploaded image"
         draggable={false}
         style={{
           borderRadius: `${element.borderRadius}%`,
@@ -334,11 +334,11 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
             <ElementContent element={element} />
           )}
       {editing && element.type === 'text' && !exporting && (
-        <div className="text-edit-toolbar" role="toolbar" aria-label="Textformatierung" onPointerDown={(event) => event.stopPropagation()}>
+        <div className="text-edit-toolbar" role="toolbar" aria-label="Text formatting" onPointerDown={(event) => event.stopPropagation()}>
           <input
             type="color"
             defaultValue={element.color}
-            title="Textfarbe"
+            title="Text color"
             onPointerDown={(event) => {
               event.stopPropagation()
               saveSelection()
@@ -360,7 +360,7 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
               runRichTextCommand('styleWithCSS', 'false')
               runRichTextCommand('bold')
             }}
-            title="Fett"
+            title="Bold"
           >
             <Bold size={13} />
           </button>
@@ -374,7 +374,7 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
               runRichTextCommand('styleWithCSS', 'false')
               runRichTextCommand('italic')
             }}
-            title="Kursiv"
+            title="Italic"
           >
             <Italic size={13} />
           </button>
@@ -388,7 +388,7 @@ export const CanvasItem = ({ element, selected, showTransformHandles, exporting,
               runRichTextCommand('styleWithCSS', 'false')
               runRichTextCommand('underline')
             }}
-            title="Unterstrichen"
+            title="Underline"
           >
             <Underline size={13} />
           </button>

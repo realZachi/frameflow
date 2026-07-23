@@ -51,8 +51,8 @@ type Props = {
 const elementMeta: Record<CanvasElement['type'], { label: string; icon: ReactNode }> = {
   text: { label: 'Text', icon: <Type size={16} /> },
   device: { label: 'Mockup', icon: <MonitorSmartphone size={16} /> },
-  shape: { label: 'Form', icon: <Shapes size={16} /> },
-  image: { label: 'Bild', icon: <ImagePlus size={16} /> },
+  shape: { label: 'Shape', icon: <Shapes size={16} /> },
+  image: { label: 'Image', icon: <ImagePlus size={16} /> },
 }
 
 type ToolbarPreset = {
@@ -61,10 +61,10 @@ type ToolbarPreset = {
 }
 
 const percentPresets: ToolbarPreset[] = [
-  { label: 'Aus', value: 0 },
-  { label: 'Leicht', value: 25 },
-  { label: 'Mittel', value: 50 },
-  { label: 'Stark', value: 75 },
+  { label: 'None', value: 0 },
+  { label: 'Light', value: 25 },
+  { label: 'Medium', value: 50 },
+  { label: 'Strong', value: 75 },
   { label: 'Max', value: 100 },
 ]
 
@@ -118,7 +118,7 @@ const ToolbarRange = ({ label, value, min, max, step = 1, displayValue, triggerV
           <span>{max}</span>
         </div>
         {presets && (
-          <div className="toolbar-range-presets" aria-label={`${label} Schnellwerte`}>
+          <div className="toolbar-range-presets" aria-label={`${label} quick values`}>
             {presets.map((preset) => (
               <Button
                 key={`${preset.label}-${preset.value}`}
@@ -161,7 +161,7 @@ const ToolbarColor = ({ label, value, onChange }: { label: string; value: string
         <PopoverTitle>{label}</PopoverTitle>
         <strong>{value.toUpperCase()}</strong>
       </PopoverHeader>
-      <div className="toolbar-color-grid" aria-label={`${label} Farbauswahl`}>
+      <div className="toolbar-color-grid" aria-label={`${label} color picker`}>
         {colorPresets.map((color) => (
           <Button
             key={color}
@@ -178,9 +178,9 @@ const ToolbarColor = ({ label, value, onChange }: { label: string; value: string
         ))}
       </div>
       <label className="toolbar-native-color">
-        <input type="color" value={value} onChange={(event) => onChange(event.target.value)} aria-label={`${label} frei wählen`} />
+        <input type="color" value={value} onChange={(event) => onChange(event.target.value)} aria-label={`Choose custom ${label.toLowerCase()}`} />
         <span className="toolbar-color-swatch" style={{ backgroundColor: value }} />
-        <strong>Eigene Farbe wählen</strong>
+        <strong>Choose custom color</strong>
       </label>
     </PopoverContent>
   </Popover>
@@ -203,9 +203,9 @@ const AdvancedSlider = ({ label, value, min, max, step = 1, displayValue, onChan
 
 const BaseSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>) => (
   <div className="toolbar-popover-section">
-    <AdvancedSlider label="Breite" value={element.width} min={8} max={140} displayValue={`${Math.round(element.width)}%`} onChange={(width) => onUpdate({ width })} />
-    <AdvancedSlider label="Drehung" value={element.rotation} min={-180} max={180} displayValue={`${Math.round(element.rotation)}°`} onChange={(rotation) => onUpdate({ rotation })} />
-    <AdvancedSlider label="Deckkraft" value={element.opacity} min={0.05} max={1} step={0.01} displayValue={`${Math.round(element.opacity * 100)}%`} onChange={(opacity) => onUpdate({ opacity })} />
+    <AdvancedSlider label="Width" value={element.width} min={8} max={140} displayValue={`${Math.round(element.width)}%`} onChange={(width) => onUpdate({ width })} />
+    <AdvancedSlider label="Rotation" value={element.rotation} min={-180} max={180} displayValue={`${Math.round(element.rotation)}°`} onChange={(rotation) => onUpdate({ rotation })} />
+    <AdvancedSlider label="Opacity" value={element.opacity} min={0.05} max={1} step={0.01} displayValue={`${Math.round(element.opacity * 100)}%`} onChange={(opacity) => onUpdate({ opacity })} />
   </div>
 )
 
@@ -214,26 +214,26 @@ const TextSettings = ({ element, onUpdate }: {
   onUpdate: Props['onUpdate']
 }) => (
   <div className="toolbar-popover-section">
-    <strong className="toolbar-popover-heading">Textdetails</strong>
-    <AdvancedSlider label="Zeilenhöhe" value={element.lineHeight} min={0.7} max={1.8} step={0.02} displayValue={element.lineHeight.toFixed(2)} onChange={(lineHeight) => onUpdate({ lineHeight })} />
-    <AdvancedSlider label="Schriftstärke" value={element.fontWeight} min={100} max={900} step={50} onChange={(fontWeight) => onUpdate({ fontWeight })} />
+    <strong className="toolbar-popover-heading">Text details</strong>
+    <AdvancedSlider label="Line height" value={element.lineHeight} min={0.7} max={1.8} step={0.02} displayValue={element.lineHeight.toFixed(2)} onChange={(lineHeight) => onUpdate({ lineHeight })} />
+    <AdvancedSlider label="Font weight" value={element.fontWeight} min={100} max={900} step={50} onChange={(fontWeight) => onUpdate({ fontWeight })} />
     <div className="toolbar-transform-control">
-      <span>Schreibweise</span>
+      <span>Case</span>
       <div className="toolbar-button-group">
         <Button variant={(element.textTransform ?? 'none') === 'none' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'none' })}>Aa</Button>
         <Button variant={element.textTransform === 'uppercase' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'uppercase' })}>AA</Button>
         <Button variant={element.textTransform === 'lowercase' ? 'secondary' : 'ghost'} size="sm" onClick={() => onUpdate({ textTransform: 'lowercase' })}>aa</Button>
       </div>
     </div>
-    <AdvancedSlider label="Laufweite" value={element.letterSpacing} min={-4} max={8} step={0.1} displayValue={`${element.letterSpacing.toFixed(1)} px`} onChange={(letterSpacing) => onUpdate({ letterSpacing })} />
-    <ToolbarColor label="Textfläche" value={element.backgroundColor ?? '#ffffff'} onChange={(backgroundColor) => onUpdate({ backgroundColor })} />
-    <AdvancedSlider label="Flächen-Deckkraft" value={element.backgroundOpacity ?? 0} min={0} max={1} step={0.01} displayValue={`${Math.round((element.backgroundOpacity ?? 0) * 100)}%`} onChange={(backgroundOpacity) => onUpdate({ backgroundOpacity })} />
-    <AdvancedSlider label="Innenabstand" value={element.padding ?? 0} min={0} max={24} displayValue={`${element.padding ?? 0} px`} onChange={(padding) => onUpdate({ padding })} />
-    <AdvancedSlider label="Ecken" value={element.borderRadius ?? 0} min={0} max={40} displayValue={`${element.borderRadius ?? 0} px`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
-    <ToolbarColor label="Kontur" value={element.strokeColor ?? '#111116'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
-    <AdvancedSlider label="Konturstärke" value={element.strokeWidth ?? 0} min={0} max={3} step={0.25} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
-    <AdvancedSlider label="Textschatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
-    <ToolbarColor label="Schattenfarbe" value={element.shadowColor ?? '#000000'} onChange={(shadowColor) => onUpdate({ shadowColor })} />
+    <AdvancedSlider label="Tracking" value={element.letterSpacing} min={-4} max={8} step={0.1} displayValue={`${element.letterSpacing.toFixed(1)} px`} onChange={(letterSpacing) => onUpdate({ letterSpacing })} />
+    <ToolbarColor label="Text background" value={element.backgroundColor ?? '#ffffff'} onChange={(backgroundColor) => onUpdate({ backgroundColor })} />
+    <AdvancedSlider label="Background opacity" value={element.backgroundOpacity ?? 0} min={0} max={1} step={0.01} displayValue={`${Math.round((element.backgroundOpacity ?? 0) * 100)}%`} onChange={(backgroundOpacity) => onUpdate({ backgroundOpacity })} />
+    <AdvancedSlider label="Padding" value={element.padding ?? 0} min={0} max={24} displayValue={`${element.padding ?? 0} px`} onChange={(padding) => onUpdate({ padding })} />
+    <AdvancedSlider label="Corners" value={element.borderRadius ?? 0} min={0} max={40} displayValue={`${element.borderRadius ?? 0} px`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
+    <ToolbarColor label="Stroke" value={element.strokeColor ?? '#111116'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
+    <AdvancedSlider label="Stroke width" value={element.strokeWidth ?? 0} min={0} max={3} step={0.25} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
+    <AdvancedSlider label="Text shadow" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
+    <ToolbarColor label="Shadow color" value={element.shadowColor ?? '#000000'} onChange={(shadowColor) => onUpdate({ shadowColor })} />
   </div>
 )
 
@@ -242,10 +242,10 @@ const ShapeSettings = ({ element, onUpdate }: {
   onUpdate: Props['onUpdate']
 }) => (
   <div className="toolbar-popover-section">
-    <strong className="toolbar-popover-heading">Formdetails</strong>
-    <ToolbarColor label="Kontur" value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
-    <AdvancedSlider label="Konturstärke" value={element.strokeWidth ?? 0} min={0} max={12} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
-    <AdvancedSlider label="Schatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
+    <strong className="toolbar-popover-heading">Shape details</strong>
+    <ToolbarColor label="Stroke" value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
+    <AdvancedSlider label="Stroke width" value={element.strokeWidth ?? 0} min={0} max={12} displayValue={`${element.strokeWidth ?? 0} px`} onChange={(strokeWidth) => onUpdate({ strokeWidth })} />
+    <AdvancedSlider label="Shadow" value={element.shadow ?? 0} min={0} max={100} displayValue={`${element.shadow ?? 0}%`} onChange={(shadow) => onUpdate({ shadow })} />
   </div>
 )
 
@@ -254,9 +254,9 @@ const ImageSettings = ({ element, onUpdate }: {
   onUpdate: Props['onUpdate']
 }) => (
   <div className="toolbar-popover-section">
-    <strong className="toolbar-popover-heading">Bilddetails</strong>
-    <AdvancedSlider label="Ecken" value={element.borderRadius} min={0} max={50} displayValue={`${element.borderRadius}%`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
-    <AdvancedSlider label="Schatten" value={element.shadow ?? 32} min={0} max={100} displayValue={`${element.shadow ?? 32}%`} onChange={(shadow) => onUpdate({ shadow })} />
+    <strong className="toolbar-popover-heading">Image details</strong>
+    <AdvancedSlider label="Corners" value={element.borderRadius} min={0} max={50} displayValue={`${element.borderRadius}%`} onChange={(borderRadius) => onUpdate({ borderRadius })} />
+    <AdvancedSlider label="Shadow" value={element.shadow ?? 32} min={0} max={100} displayValue={`${element.shadow ?? 32}%`} onChange={(shadow) => onUpdate({ shadow })} />
   </div>
 )
 
@@ -265,10 +265,10 @@ const DeviceSettings = ({ element, onUpdate }: {
   onUpdate: Props['onUpdate']
 }) => (
   <div className="toolbar-popover-section">
-    <strong className="toolbar-popover-heading">Perspektive</strong>
-    <AdvancedSlider label="Seitliche Neigung" value={element.tiltY} min={-18} max={18} displayValue={`${element.tiltY}°`} onChange={(tiltY) => onUpdate({ tiltY })} />
-    <AdvancedSlider label="Vertikale Neigung" value={element.tiltX} min={-12} max={12} displayValue={`${element.tiltX}°`} onChange={(tiltX) => onUpdate({ tiltX })} />
-    <AdvancedSlider label="Schatten" value={element.shadow} min={0} max={100} displayValue={`${element.shadow}%`} onChange={(shadow) => onUpdate({ shadow })} />
+    <strong className="toolbar-popover-heading">Perspective</strong>
+    <AdvancedSlider label="Side tilt" value={element.tiltY} min={-18} max={18} displayValue={`${element.tiltY}°`} onChange={(tiltY) => onUpdate({ tiltY })} />
+    <AdvancedSlider label="Vertical tilt" value={element.tiltX} min={-12} max={12} displayValue={`${element.tiltX}°`} onChange={(tiltX) => onUpdate({ tiltX })} />
+    <AdvancedSlider label="Shadow" value={element.shadow} min={0} max={100} displayValue={`${element.shadow}%`} onChange={(shadow) => onUpdate({ shadow })} />
   </div>
 )
 
@@ -281,12 +281,12 @@ const ElementSpecificSettings = ({ element, onUpdate }: Pick<Props, 'element' | 
 
 const MoreSettings = ({ element, onUpdate }: Pick<Props, 'element' | 'onUpdate'>) => (
   <Popover>
-    <PopoverTrigger render={<Button variant="outline" size="icon-sm" className="toolbar-more" title="Weitere Einstellungen" aria-label="Weitere Einstellungen" />}>
+    <PopoverTrigger render={<Button variant="outline" size="icon-sm" className="toolbar-more" title="More settings" aria-label="More settings" />}>
       <SlidersHorizontal size={15} />
     </PopoverTrigger>
     <PopoverContent align="end" sideOffset={9} className="element-settings-popover">
       <PopoverHeader>
-        <PopoverTitle>Weitere Einstellungen</PopoverTitle>
+        <PopoverTitle>More settings</PopoverTitle>
       </PopoverHeader>
       <BaseSettings element={element} onUpdate={onUpdate} />
       <ElementSpecificSettings element={element} onUpdate={onUpdate} />
@@ -298,19 +298,19 @@ const TextControls = ({ element, onUpdate }: { element: Extract<CanvasElement, {
   const isBold = element.fontWeight >= 700
   const fontCategories = [...new Set(fontOptions.map((font) => font.category))]
   const weightLabel = element.fontWeight < 350
-    ? 'Leicht'
+    ? 'Light'
     : element.fontWeight < 550
       ? 'Normal'
       : element.fontWeight < 675
-        ? 'Halbfett'
+        ? 'Semibold'
         : element.fontWeight < 825
-          ? 'Fett'
-          : 'Schwarz'
+          ? 'Bold'
+          : 'Black'
 
   return (
     <>
       <Select value={element.fontFamily} onValueChange={(fontFamily) => onUpdate({ fontFamily: String(fontFamily) })}>
-        <SelectTrigger size="sm" className="toolbar-font" aria-label="Schriftfamilie">
+        <SelectTrigger size="sm" className="toolbar-font" aria-label="Font family">
           <SelectValue>{fontOptions.find((font) => font.value === element.fontFamily)?.name ?? element.fontFamily}</SelectValue>
         </SelectTrigger>
         <SelectContent align="start" className="toolbar-select-content">
@@ -323,7 +323,7 @@ const TextControls = ({ element, onUpdate }: { element: Extract<CanvasElement, {
         </SelectContent>
       </Select>
       <ToolbarRange
-        label="Größe"
+        label="Size"
         value={element.fontSize}
         min={6}
         max={120}
@@ -340,7 +340,7 @@ const TextControls = ({ element, onUpdate }: { element: Extract<CanvasElement, {
       />
       <ToolbarRange
         className="toolbar-text-weight"
-        label="Stärke"
+        label="Weight"
         value={element.fontWeight}
         min={100}
         max={900}
@@ -348,25 +348,25 @@ const TextControls = ({ element, onUpdate }: { element: Extract<CanvasElement, {
         displayValue={String(Math.round(element.fontWeight))}
         triggerValue={weightLabel}
         presets={[
-          { label: 'Leicht', value: 300 },
+          { label: 'Light', value: 300 },
           { label: 'Normal', value: 450 },
-          { label: 'Halbfett', value: 600 },
-          { label: 'Fett', value: 750 },
-          { label: 'Schwarz', value: 900 },
+          { label: 'Semibold', value: 600 },
+          { label: 'Bold', value: 750 },
+          { label: 'Black', value: 900 },
         ]}
         onChange={(fontWeight) => onUpdate({ fontWeight })}
       />
-      <ToolbarColor label="Textfarbe" value={element.color} onChange={(color) => onUpdate({ color })} />
-      <div className="toolbar-button-group" aria-label="Textausrichtung">
-        <Button variant={element.align === 'left' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'left' })} aria-label="Linksbündig"><AlignLeft /></Button>
-        <Button variant={element.align === 'center' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'center' })} aria-label="Zentriert"><AlignCenter /></Button>
-        <Button variant={element.align === 'right' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'right' })} aria-label="Rechtsbündig"><AlignRight /></Button>
+      <ToolbarColor label="Text color" value={element.color} onChange={(color) => onUpdate({ color })} />
+      <div className="toolbar-button-group" aria-label="Text alignment">
+        <Button variant={element.align === 'left' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'left' })} aria-label="Align left"><AlignLeft /></Button>
+        <Button variant={element.align === 'center' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'center' })} aria-label="Align center"><AlignCenter /></Button>
+        <Button variant={element.align === 'right' ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ align: 'right' })} aria-label="Align right"><AlignRight /></Button>
       </div>
-      <div className="toolbar-button-group" aria-label="Schriftschnitt">
-        <Button className="toolbar-format-button" variant={isBold ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ fontWeight: isBold ? 450 : 750 })} aria-label="Fett" aria-pressed={isBold}><Bold /></Button>
-        <Button className="toolbar-format-button" variant={element.italic ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ italic: !element.italic })} aria-label="Kursiv" aria-pressed={element.italic}><Italic /></Button>
-        <Button className="toolbar-format-button" variant={element.underline ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ underline: !element.underline })} aria-label="Unterstrichen" aria-pressed={element.underline}><Underline /></Button>
-        <Button className="toolbar-format-button" variant={element.strikethrough ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ strikethrough: !element.strikethrough })} aria-label="Durchgestrichen" aria-pressed={element.strikethrough}><Strikethrough /></Button>
+      <div className="toolbar-button-group" aria-label="Font style">
+        <Button className="toolbar-format-button" variant={isBold ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ fontWeight: isBold ? 450 : 750 })} aria-label="Bold" aria-pressed={isBold}><Bold /></Button>
+        <Button className="toolbar-format-button" variant={element.italic ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ italic: !element.italic })} aria-label="Italic" aria-pressed={element.italic}><Italic /></Button>
+        <Button className="toolbar-format-button" variant={element.underline ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ underline: !element.underline })} aria-label="Underline" aria-pressed={element.underline}><Underline /></Button>
+        <Button className="toolbar-format-button" variant={element.strikethrough ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => onUpdate({ strikethrough: !element.strikethrough })} aria-label="Strikethrough" aria-pressed={element.strikethrough}><Strikethrough /></Button>
       </div>
     </>
   )
@@ -388,7 +388,7 @@ const DeviceControls = ({ element, onUpdate, onUpload }: {
           onUpdate({ deviceStyle, ...getDevicePlacement(deviceStyle) })
         }}
       >
-        <SelectTrigger size="sm" className="toolbar-device-select" aria-label="Mockup-Stil">
+        <SelectTrigger size="sm" className="toolbar-device-select" aria-label="Mockup style">
           <SelectValue>{deviceOptions.find((device) => device.id === element.deviceStyle)?.label ?? element.deviceStyle}</SelectValue>
         </SelectTrigger>
         <SelectContent align="start">
@@ -398,9 +398,9 @@ const DeviceControls = ({ element, onUpdate, onUpload }: {
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])} />
       <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
         {element.screenshot ? <ImagePlus /> : <Upload />}
-        {element.screenshot ? 'Screenshot ersetzen' : 'Screenshot einsetzen'}
+        {element.screenshot ? 'Replace screenshot' : 'Add screenshot'}
       </Button>
-      <ToolbarRange label="Schatten" value={element.shadow} min={0} max={100} displayValue={`${Math.round(element.shadow)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
+      <ToolbarRange label="Shadow" value={element.shadow} min={0} max={100} displayValue={`${Math.round(element.shadow)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
     </>
   )
 }
@@ -422,26 +422,26 @@ export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicat
   }, [element])
 
   return (
-    <div ref={toolbarRef} className="context-toolbar" role="toolbar" aria-label={`${meta.label} bearbeiten`}>
+    <div ref={toolbarRef} className="context-toolbar" role="toolbar" aria-label={`Edit ${meta.label}`}>
       <div className="context-toolbar-identity">
         <span>{meta.icon}</span>
-        <div><strong>{meta.label}</strong><small>Ausgewählt</small></div>
+        <div><strong>{meta.label}</strong><small>Selected</small></div>
       </div>
       <div ref={controlsRef} className="context-toolbar-controls">
         {element.type === 'text' && <TextControls element={element} onUpdate={onUpdate} />}
         {element.type === 'shape' && (
           <>
-            <ToolbarColor label="Füllung" value={element.color} onChange={(color) => onUpdate({ color })} />
-            <ToolbarColor label="Kontur" value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
+            <ToolbarColor label="Fill" value={element.color} onChange={(color) => onUpdate({ color })} />
+            <ToolbarColor label="Stroke" value={element.strokeColor ?? '#171713'} onChange={(strokeColor) => onUpdate({ strokeColor })} />
             <ToolbarRange
-              label="Kontur"
+              label="Stroke"
               value={element.strokeWidth ?? 0}
               min={0}
               max={12}
               step={0.5}
               displayValue={`${element.strokeWidth ?? 0} px`}
               presets={[
-                { label: 'Aus', value: 0 },
+                { label: 'None', value: 0 },
                 { label: '1', value: 1 },
                 { label: '2', value: 2 },
                 { label: '4', value: 4 },
@@ -450,28 +450,28 @@ export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicat
               ]}
               onChange={(strokeWidth) => onUpdate({ strokeWidth })}
             />
-            <ToolbarRange label="Schatten" value={element.shadow ?? 0} min={0} max={100} displayValue={`${Math.round(element.shadow ?? 0)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
+            <ToolbarRange label="Shadow" value={element.shadow ?? 0} min={0} max={100} displayValue={`${Math.round(element.shadow ?? 0)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
           </>
         )}
         {element.type === 'image' && (
           <>
             <ToolbarRange
-              label="Ecken"
+              label="Corners"
               value={element.borderRadius}
               min={0}
               max={50}
               displayValue={`${Math.round(element.borderRadius)}%`}
               presets={[
-                { label: 'Eckig', value: 0 },
-                { label: 'Leicht', value: 8 },
-                { label: 'Rund', value: 24 },
+                { label: 'Square', value: 0 },
+                { label: 'Slight', value: 8 },
+                { label: 'Rounded', value: 24 },
                 { label: 'Max', value: 50 },
               ]}
               onChange={(borderRadius) => onUpdate({ borderRadius })}
             />
-            <ToolbarRange label="Schatten" value={element.shadow ?? 32} min={0} max={100} displayValue={`${Math.round(element.shadow ?? 32)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
+            <ToolbarRange label="Shadow" value={element.shadow ?? 32} min={0} max={100} displayValue={`${Math.round(element.shadow ?? 32)}%`} presets={percentPresets} onChange={(shadow) => onUpdate({ shadow })} />
             <ToolbarRange
-              label="Deckkraft"
+              label="Opacity"
               value={Math.round(element.opacity * 100)}
               min={5}
               max={100}
@@ -491,13 +491,13 @@ export const ElementToolbar = ({ element, onUpdate, onUploadToDevice, onDuplicat
       </div>
       <div ref={actionsRef} className="context-toolbar-actions">
         <Separator orientation="vertical" />
-        <Button variant="ghost" size="icon-sm" onClick={onDuplicate} title="Duplizieren" aria-label="Duplizieren"><Copy /></Button>
-        <Button variant={element.locked ? 'secondary' : 'ghost'} size="icon-sm" onClick={onToggleLock} title={element.locked ? 'Entsperren' : 'Sperren'} aria-label={element.locked ? 'Entsperren' : 'Sperren'}>
+        <Button variant="ghost" size="icon-sm" onClick={onDuplicate} title="Duplicate" aria-label="Duplicate"><Copy /></Button>
+        <Button variant={element.locked ? 'secondary' : 'ghost'} size="icon-sm" onClick={onToggleLock} title={element.locked ? 'Unlock' : 'Lock'} aria-label={element.locked ? 'Unlock' : 'Lock'}>
           {element.locked ? <LockOpen /> : <Lock />}
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={() => onMoveLayer(-1)} title="Eine Ebene nach hinten" aria-label="Eine Ebene nach hinten"><ArrowDown /></Button>
-        <Button variant="ghost" size="icon-sm" onClick={() => onMoveLayer(1)} title="Eine Ebene nach vorne" aria-label="Eine Ebene nach vorne"><ArrowUp /></Button>
-        <Button variant="destructive" size="icon-sm" onClick={onDelete} title="Löschen" aria-label="Löschen"><Trash2 /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => onMoveLayer(-1)} title="Send backward" aria-label="Send backward"><ArrowDown /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => onMoveLayer(1)} title="Bring forward" aria-label="Bring forward"><ArrowUp /></Button>
+        <Button variant="destructive" size="icon-sm" onClick={onDelete} title="Delete" aria-label="Delete"><Trash2 /></Button>
       </div>
     </div>
   )

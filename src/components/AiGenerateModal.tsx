@@ -40,7 +40,7 @@ const IdleContent = ({
   <>
     <div className="ai-modal-field">
       <label htmlFor="ai-modal-description">
-        {isEditMode ? 'Was soll sich ändern?' : 'Worum geht es in deiner App?'}
+        {isEditMode ? 'What would you like to change?' : 'What is your app about?'}
       </label>
       <textarea
         id="ai-modal-description"
@@ -48,8 +48,8 @@ const IdleContent = ({
         value={description}
         onChange={(event) => onDescriptionChange(event.target.value)}
         placeholder={isEditMode
-          ? 'Zum Beispiel: Überschrift kürzen, Gerät größer machen und Kontrast erhöhen …'
-          : 'Beschreibe deine App: Zielgruppe, Kernfeatures, Tonalität …'}
+          ? 'For example: shorten the headline, make the device larger, and increase contrast …'
+          : 'Describe your app: audience, core features, tone …'}
       />
     </div>
     <div className="ai-modal-field">
@@ -68,11 +68,11 @@ const IdleContent = ({
         onClick={() => fileInputRef.current?.click()}
       >
         <Upload size={16} />
-        <span>{isEditMode ? 'Screenshot hinzufügen' : 'Screenshots auswählen'}</span>
+        <span>{isEditMode ? 'Add screenshot' : 'Choose screenshots'}</span>
       </button>
       {isEditMode && (
         <small className="ai-modal-hint">
-          Nur nötig, wenn du ein neues Motiv oder einen neuen App-Screenshot verwenden möchtest.
+          Only needed if you want to use a new image or app screenshot.
         </small>
       )}
       {screenshots.length > 0 && (
@@ -83,7 +83,7 @@ const IdleContent = ({
               <button
                 type="button"
                 onClick={() => onRemoveScreenshot(shot.id)}
-                aria-label={`${shot.name} entfernen`}
+                aria-label={`Remove ${shot.name}`}
               >
                 <X size={11} />
               </button>
@@ -118,7 +118,7 @@ const RunningContent = ({
       ))}
       <div className="ai-modal-log-entry ai-modal-log-entry--spinner">
         <span className="ai-modal-spinner" />
-        {reasoningTail ? `Denkt nach … ${reasoningTail}` : 'Generiere …'}
+        {reasoningTail ? `Thinking … ${reasoningTail}` : 'Generating …'}
       </div>
     </div>
     {assistantText && <p className="ai-modal-assistant-text">{assistantText}</p>}
@@ -143,8 +143,8 @@ const ResultContent = ({
       <div className="ai-modal-result ai-modal-result--done">
         <p>
           {isEditMode
-            ? 'Screen bearbeitet.'
-            : `Fertig: ${doneInfo.slidesCreated} Screens erstellt.`}
+            ? 'Screen updated.'
+            : `Done: ${doneInfo.slidesCreated} ${doneInfo.slidesCreated === 1 ? 'screen' : 'screens'} created.`}
         </p>
         {(doneInfo.summary || assistantText) && (
           <p className="ai-modal-assistant-text">
@@ -180,17 +180,17 @@ const ModalFooter = ({
   if (phase === 'idle') {
     return (
       <button className="export-button ai-modal-generate" onClick={onGenerate} disabled={!canGenerate}>
-        <Sparkles size={16} /><b>{isEditMode ? 'Bearbeiten' : 'Generieren'}</b>
+        <Sparkles size={16} /><b>{isEditMode ? 'Edit' : 'Generate'}</b>
       </button>
     )
   }
   if (phase === 'running') {
-    return <button className="ai-modal-btn-secondary" onClick={onCancel}>Abbrechen</button>
+    return <button className="ai-modal-btn-secondary" onClick={onCancel}>Cancel</button>
   }
   if (phase === 'done') {
-    return <button className="export-button ai-modal-generate" onClick={onClose}><b>Schließen</b></button>
+    return <button className="export-button ai-modal-generate" onClick={onClose}><b>Close</b></button>
   }
-  return <button className="ai-modal-btn-secondary" onClick={onRetry}>Erneut versuchen</button>
+  return <button className="ai-modal-btn-secondary" onClick={onRetry}>Try again</button>
 }
 
 export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
@@ -314,16 +314,16 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
       className={`ai-modal-overlay${phase !== 'idle' ? ' ai-modal-overlay--live' : ''}`}
       onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose() }}
     >
-      <div className="ai-modal-card" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Screen mit AI bearbeiten' : 'Mit AI generieren'}>
+      <div className="ai-modal-card" role="dialog" aria-modal="true" aria-label={isEditMode ? 'Edit screen with AI' : 'Generate with AI'}>
         <div className="ai-modal-header">
           <div className="ai-modal-title">
             <Sparkles size={16} />
             <div>
-              <h2>{isEditMode ? 'Screen mit AI bearbeiten' : 'Mit AI generieren'}</h2>
+              <h2>{isEditMode ? 'Edit screen with AI' : 'Generate with AI'}</h2>
               {targetSlide && <span>{targetSlide.name}</span>}
             </div>
           </div>
-          <button className="ai-modal-close" onClick={requestClose} disabled={phase === 'running'} aria-label="Schließen"><X size={16} /></button>
+          <button className="ai-modal-close" onClick={requestClose} disabled={phase === 'running'} aria-label="Close"><X size={16} /></button>
         </div>
 
         <div className="ai-modal-body">

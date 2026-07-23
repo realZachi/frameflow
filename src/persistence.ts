@@ -55,8 +55,8 @@ const openDatabase = (): Promise<IDBDatabase> => {
       }
       resolve(request.result)
     }
-    request.onerror = () => fail(request.error ?? new Error('Der lokale Projektspeicher konnte nicht geöffnet werden.'))
-    request.onblocked = () => fail(new Error('Der lokale Projektspeicher wird von einem anderen Tab blockiert.'))
+    request.onerror = () => fail(request.error ?? new Error('Local project storage could not be opened.'))
+    request.onblocked = () => fail(new Error('Local project storage is blocked by another tab.'))
   })
 
   return databasePromise
@@ -111,8 +111,8 @@ export const loadProjectWorkspace = async (): Promise<{ activeProject: Persisted
       const activeProject = projects.find((project) => project.id === configuredId) ?? projects[0] ?? null
       resolve({ activeProject, projects: projects.map(summarizeProject) })
     }
-    transaction.onerror = () => reject(transaction.error ?? new Error('Die lokalen Projekte konnten nicht geladen werden.'))
-    transaction.onabort = () => reject(transaction.error ?? new Error('Das Laden der lokalen Projekte wurde abgebrochen.'))
+    transaction.onerror = () => reject(transaction.error ?? new Error('Local projects could not be loaded.'))
+    transaction.onabort = () => reject(transaction.error ?? new Error('Loading local projects was cancelled.'))
   })
 }
 
@@ -123,7 +123,7 @@ export const loadProject = async (projectId: string): Promise<PersistedProject |
     const transaction = database.transaction(PROJECT_STORE, 'readonly')
     const request = transaction.objectStore(PROJECT_STORE).get(projectId)
     request.onsuccess = () => resolve(normalizeProject(request.result))
-    request.onerror = () => reject(request.error ?? new Error('Das lokale Projekt konnte nicht geladen werden.'))
+    request.onerror = () => reject(request.error ?? new Error('The local project could not be loaded.'))
   })
 }
 
@@ -134,8 +134,8 @@ export const saveProject = async (project: PersistedProject): Promise<void> => {
     const transaction = database.transaction(PROJECT_STORE, 'readwrite')
     transaction.objectStore(PROJECT_STORE).put(project)
     transaction.oncomplete = () => resolve()
-    transaction.onerror = () => reject(transaction.error ?? new Error('Das lokale Projekt konnte nicht gespeichert werden.'))
-    transaction.onabort = () => reject(transaction.error ?? new Error('Das lokale Speichern wurde abgebrochen.'))
+    transaction.onerror = () => reject(transaction.error ?? new Error('The local project could not be saved.'))
+    transaction.onabort = () => reject(transaction.error ?? new Error('Saving the local project was cancelled.'))
   })
 }
 
@@ -146,8 +146,8 @@ export const setActiveProjectId = async (projectId: string): Promise<void> => {
     const transaction = database.transaction(SETTINGS_STORE, 'readwrite')
     transaction.objectStore(SETTINGS_STORE).put({ key: ACTIVE_PROJECT_KEY, value: projectId } satisfies SettingRecord)
     transaction.oncomplete = () => resolve()
-    transaction.onerror = () => reject(transaction.error ?? new Error('Das aktive Projekt konnte nicht gespeichert werden.'))
-    transaction.onabort = () => reject(transaction.error ?? new Error('Der Projektwechsel wurde abgebrochen.'))
+    transaction.onerror = () => reject(transaction.error ?? new Error('The active project could not be saved.'))
+    transaction.onabort = () => reject(transaction.error ?? new Error('Switching projects was cancelled.'))
   })
 }
 
@@ -158,8 +158,8 @@ export const deleteProject = async (projectId: string): Promise<void> => {
     const transaction = database.transaction(PROJECT_STORE, 'readwrite')
     transaction.objectStore(PROJECT_STORE).delete(projectId)
     transaction.oncomplete = () => resolve()
-    transaction.onerror = () => reject(transaction.error ?? new Error('Das lokale Projekt konnte nicht gelöscht werden.'))
-    transaction.onabort = () => reject(transaction.error ?? new Error('Das Löschen wurde abgebrochen.'))
+    transaction.onerror = () => reject(transaction.error ?? new Error('The local project could not be deleted.'))
+    transaction.onabort = () => reject(transaction.error ?? new Error('Deleting the project was cancelled.'))
   })
 }
 

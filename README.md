@@ -7,7 +7,7 @@ Design polished App Store screenshots in the browser, with precise manual contro
 
 Frameflow is an open-source, desktop-first editor for building complete App Store screenshot sets. Projects stay in the browser, screenshots can be placed in perspective-aware device mockups, and every artboard exports at an exact store-ready resolution.
 
-> Frameflow is in active early development. The editor UI is currently German; code, issues, and project documentation use English.
+> Frameflow is in active early development. The editor UI, code, issues, and project documentation use English.
 
 ## Why Frameflow?
 
@@ -59,14 +59,16 @@ The key intentionally has no `VITE_` prefix. Vite's local server reads it and pr
 
 When you start an AI run, the description and screenshots selected for that run are sent to Moonshot AI. Normal editing, local persistence, and export do not call the AI provider. API usage may incur charges from Moonshot.
 
+AI requests may be written in any language, but generated canvas copy and completion summaries remain in English.
+
 ## Use the editor
 
 1. Start with a template or add an empty screen.
 2. Use the left sidebar to add text, device mockups, shapes, backgrounds, or uploads.
 3. Select an element to edit it; drag the handles to move, resize, or rotate it.
 4. Place an uploaded PNG, JPG, or WebP freely or inside a selected device.
-5. Optionally choose **Mit AI generieren** to create a set, or select a screen and use its contextual magic-cursor action to revise only that screen.
-6. Choose **Alle als ZIP** and select an export format.
+5. Optionally choose **Generate with AI** to create a set, or select a screen and use its contextual magic-cursor action to revise only that screen.
+6. Choose **Export all as ZIP** and select an export format.
 
 Projects save automatically in the current browser profile. Clearing site data also removes saved projects, so export important work before resetting browser storage.
 

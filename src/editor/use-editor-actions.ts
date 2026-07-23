@@ -34,7 +34,7 @@ type EditorActionsOptions = {
 
 const textPresets: Record<TextPreset, Partial<TextElement> & Pick<TextElement, 'text' | 'y' | 'fontSize' | 'fontWeight' | 'width' | 'lineHeight' | 'letterSpacing' | 'fontFamily'>> = {
   title: {
-    text: 'Deine Headline',
+    text: 'Your headline',
     y: 10,
     fontSize: 42,
     fontWeight: 760,
@@ -44,7 +44,7 @@ const textPresets: Record<TextPreset, Partial<TextElement> & Pick<TextElement, '
     fontFamily: 'Bricolage Grotesque Variable',
   },
   subtitle: {
-    text: 'Die klare zweite Zeile',
+    text: 'A clear supporting line',
     y: 20,
     fontSize: 24,
     fontWeight: 650,
@@ -54,7 +54,7 @@ const textPresets: Record<TextPreset, Partial<TextElement> & Pick<TextElement, '
     fontFamily: 'Manrope Variable',
   },
   body: {
-    text: 'Eine kurze Erklärung, die den Mehrwert deiner App auf den Punkt bringt.',
+    text: 'A short explanation that captures your app’s value.',
     y: 24,
     fontSize: 17,
     fontWeight: 520,
@@ -80,7 +80,7 @@ const textPresets: Record<TextPreset, Partial<TextElement> & Pick<TextElement, '
     color: '#172015',
   },
   quote: {
-    text: '„Weniger Aufwand.\nMehr Wirkung.“',
+    text: '“Less effort.\nMore impact.”',
     y: 20,
     fontSize: 27,
     fontWeight: 600,
@@ -91,7 +91,7 @@ const textPresets: Record<TextPreset, Partial<TextElement> & Pick<TextElement, '
     italic: true,
   },
   stat: {
-    text: '98%\nmehr Fokus',
+    text: '98%\nmore focus',
     y: 18,
     fontSize: 38,
     fontWeight: 760,
@@ -246,7 +246,7 @@ export function useEditorActions({
     })))
     setUploads((current) => [...assets, ...current])
     if (assets.length > 0) {
-      setToast(`${assets.length} ${assets.length === 1 ? 'Datei' : 'Dateien'} hinzugefügt`)
+      setToast(`${assets.length} ${assets.length === 1 ? 'file' : 'files'} added`)
     }
   }, [setToast, setUploads])
 
@@ -273,7 +273,7 @@ export function useEditorActions({
           },
         }
       : slide))
-    setToast('Bild als Hintergrund eingesetzt')
+    setToast('Image set as background')
   }, [activeSlideId, commit, setToast, setUploads])
 
   const applyTemplate = useCallback((template: TemplateId) => {
@@ -282,7 +282,7 @@ export function useEditorActions({
       ? { ...replacement, id: activeSlideId }
       : slide))
     setSelectedElementId(null)
-    setToast('Vorlage angewendet')
+    setToast('Template applied')
   }, [activeSlide.name, activeSlideId, commit, setSelectedElementId, setToast])
 
   const duplicateSelected = useCallback(() => {

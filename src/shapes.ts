@@ -3,23 +3,23 @@ import type { ShapeElement } from './types'
 export const shapeCatalog: {
   id: ShapeElement['shape']
   label: string
-  group: 'Basis' | 'Akzent' | 'Linien'
+  group: 'Base' | 'Accent' | 'Lines'
 }[] = [
-  { id: 'circle', label: 'Kreis', group: 'Basis' },
-  { id: 'square', label: 'Quadrat', group: 'Basis' },
-  { id: 'rounded-square', label: 'Soft Square', group: 'Basis' },
-  { id: 'pill', label: 'Pill', group: 'Basis' },
-  { id: 'triangle', label: 'Dreieck', group: 'Basis' },
-  { id: 'diamond', label: 'Raute', group: 'Basis' },
-  { id: 'star', label: 'Stern', group: 'Akzent' },
-  { id: 'burst', label: 'Burst', group: 'Akzent' },
-  { id: 'spark', label: 'Spark', group: 'Akzent' },
-  { id: 'blob', label: 'Blob', group: 'Akzent' },
-  { id: 'arch', label: 'Bogen', group: 'Akzent' },
-  { id: 'ring', label: 'Ring', group: 'Akzent' },
-  { id: 'line', label: 'Linie', group: 'Linien' },
-  { id: 'arrow', label: 'Pfeil', group: 'Linien' },
-  { id: 'wave', label: 'Welle', group: 'Linien' },
+  { id: 'circle', label: 'Circle', group: 'Base' },
+  { id: 'square', label: 'Square', group: 'Base' },
+  { id: 'rounded-square', label: 'Soft square', group: 'Base' },
+  { id: 'pill', label: 'Pill', group: 'Base' },
+  { id: 'triangle', label: 'Triangle', group: 'Base' },
+  { id: 'diamond', label: 'Diamond', group: 'Base' },
+  { id: 'star', label: 'Star', group: 'Accent' },
+  { id: 'burst', label: 'Burst', group: 'Accent' },
+  { id: 'spark', label: 'Spark', group: 'Accent' },
+  { id: 'blob', label: 'Blob', group: 'Accent' },
+  { id: 'arch', label: 'Arch', group: 'Accent' },
+  { id: 'ring', label: 'Ring', group: 'Accent' },
+  { id: 'line', label: 'Line', group: 'Lines' },
+  { id: 'arrow', label: 'Arrow', group: 'Lines' },
+  { id: 'wave', label: 'Wave', group: 'Lines' },
 ]
 
 export const shapeAspectRatio: Record<ShapeElement['shape'], number> = {

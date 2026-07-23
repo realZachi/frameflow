@@ -84,11 +84,11 @@ describe('project utilities', () => {
 
   it('generates case-insensitive unique project names', () => {
     const projects = [
-      summary('1', 'Neues Projekt', 1),
-      summary('2', 'neues projekt 2', 2),
+      summary('1', 'New Project', 1),
+      summary('2', 'new project 2', 2),
     ]
 
-    expect(getUniqueProjectName(projects, 'Neues Projekt')).toBe('Neues Projekt 3')
+    expect(getUniqueProjectName(projects, 'New Project')).toBe('New Project 3')
     expect(getUniqueProjectName(projects, 'Launch')).toBe('Launch')
   })
 })

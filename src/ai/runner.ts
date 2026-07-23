@@ -25,43 +25,43 @@ const describeToolCall = (toolName: string, input: unknown): string => {
   const data = (input && typeof input === 'object' ? (input as Record<string, unknown>) : {})
   switch (toolName) {
     case 'get_canvas_state':
-      return 'Board-Status abgerufen'
+      return 'Canvas state retrieved'
     case 'add_slide':
-      return 'Neuer Screen angelegt'
+      return 'New screen created'
     case 'rename_slide':
       return typeof data['name'] === 'string'
-        ? `Screen umbenannt: „${truncate(data['name'], 30)}"`
-        : 'Screen umbenannt'
+        ? `Screen renamed: “${truncate(data['name'], 30)}”`
+        : 'Screen renamed'
     case 'set_slide_background':
-      return 'Hintergrund geändert'
+      return 'Background updated'
     case 'delete_slide':
-      return 'Screen gelöscht'
+      return 'Screen deleted'
     case 'add_text':
       return typeof data['text'] === 'string'
-        ? `Text: „${truncate(data['text'], 30)}"`
-        : 'Text hinzugefügt'
+        ? `Text: “${truncate(data['text'], 30)}”`
+        : 'Text added'
     case 'add_device':
       return typeof data['deviceStyle'] === 'string'
-        ? `Gerät hinzugefügt (${data['deviceStyle']})`
-        : 'Gerät hinzugefügt'
+        ? `Device added (${data['deviceStyle']})`
+        : 'Device added'
     case 'add_shape':
       return typeof data['shape'] === 'string'
-        ? `Form hinzugefügt (${data['shape']})`
-        : 'Form hinzugefügt'
+        ? `Shape added (${data['shape']})`
+        : 'Shape added'
     case 'add_image':
-      return 'Bild hinzugefügt'
+      return 'Image added'
     case 'set_device_screenshot':
-      return 'Screenshot im Gerät ersetzt'
+      return 'Device screenshot replaced'
     case 'update_element':
-      return 'Element aktualisiert'
+      return 'Element updated'
     case 'delete_element':
-      return 'Element gelöscht'
+      return 'Element deleted'
     case 'inspect_slide':
-      return 'Layout vermessen'
+      return 'Layout measured'
     case 'render_slide_preview':
-      return 'Vorschau geprüft'
+      return 'Preview checked'
     default:
-      return `Werkzeug: ${toolName}`
+      return `Tool: ${toolName}`
   }
 }
 
@@ -73,7 +73,7 @@ const extractMediaType = (dataUrl: string): string => {
 const describeError = (error: unknown): string => {
   if (APICallError.isInstance(error)) {
     if (error.statusCode === 400 || error.statusCode === 401 || error.statusCode === 403) {
-      return `Moonshot-API-Fehler (${error.statusCode}) — prüfe den MOONSHOT_API_KEY in .env.local und starte den Dev-Server neu. ${error.message}`
+      return `Moonshot API error (${error.statusCode}) — check MOONSHOT_API_KEY in .env.local and restart the development server. ${error.message}`
     }
     return error.message
   }
@@ -96,9 +96,9 @@ export async function runAiGeneration(options: {
   const { description, screenshots, controller, targetSlideId, signal, onEvent, onActivity } = options
 
   try {
-    // Der Key wird nicht im Browser gehalten: der Vite-Dev-Server proxied
-    // /api/moonshot → api.moonshot.ai und setzt den Authorization-Header
-    // aus MOONSHOT_API_KEY (siehe vite.config.ts).
+    // The key never enters the browser: the Vite development server proxies
+    // /api/moonshot to api.moonshot.ai and sets the Authorization header
+    // from MOONSHOT_API_KEY (see vite.config.ts).
     const moonshot = createOpenAICompatible({
       name: 'moonshot',
       baseURL: `${window.location.origin}/api/moonshot/v1`,
@@ -118,7 +118,7 @@ export async function runAiGeneration(options: {
       content.push({ type: 'file', mediaType: extractMediaType(shot.dataUrl), data: shot.dataUrl })
     }
 
-    onEvent({ type: 'status', message: 'Verbinde mit Moonshot AI…' })
+    onEvent({ type: 'status', message: 'Connecting to Moonshot AI…' })
 
     const runController = targetSlideId ? scopeAiControllerToSlide(controller, targetSlideId) : controller
     const result = streamText({
@@ -148,8 +148,8 @@ export async function runAiGeneration(options: {
           break
         }
         case 'reasoning-delta': {
-          // kimi-k3 ist ein Reasoning-Modell: ohne diese Deltas wirkt der Lauf
-          // minutenlang eingefroren, obwohl das Modell arbeitet.
+          // kimi-k3 is a reasoning model; without these deltas the run appears
+          // frozen for minutes even while the model is working.
           onEvent({ type: 'reasoning', delta: part.text })
           break
         }
@@ -169,7 +169,7 @@ export async function runAiGeneration(options: {
     }
 
     if (signal?.aborted) {
-      onEvent({ type: 'status', message: 'Abgebrochen' })
+      onEvent({ type: 'status', message: 'Cancelled' })
       return
     }
     if (hadError) return
@@ -185,7 +185,7 @@ export async function runAiGeneration(options: {
     onEvent({ type: 'done', summary: finalText, slidesCreated })
   } catch (error) {
     if (isAbortError(error)) {
-      onEvent({ type: 'status', message: 'Abgebrochen' })
+      onEvent({ type: 'status', message: 'Cancelled' })
       return
     }
     onEvent({ type: 'error', message: describeError(error) })

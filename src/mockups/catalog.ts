@@ -134,12 +134,12 @@ export const photoMockups: Record<DeviceStyle, PhotoMockupDefinition> = {
 }
 
 export const deviceOptions: { id: DeviceStyle; label: string; kind: 'photo'; preview: string }[] = [
-  { id: 'iphone-17-a', label: '17 Pro · Aufrecht', kind: 'photo', preview: iphone17AOverlay },
-  { id: 'iphone-17-b', label: '17 Pro · Frontal', kind: 'photo', preview: iphone17BOverlay },
-  { id: 'iphone-17-c', label: '17 Pro · Rechts', kind: 'photo', preview: iphone17COverlay },
-  { id: 'iphone-17-d', label: '17 Pro · Links', kind: 'photo', preview: iphone17DOverlay },
-  { id: 'iphone-17-e', label: '17 Pro · Flach', kind: 'photo', preview: iphone17EOverlay },
-  { id: 'iphone-17-f', label: '17 Pro · Angelehnt', kind: 'photo', preview: iphone17FOverlay },
+  { id: 'iphone-17-a', label: '17 Pro · Upright', kind: 'photo', preview: iphone17AOverlay },
+  { id: 'iphone-17-b', label: '17 Pro · Front', kind: 'photo', preview: iphone17BOverlay },
+  { id: 'iphone-17-c', label: '17 Pro · Right', kind: 'photo', preview: iphone17COverlay },
+  { id: 'iphone-17-d', label: '17 Pro · Left', kind: 'photo', preview: iphone17DOverlay },
+  { id: 'iphone-17-e', label: '17 Pro · Flat', kind: 'photo', preview: iphone17EOverlay },
+  { id: 'iphone-17-f', label: '17 Pro · Leaning', kind: 'photo', preview: iphone17FOverlay },
   { id: 'tilted-hand', label: 'Hand · Tilted', kind: 'photo', preview: tiltedHandOverlay },
 ]
 

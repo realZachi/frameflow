@@ -219,15 +219,15 @@ export const EditorCanvas = ({
                     size="icon-xs"
                     onClick={() => onEditSlideWithAi(slide.id)}
                     disabled={aiActionsDisabled}
-                    title={`${slide.name} mit AI bearbeiten`}
-                    aria-label={`${slide.name} mit AI bearbeiten`}
+                    title={`Edit ${slide.name} with AI`}
+                    aria-label={`Edit ${slide.name} with AI`}
                   >
                     <CursorMagicSelection02 size={13} />
                   </Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onDuplicateSlide(slide.id)} title="Screen duplizieren" aria-label="Screen duplizieren"><Copy size={13} /></Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, -1)} disabled={index === 0} title="Nach links" aria-label="Nach links"><ChevronLeft size={14} /></Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, 1)} disabled={index === slides.length - 1} title="Nach rechts" aria-label="Nach rechts"><ChevronRight size={14} /></Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => onDeleteSlide(slide.id)} disabled={slides.length === 1} title="Screen löschen" aria-label="Screen löschen"><Trash2 size={13} /></Button>
+                  <Button variant="ghost" size="icon-xs" onClick={() => onDuplicateSlide(slide.id)} title="Duplicate screen" aria-label="Duplicate screen"><Copy size={13} /></Button>
+                  <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, -1)} disabled={index === 0} title="Move left" aria-label="Move left"><ChevronLeft size={14} /></Button>
+                  <Button variant="ghost" size="icon-xs" onClick={() => onMoveSlide(slide.id, 1)} disabled={index === slides.length - 1} title="Move right" aria-label="Move right"><ChevronRight size={14} /></Button>
+                  <Button variant="ghost" size="icon-xs" onClick={() => onDeleteSlide(slide.id)} disabled={slides.length === 1} title="Delete screen" aria-label="Delete screen"><Trash2 size={13} /></Button>
                 </div>
               </div>
               <div
@@ -264,8 +264,8 @@ export const EditorCanvas = ({
         })}
         <button className="add-artboard" onClick={onAddSlide}>
           <span><Plus size={20} /></span>
-          <strong>Screen hinzufügen</strong>
-          <small>Neues leeres Artboard</small>
+          <strong>Add screen</strong>
+          <small>New blank artboard</small>
         </button>
       </div>
     </main>

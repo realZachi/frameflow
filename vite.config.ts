@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const moonshotKey = env['MOONSHOT_API_KEY'] ?? ''
 
-  // Proxy statt Direct-Browser-Call: die Moonshot-API erlaubt kein CORS,
-  // und der Key bleibt so serverseitig (kein VITE_-Prefix, nicht im Bundle).
+  // Proxy instead of a direct browser call: the Moonshot API does not allow CORS,
+  // and the key remains server-side (no VITE_ prefix, never included in the bundle).
   const moonshotProxy = {
     '/api/moonshot': {
       target: 'https://api.moonshot.ai',

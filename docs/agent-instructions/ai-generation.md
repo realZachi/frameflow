@@ -37,6 +37,7 @@ Clear selection before generation and preview capture. Any live overlay must car
 - Keep these values identical in `prompt.ts`, schemas, tool descriptions, and documentation.
 - Keep loaded font names aligned with `src/main.tsx`.
 - Keep the prompt's repair-round limit aligned with preview behavior.
+- Keep AI-generated canvas copy and completion summaries in English, regardless of the language used in the request.
 
 Rich text comes from structured highlights through `src/ai/richtext.ts`. The model never writes raw HTML. `sanitizeRichText` remains the final whitelist.
 

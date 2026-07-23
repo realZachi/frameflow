@@ -56,7 +56,7 @@ describe('EditorCanvas screen actions', () => {
       expect(group.querySelectorAll('button').length).toBe(5)
     }
 
-    const aiAction = root.querySelector('[aria-label="Hook mit AI bearbeiten"]')
+    const aiAction = root.querySelector('[aria-label="Edit Hook with AI"]')
     expect(aiAction?.parentElement).toBe(actionGroups.item(0))
   })
 })

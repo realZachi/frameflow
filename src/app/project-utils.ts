@@ -36,17 +36,17 @@ export const getUniqueProjectName = (
   projects: ProjectSummary[],
   desiredName: string,
 ) => {
-  const names = new Set(projects.map((project) => project.projectName.toLocaleLowerCase('de-DE')))
-  if (!names.has(desiredName.toLocaleLowerCase('de-DE'))) return desiredName
+  const names = new Set(projects.map((project) => project.projectName.toLocaleLowerCase('en-US')))
+  if (!names.has(desiredName.toLocaleLowerCase('en-US'))) return desiredName
 
   let suffix = 2
-  while (names.has(`${desiredName} ${suffix}`.toLocaleLowerCase('de-DE'))) suffix += 1
+  while (names.has(`${desiredName} ${suffix}`.toLocaleLowerCase('en-US'))) suffix += 1
   return `${desiredName} ${suffix}`
 }
 
-export const formatProjectTime = (timestamp: number) => new Date(timestamp).toLocaleString('de-DE', {
-  day: '2-digit',
-  month: '2-digit',
-  hour: '2-digit',
+export const formatProjectTime = (timestamp: number) => new Date(timestamp).toLocaleString('en-US', {
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
   minute: '2-digit',
 })

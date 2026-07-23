@@ -36,14 +36,14 @@ export function ProjectDeleteDialog({
       <AlertDialogContent className="project-delete-dialog">
         <AlertDialogHeader>
           <AlertDialogMedia><Trash2 size={17} /></AlertDialogMedia>
-          <AlertDialogTitle>Projekt löschen?</AlertDialogTitle>
+          <AlertDialogTitle>Delete project?</AlertDialogTitle>
           <AlertDialogDescription>
-            „{projectName}“ samt Screens und Uploads wird dauerhaft aus diesem Browser gelöscht.
+            “{projectName}”, including its screens and uploads, will be permanently deleted from this browser.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel className="project-delete-cancel" disabled={deleting}>
-            Abbrechen
+            Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             className="project-delete-confirm"
@@ -51,7 +51,7 @@ export function ProjectDeleteDialog({
             disabled={deleting}
             onClick={onConfirm}
           >
-            {deleting ? 'Wird gelöscht …' : 'Projekt löschen'}
+            {deleting ? 'Deleting …' : 'Delete project'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

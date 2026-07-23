@@ -164,13 +164,13 @@ export function useAiWorkflow({
   const handleFinished = useCallback((slidesCreated: number) => {
     setActivity(null)
     if (targetSlideId) {
-      setToast('Screen mit AI bearbeitet')
+      setToast('Screen edited with AI')
       setActiveSlideId(targetSlideId)
       clearSelection()
       return
     }
 
-    setToast(`${slidesCreated} Screens mit AI erstellt`)
+    setToast(`${slidesCreated} ${slidesCreated === 1 ? 'screen' : 'screens'} created with AI`)
     const firstNewSlide = slidesRef.current.find(
       (slide) => !preRunSlideIds.current.has(slide.id),
     )

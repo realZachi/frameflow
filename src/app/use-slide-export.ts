@@ -13,7 +13,7 @@ type SlideExportOptions = {
 }
 
 const getSafeFilename = (name: string, fallback: string) =>
-  name.replace(/[^a-z0-9äöüß_-]+/gi, '-').replace(/^-|-$/g, '') || fallback
+  name.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') || fallback
 
 export function useSlideExport({
   slides,
@@ -57,7 +57,7 @@ export function useSlideExport({
           filter: (candidate) =>
             !(candidate instanceof HTMLElement && candidate.dataset['aiOverlay']),
         })
-        if (!blob) throw new Error(`Screen ${index + 1} konnte nicht gerendert werden`)
+        if (!blob) throw new Error(`Screen ${index + 1} couldn’t be rendered`)
 
         const filename = getSafeFilename(slide.name, `Screen-${index + 1}`)
         zip.file(`${String(index + 1).padStart(2, '0')}-${filename}.png`, blob)
@@ -71,10 +71,10 @@ export function useSlideExport({
       })
       const projectFilename = getSafeFilename(projectName.trim(), 'Frameflow')
       downloadBlob(blob, `${projectFilename}-${format.filename}-Screens.zip`)
-      setToast(`${slides.length} PNGs für ${format.label} als ZIP exportiert`)
+      setToast(`Exported ${slides.length} PNGs for ${format.label} as a ZIP archive`)
     } catch (error) {
       console.error(error)
-      setToast('Export fehlgeschlagen – bitte erneut versuchen')
+      setToast('Export failed — please try again')
     } finally {
       setExporting(false)
       setExportProgress(0)

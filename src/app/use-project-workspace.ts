@@ -169,13 +169,13 @@ export function useProjectWorkspace({
         setLastSavedAt(savedAt)
       }
       setProjects((current) => upsertProjectSummary(current, snapshot))
-      if (showConfirmation) setToast('Projekt lokal gespeichert')
+      if (showConfirmation) setToast('Project saved locally')
       return true
     } catch {
       if (attempt === saveAttemptRef.current && revision === changeRevisionRef.current) {
         setSaveStatus('error')
       }
-      if (showConfirmation) setToast('Lokales Speichern fehlgeschlagen')
+      if (showConfirmation) setToast('Couldn’t save locally')
       return false
     }
   }, [setToast, slidesRef, uploadsRef])
@@ -213,28 +213,28 @@ export function useProjectWorkspace({
     if (projectId === currentProjectIdRef.current) return
     void runProjectTransition(async () => {
       const project = await loadProject(projectId)
-      if (!project) throw new Error('Projekt nicht gefunden')
+      if (!project) throw new Error('Project not found')
       return project
-    }, 'Projekt geöffnet', 'Projekt konnte nicht geöffnet werden')
+    }, 'Project opened', 'Couldn’t open project')
   }, [runProjectTransition])
 
   const createNewProject = useCallback(() => {
     const project = makeNewProject(
-      getUniqueProjectName(projects, 'Neues Projekt'),
+      getUniqueProjectName(projects, 'New Project'),
       createInitialSlides(),
       [],
     )
     void runProjectTransition(async () => {
       await saveProject(project)
       return project
-    }, 'Neues Projekt angelegt', 'Neues Projekt konnte nicht angelegt werden')
+    }, 'New project created', 'Couldn’t create project')
   }, [projects, runProjectTransition])
 
   const duplicateCurrentProject = useCallback(() => {
     const project = makeNewProject(
       getUniqueProjectName(
         projects,
-        `${projectNameRef.current.trim() || DEFAULT_PROJECT_NAME} Kopie`,
+        `${projectNameRef.current.trim() || DEFAULT_PROJECT_NAME} Copy`,
       ),
       structuredClone(slidesRef.current),
       structuredClone(uploadsRef.current),
@@ -242,7 +242,7 @@ export function useProjectWorkspace({
     void runProjectTransition(async () => {
       await saveProject(project)
       return project
-    }, 'Projekt dupliziert', 'Projekt konnte nicht dupliziert werden')
+    }, 'Project duplicated', 'Couldn’t duplicate project')
   }, [projects, runProjectTransition, slidesRef, uploadsRef])
 
   const deleteCurrentProject = useCallback(async () => {
@@ -253,9 +253,9 @@ export function useProjectWorkspace({
     try {
       await saveQueueRef.current.catch(() => undefined)
       const nextSummary = projects.find((project) => project.id !== currentProjectIdRef.current)
-      if (!nextSummary) throw new Error('Kein Ersatzprojekt gefunden')
+      if (!nextSummary) throw new Error('No replacement project found')
       const nextProject = await loadProject(nextSummary.id)
-      if (!nextProject) throw new Error('Ersatzprojekt nicht gefunden')
+      if (!nextProject) throw new Error('Replacement project not found')
 
       await deleteProject(currentProjectIdRef.current)
       await setActiveProjectId(nextProject.id)
@@ -264,10 +264,10 @@ export function useProjectWorkspace({
       setProjects((current) => current.filter((project) => project.id !== currentProjectIdRef.current))
       setSaveStatus('saved')
       setDeleteDialogOpen(false)
-      setToast('Projekt lokal gelöscht')
+      setToast('Project deleted locally')
     } catch {
       setSaveStatus('error')
-      setToast('Projekt konnte nicht gelöscht werden')
+      setToast('Couldn’t delete project')
     } finally {
       projectTransitionRef.current = false
       setDeletingProject(false)

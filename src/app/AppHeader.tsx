@@ -74,14 +74,14 @@ function ProjectMenu({
 > & { disabled: boolean }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="project-menu-trigger" aria-label="Projektmenü öffnen">
+      <DropdownMenuTrigger className="project-menu-trigger" aria-label="Open project menu">
         <ChevronDown size={13} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={18} className="project-menu-content w-80">
         <DropdownMenuGroup className="project-menu-projects">
           <DropdownMenuLabel className="project-menu-label">
-            <strong>Lokale Projekte</strong>
-            <span>{projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'} in diesem Browser</span>
+            <strong>Local projects</strong>
+            <span>{projects.length} {projects.length === 1 ? 'project' : 'projects'} in this browser</span>
           </DropdownMenuLabel>
           <div className="project-menu-list">
             {projects.map((project) => (
@@ -97,7 +97,7 @@ function ProjectMenu({
                 </span>
                 <span className="project-menu-project-copy">
                   <strong>{project.projectName}</strong>
-                  <small>Gespeichert {formatProjectTime(project.savedAt)}</small>
+                  <small>Saved {formatProjectTime(project.savedAt)}</small>
                 </span>
               </DropdownMenuItem>
             ))}
@@ -107,17 +107,17 @@ function ProjectMenu({
         <DropdownMenuGroup>
           <DropdownMenuItem className="project-menu-action" disabled={disabled} onClick={onCreateProject}>
             <Plus size={15} />
-            <span>Neues Projekt</span>
+            <span>New project</span>
           </DropdownMenuItem>
           <DropdownMenuItem className="project-menu-action" disabled={disabled} onClick={onDuplicateProject}>
             <Copy size={15} />
-            <span>Projekt duplizieren</span>
+            <span>Duplicate project</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="project-menu-action" disabled={disabled} onClick={onSaveProject}>
           <Save size={15} />
-          <span>Jetzt speichern</span>
+          <span>Save now</span>
           <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -127,7 +127,7 @@ function ProjectMenu({
           onClick={onRequestProjectDeletion}
         >
           <Trash2 size={15} />
-          <span>Aktuelles Projekt löschen</span>
+          <span>Delete current project</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -141,16 +141,16 @@ function ExportMenu({
 }: Pick<AppHeaderProps, 'exporting' | 'exportProgress' | 'onExport'>) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="export-button" disabled={exporting} aria-label="Exportformat wählen">
+      <DropdownMenuTrigger className="export-button" disabled={exporting} aria-label="Choose export format">
         {exporting
           ? <><span className="export-spinner" /><b>{exportProgress}%</b></>
-          : <><Download size={17} /><b>Alle als ZIP</b><ChevronDown className="export-button-chevron" size={13} /></>}
+          : <><Download size={17} /><b>Export all as ZIP</b><ChevronDown className="export-button-chevron" size={13} /></>}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="export-menu-content w-64">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="export-menu-label">
-            <strong>Alle Screens exportieren</strong>
-            <span>App-Store-Format wählen</span>
+            <strong>Export all screens</strong>
+            <span>Choose App Store format</span>
           </DropdownMenuLabel>
           {EXPORT_FORMATS.map((format) => (
             <DropdownMenuItem
@@ -210,7 +210,7 @@ export function AppHeader({
           <span
             className={`save-state save-state--${saveStatus}`}
             title={lastSavedAt
-              ? `Zuletzt gespeichert um ${new Date(lastSavedAt).toLocaleTimeString('de-DE', {
+              ? `Last saved at ${new Date(lastSavedAt).toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}`
@@ -224,7 +224,7 @@ export function AppHeader({
             <input
               value={projectName}
               onChange={(event) => onProjectNameChange(event.target.value)}
-              aria-label="Projektname"
+              aria-label="Project name"
             />
             <ProjectMenu
               projects={projects}
@@ -240,10 +240,10 @@ export function AppHeader({
         </div>
         <div className="topbar-actions">
           <div className="history-actions">
-            <button onClick={onUndo} disabled={!canUndo} title="Rückgängig (⌘Z)">
+            <button onClick={onUndo} disabled={!canUndo} title="Undo (⌘Z)">
               <Undo2 size={17} />
             </button>
-            <button onClick={onRedo} disabled={!canRedo} title="Wiederholen (⇧⌘Z)">
+            <button onClick={onRedo} disabled={!canRedo} title="Redo (⇧⌘Z)">
               <Redo2 size={17} />
             </button>
           </div>
@@ -255,7 +255,7 @@ export function AppHeader({
             disabled={aiDisabled}
           >
             <span className="ai-generate-button-mark" aria-hidden="true"><Sparkles size={14} /></span>
-            <span>AI erstellen</span>
+            <span>Generate with AI</span>
           </Button>
           <ExportMenu exporting={exporting} exportProgress={exportProgress} onExport={onExport} />
         </div>

@@ -33,8 +33,8 @@ export function buildInstructions(options: AiPromptOptions = {}): string {
     ? 'Use newly uploaded screenshot assets only when they are relevant to the requested edit. No screenshot upload is required.'
     : 'Use every screenshot asset the user provided at least once, wherever it makes sense in the story.'
   const finish = targetSlideId
-    ? 'Once you are done, reply with a short 1-2 sentence summary of what you changed. Plain prose, no markdown, no lists.'
-    : 'Once you are done building slides, reply with a short 2-3 sentence summary of the design concept you created. Plain prose, no markdown, no lists.'
+    ? 'Once you are done, reply in English with a short 1-2 sentence summary of what you changed. Plain prose, no markdown, no lists.'
+    : 'Once you are done building slides, reply in English with a short 2-3 sentence summary of the design concept you created. Plain prose, no markdown, no lists.'
 
   return `You are a senior App Store marketing designer operating Frameflow, a screenshot editor, through a set of tools. ${mission}
 
@@ -103,7 +103,7 @@ ${assetRule}
 - 'Arial, sans-serif': plain fallback. Avoid unless the user specifically asks for a plain/generic look.
 
 ## Language
-Write all on-canvas copy (headlines, supporting text, labels) in the same language the user used to describe their app.
+Write all on-canvas copy (headlines, supporting text, labels) in English, regardless of the language used in the user's request.
 
 ## Assets
 Only ever reference asset ids that actually exist (from get_canvas_state or the ids given to you in the user message). Never invent an asset id.
