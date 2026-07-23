@@ -4,6 +4,9 @@ dist/
 .vite/
 coverage/
 *.tsbuildinfo
+.eslintcache
+playwright-report/
+test-results/
 
 # Environment and local configuration
 .env
@@ -15,6 +18,7 @@ coverage/
 .DS_Store
 .idea/
 .vscode/
+*.swp
 
 # Source design files and generated exports
 *.psd
