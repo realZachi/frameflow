@@ -1,39 +1,20 @@
-## Summary
+<!-- Thanks for contributing. Fill in what's useful and delete the rest — this is a prompt, not a checklist to complete. -->
 
-<!-- What problem does this pull request solve, and how? -->
+## What this changes
 
-## Related issue
+<!-- What problem does it solve, and how? Link an issue with "Closes #123" if there is one. -->
 
-<!-- Use "Closes #123" when applicable. -->
+## How you tested it
 
-## Change type
-
-- [ ] Bug fix
-- [ ] Feature
-- [ ] Refactor
-- [ ] Documentation
-- [ ] Asset or mockup
-- [ ] Maintenance
-
-## Verification
-
-<!-- List the commands and manual scenarios you tested. -->
-
-- [ ] `bun run check`
-- [ ] Relevant editor behavior tested manually
-- [ ] Undo and redo tested when editor state changed
-- [ ] Persistence or reload tested when stored data changed
-- [ ] Export dimensions checked when rendering changed
+<!-- Which commands you ran, what you clicked through, what you saw. `bun run check` should pass. -->
 
 ## Visual changes
 
-<!-- Add before-and-after screenshots or a recording. Remove this section when not applicable. -->
+<!-- Before-and-after screenshots or a short recording, if anything looks different. Delete if not. -->
 
-## Contributor checklist
+---
 
-- [ ] The change is focused and does not include unrelated refactoring.
-- [ ] I added or updated documentation for user-visible or architectural changes.
-- [ ] I did not commit API keys, private screenshots, credentials, PSD files, or generated exports.
-- [ ] New UI follows the shadcn configuration and uses existing Hugeicons wrappers.
-- [ ] New third-party assets include source and license details in `ASSET_LICENSES.md`.
-- [ ] I have the right to submit this contribution under the MIT License.
+<!-- A few things that are easy to miss:
+     - No API keys, private screenshots, credentials, PSD files, or generated exports in the diff.
+     - Third-party assets need source and license details in ASSET_LICENSES.md.
+     - Undo/redo and reload are worth a quick check when editor state or stored data changed. -->

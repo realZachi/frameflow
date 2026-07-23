@@ -117,11 +117,13 @@ src/types.ts             Shared editor models
 src/styles/              Base styles and shadcn theme layer
 ```
 
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) covers data flow, the export pipeline, AI safety boundaries, and extension points. Before adding a device asset, read the [mockup specification](src/mockups/README.md). Agent-assisted contributors must follow [AGENTS.md](AGENTS.md).
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) covers data flow, the export pipeline, AI safety boundaries, and extension points. Adding a device asset? Read the [mockup specification](src/mockups/README.md) first. Working with a coding agent? [AGENTS.md](AGENTS.md) has the rules it should follow.
 
 ## Contributing
 
-Bug reports, design improvements, docs fixes, new device mockups, and code are all welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions, and the PR checklist. By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
+The project is early, so there's plenty of room. If something is broken, fix it. If something is missing and you think others would want it too, add it. No need to ask first — a pull request is a fine way to start the conversation.
+
+Bug reports, design improvements, docs fixes, and new device mockups count just as much as code. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup and the conventions; the `good first issue` label is a good place to look if you'd like something already scoped. By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 - Questions and help: [SUPPORT.md](SUPPORT.md)
 - Security issues (privately, please): [SECURITY.md](SECURITY.md)

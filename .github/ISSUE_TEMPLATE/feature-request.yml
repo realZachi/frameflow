@@ -1,39 +1,33 @@
 name: Feature request
-description: Suggest an improvement to Frameflow.
+description: Something you'd like Frameflow to do.
 title: "[Feature]: "
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for sharing an idea. Describe the problem before the proposed interface so the community can explore the best solution.
+        Ideas are welcome, half-formed ones too. If you'd rather just build it, that works as well — a pull request is a fine way to open the conversation.
 
   - type: textarea
-    id: problem
+    id: idea
     attributes:
-      label: Problem
-      description: What is difficult today, and who experiences it?
-    validations:
-      required: true
-
-  - type: textarea
-    id: proposal
-    attributes:
-      label: Proposed solution
-      description: Explain the desired behavior. Mockups or examples are welcome.
+      label: What would you like?
+      description: What's difficult or missing today, and what would make it better? Mockups and examples are welcome.
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
-      description: What workarounds or other approaches have you tried?
+      label: Anything you've tried instead?
+      description: Workarounds or other approaches, if you have any.
 
   - type: dropdown
     id: area
     attributes:
-      label: Area
+      label: Which part of Frameflow?
       options:
+        - Not sure
         - Canvas and element editing
         - Templates and visual design
         - Project persistence
@@ -43,26 +37,13 @@ body:
         - Developer experience
         - Documentation or translation
         - Other
-    validations:
-      required: true
 
   - type: dropdown
     id: contribution
     attributes:
-      label: Would you like to work on this?
+      label: Would you like to build it yourself?
       options:
+        - Haven't decided
         - "Yes"
-        - "Maybe, with guidance"
+        - Maybe, with some guidance
         - "No"
-    validations:
-      required: true
-
-  - type: checkboxes
-    id: checks
-    attributes:
-      label: Checklist
-      options:
-        - label: I searched existing issues for similar proposals.
-          required: true
-        - label: I am willing to discuss scope and tradeoffs before implementation.
-          required: true

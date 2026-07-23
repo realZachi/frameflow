@@ -1,37 +1,45 @@
 name: Bug report
-description: Report reproducible behavior that is not working as expected.
+description: Something isn't working the way it should.
 title: "[Bug]: "
+labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping improve Frameflow. Search existing issues first, and remove API keys, private screenshots, and customer data from everything you submit.
+        Thanks for taking the time. Fill in what you know — a short description on its own is already useful, and you can skip anything that doesn't apply.
 
-        Do not report security vulnerabilities here. Follow `SECURITY.md` instead.
+        Two asks: leave out API keys, private screenshots, and customer data, and report security vulnerabilities privately via `SECURITY.md` rather than here.
 
-  - type: input
-    id: version
+  - type: textarea
+    id: what
     attributes:
-      label: Version or commit
-      description: Which release, branch, or commit are you using?
-      placeholder: main at abc1234
+      label: What happened?
+      description: What did you expect, and what did you get instead?
     validations:
       required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we reproduce it?
+      description: Rough steps are fine if you can't pin it down exactly.
+      placeholder: |
+        1. Open ...
+        2. Add ...
+        3. Click ...
 
   - type: input
     id: environment
     attributes:
-      label: Environment
-      description: Include your operating system and browser with version.
+      label: Browser and OS
       placeholder: macOS 15.5, Chrome 138
-    validations:
-      required: true
 
   - type: dropdown
     id: area
     attributes:
-      label: Affected area
+      label: Where does it happen?
       options:
+        - Not sure
         - Canvas and element editing
         - Project persistence
         - Uploads and device mockups
@@ -39,55 +47,9 @@ body:
         - AI generation
         - Setup or build
         - Other
-    validations:
-      required: true
-
-  - type: textarea
-    id: steps
-    attributes:
-      label: Reproduction steps
-      description: Give the smallest reliable sequence that demonstrates the problem.
-      placeholder: |
-        1. Open ...
-        2. Add ...
-        3. Click ...
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected behavior
-    validations:
-      required: true
-
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual behavior
-    validations:
-      required: true
 
   - type: textarea
     id: evidence
     attributes:
       label: Screenshots, recording, or logs
-      description: Optional. Use non-sensitive sample content and redact secrets.
-
-  - type: textarea
-    id: context
-    attributes:
-      label: Additional context
-      description: Share any other detail that may help reproduce or diagnose the issue.
-
-  - type: checkboxes
-    id: checks
-    attributes:
-      label: Checklist
-      options:
-        - label: I searched existing issues for duplicates.
-          required: true
-        - label: I removed API keys and private or copyrighted user content.
-          required: true
-        - label: This is not a security vulnerability.
-          required: true
+      description: Helpful but optional. Use sample content and redact anything sensitive.

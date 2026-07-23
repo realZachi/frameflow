@@ -4,15 +4,18 @@ Thank you for helping make App Store screenshot design more accessible. Contribu
 
 By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Before you start
+## Just start
 
-- Search existing issues before opening a new one.
-- Use the provided bug or feature form so maintainers have enough context.
-- For a large feature, data-model change, new dependency, or visual-system change, open an issue first. Early agreement avoids work that cannot be merged.
-- Never post API keys, private screenshots, customer data, or security details in a public issue.
-- Security vulnerabilities belong in the private process described in [SECURITY.md](SECURITY.md).
+Frameflow is early, and it improves fastest when people fix what annoys them. If you hit a bug, fix it. If something is missing and you think others would want it too, add it. You do not need to ask first, and you do not need an issue — a pull request is a perfectly good way to open the conversation.
 
-If you want to contribute but do not know where to begin, look for issues marked `good first issue` or `help wanted`.
+If you would rather pick up something already scoped, the `good first issue` and `help wanted` labels are a good place to look.
+
+Two things to keep in mind, both about safety rather than process:
+
+- Never post API keys, private screenshots, customer data, or security details in a public issue or pull request.
+- Security vulnerabilities go through the private process in [SECURITY.md](SECURITY.md), not the issue tracker.
+
+Planning something large, like reworking the data model or the visual system? A short note before you build can save you from writing code that cannot be merged. That is a favour to yourself, not a gate.
 
 AI-assisted contributions are welcome. The contributor remains responsible for understanding the change, reviewing the complete diff, removing generated clutter, testing behavior, and explaining the design. Read [AGENTS.md](AGENTS.md) before using a coding agent in this repository; generated code is held to the same review standard as handwritten code.
 
@@ -145,16 +148,15 @@ For AI changes, also verify a missing or invalid key fails safely and does not r
 
 ## Pull requests
 
-Keep pull requests small enough to review. Complete the pull request template and include:
+Keep them small enough that someone can actually review them. Beyond that, what helps:
 
-- The problem and the chosen solution.
-- A linked issue when one exists.
-- Manual verification steps and results.
+- The problem and how you solved it.
+- How you tested it, and what you saw.
 - Before-and-after visuals for UI changes.
 - Source and license information for third-party assets.
-- Any follow-up work intentionally left out.
+- Anything you deliberately left for later.
 
-CI must pass before merge. Maintainers may ask for changes to keep behavior, architecture, and visual language consistent.
+CI has to pass before merge. Maintainers may ask for changes to keep behavior, architecture, and visual language consistent — that is about the codebase staying coherent, not about the quality of your work.
 
 ## Commit messages
 
