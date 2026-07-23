@@ -65,7 +65,7 @@ When you start an AI run, the description and screenshots selected for that run 
 2. Use the left sidebar to add text, device mockups, shapes, backgrounds, or uploads.
 3. Select an element to edit it; drag the handles to move, resize, or rotate it.
 4. Place an uploaded PNG, JPG, or WebP freely or inside a selected device.
-5. Optionally choose **Mit AI generieren** to create a set or revise an existing screen.
+5. Optionally choose **Mit AI generieren** to create a set, or select a screen and use its contextual magic-cursor action to revise only that screen.
 6. Choose **Alle als ZIP** and select an export format.
 
 Projects save automatically in the current browser profile. Clearing site data also removes saved projects, so export important work before resetting browser storage.

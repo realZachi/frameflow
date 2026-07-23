@@ -425,12 +425,10 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 .artboard-actions { height: 32px; display: flex; align-items: center; gap: 7px; color: #7b7c77; padding: 0 2px; }
 .artboard-actions > span { font-size: 8px; font-weight: 780; font-variant-numeric: tabular-nums; }
 .artboard-actions > strong { font-size: 9px; color: #565751; font-weight: 610; }
-.artboard-action-group { display: flex; align-items: center; gap: 2px; margin-left: auto; }
-.artboard-secondary-actions { display: flex; gap: 1px; opacity: 0; transform: translateY(2px); transition: opacity .18s, transform .18s; }
-.artboard-wrap:hover .artboard-secondary-actions, .artboard-wrap.is-active .artboard-secondary-actions { opacity: 1; transform: translateY(0); }
+.artboard-screen-actions { display: flex; align-items: center; gap: 1px; margin-left: auto; opacity: 0; transform: translateY(2px); transition: opacity .18s, transform .18s; }
+.artboard-wrap:hover .artboard-screen-actions, .artboard-wrap.is-active .artboard-screen-actions { opacity: 1; transform: translateY(0); }
 .artboard-actions button { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: transparent; color: #777873; border-radius: 5px; cursor: pointer; }
 .artboard-actions button:hover { background: #cccec9; color: #30302c; }
-.artboard-actions .artboard-ai-action { background: rgba(255,255,255,.62); color: #565751; box-shadow: 0 0 0 1px rgba(0,0,0,.06); }
 .artboard-export { width: 330px; aspect-ratio: 1290 / 2796; position: relative; overflow: hidden; box-shadow: 0 7px 19px rgba(38,39,35,.13), 0 0 0 1px rgba(0,0,0,.08); isolation: isolate; transition: box-shadow .2s ease; }
 .artboard-background { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .artboard-wrap.is-active .artboard-export { box-shadow: 0 8px 25px rgba(38,39,35,.18), 0 0 0 2px #2d6aff; }
@@ -599,4 +597,3 @@ button:disabled { cursor: not-allowed; opacity: .35; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
-

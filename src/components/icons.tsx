@@ -13,6 +13,7 @@ import {
   ChevronRight as ChevronRightIcon,
   Cloud as CloudIcon,
   Copy as CopyIcon,
+  CursorMagicSelection02Icon,
   Download as DownloadIcon,
   ImagePlus as ImagePlusIcon,
   Italic as ItalicIcon,
@@ -60,6 +61,7 @@ export const ChevronLeft = createIcon(ChevronLeftIcon)
 export const ChevronRight = createIcon(ChevronRightIcon)
 export const Cloud = createIcon(CloudIcon)
 export const Copy = createIcon(CopyIcon)
+export const CursorMagicSelection02 = createIcon(CursorMagicSelection02Icon)
 export const Download = createIcon(DownloadIcon)
 export const ImagePlus = createIcon(ImagePlusIcon)
 export const Italic = createIcon(ItalicIcon)
