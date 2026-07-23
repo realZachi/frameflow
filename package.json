@@ -14,13 +14,14 @@
     "typecheck": "tsc -b",
     "build": "bun run typecheck && vite build",
     "preview": "vite preview",
+    "structure": "bun scripts/check-structure.ts",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "bun run lint --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "audit": "bun audit",
-    "check": "bun run lint && bun run test:coverage && bun run build && bun run audit"
+    "check": "bun run structure && bun run lint && bun run test:coverage && bun run build && bun run audit"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.14",
