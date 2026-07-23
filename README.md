@@ -75,13 +75,17 @@ Projects save automatically in the current browser profile. Clearing site data a
 | Command | Purpose |
 | --- | --- |
 | `bun run dev` | Start the local editor on port `4173` |
-| `bun run lint` | Run ESLint |
+| `bun run structure` | Enforce stylesheet module boundaries |
+| `bun run typecheck` | Run strict TypeScript checks |
+| `bun run lint` | Run typed ESLint, complexity, and dependency rules |
+| `bun run test` | Run the Vitest suite once |
+| `bun run test:coverage` | Run tests and enforce coverage thresholds |
 | `bun run build` | Type-check and create the production bundle |
 | `bun run preview` | Serve the production bundle locally with the API proxy |
 | `bun run audit` | Check installed dependencies for known vulnerabilities |
-| `bun run check` | Run lint, build, and security audit as CI does |
+| `bun run check` | Run every required local and CI quality gate |
 
-There is no automated test suite yet. Pull requests that change editor behavior should include focused manual verification.
+Rendered editor, export, and AI changes still require focused browser verification in addition to the automated suite.
 
 ## Self-hosting
 
@@ -96,18 +100,18 @@ Do not expose a shared production key in client-side code. If every deployment s
 Frameflow is a single-package React 19, TypeScript, Vite, and Tailwind CSS application.
 
 ```text
-src/App.tsx              Editor state, history, persistence, and export
+src/App.tsx              Application composition
+src/app/                 Project lifecycle, app shell, and export
+src/editor/              History, editor actions, keyboard, pure calculations
 src/components/          Canvas, toolbars, sidebar, modal, and shadcn UI
-src/ai/                  AI runner, tools, prompt, measurement, and previews
-src/mockups/catalog.ts   Device definitions and perspective geometry
-src/assets/mockups/      Browser-ready transparent mockup overlays
+src/ai/                  AI runner, tool groups, prompt, measurement, previews
+src/mockups/             Device definitions and perspective geometry
 src/persistence.ts       IndexedDB project storage
-src/data.ts              Starter templates and editor presets
 src/types.ts             Shared editor models
-src/styles.css           Global visual system and artboard styling
+src/styles/              Base styles and shadcn theme layer
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) for the editor data flow, export pipeline, AI safety boundaries, and extension points. See the [mockup specification](src/mockups/README.md) before adding a device asset.
+See [Architecture](docs/ARCHITECTURE.md) for the editor data flow, export pipeline, AI safety boundaries, and extension points. Agent-assisted contributors must also follow [AGENTS.md](AGENTS.md). See the [mockup specification](src/mockups/README.md) before adding a device asset.
 
 ## Contributing
 

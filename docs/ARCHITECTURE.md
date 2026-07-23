@@ -21,7 +21,16 @@ The core editor has no backend requirement. The optional AI path needs a server-
 
 ## Editor state and history
 
-`src/App.tsx` owns the current project name, slides, uploads, selection, history, persistence, and export orchestration.
+`src/App.tsx` composes the application. Responsibilities are separated into:
+
+| Area | Location |
+| --- | --- |
+| Project hydration, autosave, switching, and deletion | `src/app/use-project-workspace.ts` |
+| Undo/redo and live updates | `src/editor/use-editor-history.ts` |
+| Element, upload, template, and slide actions | `src/editor/use-editor-actions.ts` |
+| Keyboard behavior and pure nudge calculations | `src/editor/use-editor-keyboard.ts`, `src/editor/nudge.ts` |
+| AI run orchestration and live activity | `src/ai/use-ai-workflow.ts` |
+| PNG/ZIP export | `src/app/use-slide-export.ts` |
 
 Slides contain a background and an ordered array of discriminated canvas elements from `src/types.ts`. Element order is also layer order. Mutations must create new objects and arrays rather than modifying existing snapshots.
 
@@ -57,7 +66,7 @@ Avoid putting credentials or provider responses into persisted project data.
 
 ## Export
 
-`src/App.tsx` uses `html-to-image` to rasterize each artboard and JSZip to package the results.
+`src/app/use-slide-export.ts` uses `html-to-image` to rasterize each artboard and JSZip to package the results. Output definitions live in `src/app/export-formats.ts`.
 
 Supported output sizes are:
 
@@ -91,7 +100,10 @@ The AI feature is split into explicit layers:
 | --- | --- |
 | `src/ai/runner.ts` | Provider client, stream handling, and UI events |
 | `src/ai/prompt.ts` | Design rules and coordinate semantics |
-| `src/ai/tools.ts` | Model-visible operations and input validation |
+| `src/ai/tools.ts` | Tool composition and generate/edit tool boundary |
+| `src/ai/*-tools.ts`, `src/ai/*-tool.ts` | Focused slide, media, text, update, and inspection tools |
+| `src/ai/tool-context.ts` | Shared clamps, lookups, activity, and measurements |
+| `src/ai/tool-schemas.ts` | Shared model-visible schemas and descriptions |
 | `src/ai/controller.ts` | Allowed editor reads and mutations |
 | `src/ai/measure.ts` | DOM-based element boxes and layout warnings |
 | `src/ai/preview.ts` | Downscaled rendered slide previews |
@@ -117,7 +129,7 @@ Editor chrome uses shadcn/ui with the configuration in `components.json`:
 
 Reusable primitives live in `src/components/ui/`. Artboard content is intentionally exempt from the neutral editor palette because it represents the user's exported design.
 
-`src/styles.css` imports `shadcn/tailwind.css`, which makes the shadcn package a build dependency. `package.json` currently overrides `@hono/node-server` to a patched release because shadcn's optional MCP dependency requests an older major. Re-evaluate the override when the upstream dependency range changes; do not remove it without running the dependency audit and a full build.
+`src/styles.css` preserves stylesheet order by importing `src/styles/base.css` and `src/styles/theme.css`. The base layer imports `shadcn/tailwind.css`, which makes the shadcn package a build dependency. `package.json` currently overrides `@hono/node-server` to a patched release because shadcn's optional MCP dependency requests an older major. Re-evaluate the override when the upstream dependency range changes; do not remove it without running the dependency audit and a full build.
 
 ## Safe extension checklist
 

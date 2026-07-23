@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Lint and build
+    name: Quality gates
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

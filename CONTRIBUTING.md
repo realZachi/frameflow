@@ -14,6 +14,8 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 If you want to contribute but do not know where to begin, look for issues marked `good first issue` or `help wanted`.
 
+AI-assisted contributions are welcome. The contributor remains responsible for understanding the change, reviewing the complete diff, removing generated clutter, testing behavior, and explaining the design. Read [AGENTS.md](AGENTS.md) before using a coding agent in this repository; generated code is held to the same review standard as handwritten code.
+
 ## Development setup
 
 Frameflow uses Bun for package and script operations.
@@ -45,17 +47,19 @@ The editor works without an API key. To work on AI generation, copy `.env.exampl
 
 | Area | Location |
 | --- | --- |
-| Editor state, history, persistence, export | `src/App.tsx` |
+| Application composition | `src/App.tsx` |
+| Project lifecycle, shell, and export | `src/app/` |
+| Editor history, actions, and calculations | `src/editor/` |
 | Canvas, sidebar, inspector, and modals | `src/components/` |
 | Reusable shadcn UI primitives | `src/components/ui/` |
-| AI runner, prompt, tools, and visual feedback | `src/ai/` |
+| AI runner, tool groups, prompt, and visual feedback | `src/ai/` |
 | Shared editor models | `src/types.ts` |
 | Templates and presets | `src/data.ts` |
 | Browser persistence | `src/persistence.ts` |
 | Device mockups and perspective data | `src/mockups/` |
-| Global editor and artboard styles | `src/styles.css` |
+| Base and themed editor styles | `src/styles/` |
 
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before changing history, persistence, export, or AI tools. Read [src/mockups/README.md](src/mockups/README.md) and [ASSET_LICENSES.md](ASSET_LICENSES.md) before adding a mockup.
+Read [AGENTS.md](AGENTS.md) and its focused rule documents before changing code. Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before changing history, persistence, export, or AI tools. Read [src/mockups/README.md](src/mockups/README.md) and [ASSET_LICENSES.md](ASSET_LICENSES.md) before adding a mockup.
 
 ## Code conventions
 
@@ -65,6 +69,10 @@ Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before changing history, persi
 - Keep editor mutations immutable. Undo and redo depend on reliable snapshots.
 - Keep unrelated refactors out of a focused pull request.
 - Add comments only where they explain a non-obvious constraint or decision.
+- Respect the automated ceilings for module size, function size, complexity, nesting, parameters, and stylesheet size.
+- Do not suppress or weaken a quality gate to make a change pass.
+
+The quote and semicolon style applies to handwritten source. Files in `src/components/ui/` retain shadcn's generated style and must be changed only through the shadcn CLI.
 
 ### UI changes
 
@@ -84,7 +92,7 @@ shadcn/ui is the required application UI system. `components.json` and preset `b
 
 Include before-and-after images or a short recording for visible UI changes. Do not include private or copyrighted customer content.
 
-`src/styles.css` imports `shadcn/tailwind.css`, so `shadcn` is a build dependency as well as a generator. The `@hono/node-server` override in `package.json` keeps shadcn's optional MCP dependency chain on a patched version. Run both `bun run check` and a shadcn add/apply command before changing or removing that override.
+`src/styles/base.css` imports `shadcn/tailwind.css`, so `shadcn` is a build dependency as well as a generator. The `@hono/node-server` override in `package.json` keeps shadcn's optional MCP dependency chain on a patched version. Run both `bun run check` and a shadcn add/apply command before changing or removing that override.
 
 ### AI changes
 
@@ -121,7 +129,7 @@ Run the full local check before opening a pull request:
 bun run check
 ```
 
-There is no automated browser test suite yet. Manually test the behavior your change touches and describe the result in the pull request.
+Unit tests and coverage run automatically. There is no automated browser test suite yet, so manually test rendered behavior your change touches and describe the result in the pull request.
 
 For editor changes, consider this baseline:
 
