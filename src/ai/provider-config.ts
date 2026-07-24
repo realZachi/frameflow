@@ -15,6 +15,7 @@ type AiProviderEnvironment = {
   VITE_ALIBABA_API_KEY?: unknown
   VITE_OPENAI_API_KEY?: unknown
   VITE_ANTHROPIC_API_KEY?: unknown
+  VITE_XAI_API_KEY?: unknown
 }
 
 const readKey = (value: unknown): string =>
@@ -28,6 +29,7 @@ export const createAiProviderKeys = (
   qwen: readKey(environment.VITE_ALIBABA_API_KEY),
   openai: readKey(environment.VITE_OPENAI_API_KEY),
   anthropic: readKey(environment.VITE_ANTHROPIC_API_KEY),
+  xai: readKey(environment.VITE_XAI_API_KEY),
 })
 
 export const getAiProviderAvailability = (
@@ -38,6 +40,7 @@ export const getAiProviderAvailability = (
   qwen: keys.qwen.length > 0,
   openai: keys.openai.length > 0,
   anthropic: keys.anthropic.length > 0,
+  xai: keys.xai.length > 0,
 })
 
 export const getInitialAiSelection = (
@@ -57,6 +60,7 @@ export const AI_PROVIDER_KEYS = createAiProviderKeys({
   VITE_ALIBABA_API_KEY: import.meta.env.VITE_ALIBABA_API_KEY,
   VITE_OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
   VITE_ANTHROPIC_API_KEY: import.meta.env.VITE_ANTHROPIC_API_KEY,
+  VITE_XAI_API_KEY: import.meta.env.VITE_XAI_API_KEY,
 })
 export const AI_PROVIDER_AVAILABILITY = getAiProviderAvailability(AI_PROVIDER_KEYS)
 export const INITIAL_AI_SELECTION = getInitialAiSelection(AI_PROVIDER_AVAILABILITY)

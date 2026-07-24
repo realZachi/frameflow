@@ -13,12 +13,14 @@ describe('AI provider configuration', () => {
       VITE_ALIBABA_API_KEY: 'qwen-key',
       VITE_OPENAI_API_KEY: 'openai-key',
       VITE_ANTHROPIC_API_KEY: 'anthropic-key',
+      VITE_XAI_API_KEY: ' xai-key ',
     })).toEqual({
       moonshot: 'moonshot-key',
       google: 'google-key',
       qwen: 'qwen-key',
       openai: 'openai-key',
       anthropic: 'anthropic-key',
+      xai: 'xai-key',
     })
   })
 
@@ -35,6 +37,7 @@ describe('AI provider configuration', () => {
       qwen: '',
       openai: 'openai-key',
       anthropic: '',
+      xai: '',
     })
     expect(getAiProviderAvailability(keys)).toEqual({
       moonshot: false,
@@ -42,6 +45,7 @@ describe('AI provider configuration', () => {
       qwen: false,
       openai: true,
       anthropic: false,
+      xai: false,
     })
   })
 
@@ -52,6 +56,7 @@ describe('AI provider configuration', () => {
       qwen: false,
       openai: true,
       anthropic: true,
+      xai: true,
     })).toEqual({
       provider: 'openai',
       model: 'gpt-5.6-terra',
@@ -62,6 +67,7 @@ describe('AI provider configuration', () => {
       qwen: false,
       openai: false,
       anthropic: false,
+      xai: false,
     })).toEqual({
       provider: 'google',
       model: 'gemini-3.6-flash',

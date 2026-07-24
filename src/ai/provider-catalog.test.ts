@@ -10,13 +10,14 @@ import {
 } from './provider-catalog'
 
 describe('AI provider catalog', () => {
-  it('contains the existing and four new providers with local Vite environment variables', () => {
+  it('contains the existing and five new providers with local Vite environment variables', () => {
     expect(AI_PROVIDERS.map((provider) => provider.id)).toEqual([
       'moonshot',
       'google',
       'qwen',
       'openai',
       'anthropic',
+      'xai',
     ])
     expect(AI_PROVIDERS.map((provider) => provider.envVar)).toEqual([
       'VITE_MOONSHOT_API_KEY',
@@ -24,10 +25,12 @@ describe('AI provider catalog', () => {
       'VITE_ALIBABA_API_KEY',
       'VITE_OPENAI_API_KEY',
       'VITE_ANTHROPIC_API_KEY',
+      'VITE_XAI_API_KEY',
     ])
     expect(AI_PROVIDERS.filter((provider) => provider.transport === 'proxy').map(
       (provider) => provider.id,
     )).toEqual(['moonshot'])
+    expect(getAiProvider('xai').models[0]?.id).toBe('grok-4.5')
   })
 
   it('provides a valid default model for every provider', () => {

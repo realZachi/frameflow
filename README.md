@@ -65,13 +65,14 @@ VITE_GOOGLE_GENERATIVE_AI_API_KEY=
 VITE_ALIBABA_API_KEY=
 VITE_OPENAI_API_KEY=
 VITE_ANTHROPIC_API_KEY=
+VITE_XAI_API_KEY=
 ```
 
 Restart the dev server after changing keys. Pick the provider and model in the generation dialog — models with configurable reasoning also expose their effort levels there. If a selected provider has no key, the dialog names the missing variable and disables generation.
 
 How it works, and what to know:
 
-- Google, Qwen, OpenAI, and Anthropic are called directly from the browser via the AI SDK. Only Moonshot goes through the local `/api/moonshot` CORS proxy.
+- Google, Qwen, OpenAI, Anthropic, and xAI are called directly from the browser via the AI SDK. Only Moonshot goes through the local `/api/moonshot` CORS proxy.
 - When you start a run, your description and selected screenshots are sent to that provider. Normal editing, persistence, and export never call any AI service. Provider charges may apply.
 - The `VITE_*` keys are embedded in client code by design — this setup is **localhost-only**. Never commit `.env.local` or deploy a keyed build (see [Self-hosting](#self-hosting)).
 - Prompts can be written in any language; generated canvas copy and summaries are in English.

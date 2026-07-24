@@ -1,4 +1,4 @@
-export type AiProviderId = 'moonshot' | 'google' | 'qwen' | 'openai' | 'anthropic'
+export type AiProviderId = 'moonshot' | 'google' | 'qwen' | 'openai' | 'anthropic' | 'xai'
 
 export type AiReasoningEffort =
   | 'provider-default'
@@ -54,6 +54,13 @@ const STANDARD_REASONING_EFFORTS = [
   'medium',
   'high',
   'xhigh',
+] as const satisfies readonly AiReasoningEffort[]
+
+const XAI_REASONING_EFFORTS = [
+  'provider-default',
+  'low',
+  'medium',
+  'high',
 ] as const satisfies readonly AiReasoningEffort[]
 
 export const AI_PROVIDERS: readonly AiProviderOption[] = [
@@ -171,6 +178,20 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         label: 'Claude Haiku 4.5',
         description: 'Fast and cost-efficient',
         reasoningEfforts: STANDARD_REASONING_EFFORTS,
+      },
+    ],
+  },
+  {
+    id: 'xai',
+    label: 'xAI',
+    envVar: 'VITE_XAI_API_KEY',
+    transport: 'direct',
+    models: [
+      {
+        id: 'grok-4.5',
+        label: 'Grok 4.5',
+        description: 'Recommended · flagship reasoning model',
+        reasoningEfforts: XAI_REASONING_EFFORTS,
       },
     ],
   },

@@ -165,6 +165,10 @@ const createAiModel = async (selection: AiModelSelection) => {
         },
       })(selection.model)
     }
+    case 'xai': {
+      const { createXai } = await import('@ai-sdk/xai')
+      return createXai({ apiKey })(selection.model)
+    }
   }
 }
 

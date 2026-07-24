@@ -24,6 +24,7 @@ describe('AI provider controls', () => {
           qwen: true,
           openai: false,
           anthropic: true,
+          xai: true,
         }}
         onProviderChange={() => undefined}
         onModelChange={() => undefined}
@@ -46,6 +47,7 @@ describe('AI provider controls', () => {
           qwen: false,
           openai: false,
           anthropic: false,
+          xai: false,
         }}
         onProviderChange={() => undefined}
         onModelChange={() => undefined}
@@ -70,6 +72,7 @@ describe('AI provider controls', () => {
           qwen: false,
           openai: true,
           anthropic: false,
+          xai: false,
         }}
         onProviderChange={() => undefined}
         onModelChange={() => undefined}
@@ -93,6 +96,7 @@ describe('AI provider controls', () => {
           qwen: false,
           openai: false,
           anthropic: false,
+          xai: false,
         }}
         onProviderChange={() => undefined}
         onModelChange={() => undefined}

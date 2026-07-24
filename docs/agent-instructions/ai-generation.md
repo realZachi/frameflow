@@ -2,7 +2,7 @@
 
 ## Security and provider boundary
 
-The browser uses the AI SDK's native Google, Alibaba/Qwen, OpenAI, and Anthropic providers directly. Moonshot uses the OpenAI chat provider through the local `/api/moonshot` CORS proxy.
+The browser uses the AI SDK's native Google, Alibaba/Qwen, OpenAI, Anthropic, and xAI providers directly. Moonshot uses the OpenAI chat provider through the local `/api/moonshot` CORS proxy.
 
 - Provider keys live in `.env.local` as `VITE_*` values and are intentionally visible to the local browser.
 - Never commit `.env.local`, reuse a shared production credential, or deploy a build containing provider keys.

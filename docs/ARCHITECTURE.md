@@ -14,12 +14,12 @@ Browser
 └── PNG/ZIP export
 
 Optional AI path
-Browser → AI SDK provider → Google / Qwen / OpenAI / Anthropic
+Browser → AI SDK provider → Google / Qwen / OpenAI / Anthropic / xAI
 Browser → /api/moonshot/* → Vite proxy → Moonshot API
 Browser → /api/ai-run-logs → Vite → ./ai-logs/*.json (developer opt-in)
 ```
 
-The core editor has no backend requirement. The optional AI path is designed for localhost use: configured `VITE_*` provider keys enter the browser bundle. Google, Qwen, OpenAI, and Anthropic are called directly; Moonshot alone uses a local same-origin proxy because its API does not support the required browser CORS flow. Do not deploy an AI-enabled build with these keys.
+The core editor has no backend requirement. The optional AI path is designed for localhost use: configured `VITE_*` provider keys enter the browser bundle. Google, Qwen, OpenAI, Anthropic, and xAI are called directly; Moonshot alone uses a local same-origin proxy because its API does not support the required browser CORS flow. Do not deploy an AI-enabled build with these keys.
 
 ## Editor state and history
 
@@ -126,7 +126,7 @@ Mutating tools return measured element bounds and layout warnings. The model can
 
 Rich text is built from structured highlight input. The model never writes raw HTML. `sanitizeRichText` in `src/utils.ts` is the final whitelist for allowed span styles.
 
-`src/ai/provider-catalog.ts` owns the selectable providers, models, transport metadata, and model-specific reasoning-effort choices. `src/ai/provider-config.ts` reads the matching `VITE_*` key from `.env.local`, and `src/ai/runner.ts` lazily loads the selected native AI SDK provider. The runner passes a non-default effort through the AI SDK's standardized `reasoning` option so each native provider can map it to its own API. Requests go directly from the local browser to Google, Alibaba/Qwen, OpenAI, or Anthropic. Moonshot uses the OpenAI chat provider through the only Vite proxy route.
+`src/ai/provider-catalog.ts` owns the selectable providers, models, transport metadata, and model-specific reasoning-effort choices. `src/ai/provider-config.ts` reads the matching `VITE_*` key from `.env.local`, and `src/ai/runner.ts` lazily loads the selected native AI SDK provider. The runner passes a non-default effort through the AI SDK's standardized `reasoning` option so each native provider can map it to its own API. Requests go directly from the local browser to Google, Alibaba/Qwen, OpenAI, Anthropic, or xAI. Moonshot uses the OpenAI chat provider through the only Vite proxy route.
 
 The keys are intentionally browser-visible for this localhost-only workflow. Never commit `.env.local` or publish an AI-enabled build. A hosted deployment must replace this local credential model with an authenticated backend.
 
