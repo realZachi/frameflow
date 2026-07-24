@@ -23,7 +23,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu'
-import { EXPORT_FORMATS, type ExportFormat } from './export-formats'
+import { EXPORT_FORMATS, type ExportTarget } from './export-formats'
 import { saveStatusLabels, type SaveStatus } from './project-types'
 import { formatProjectTime } from './project-utils'
 import type { ProjectSummary } from '../persistence'
@@ -50,7 +50,7 @@ type AppHeaderProps = {
   onUndo: () => void
   onRedo: () => void
   onOpenAi: () => void
-  onExport: (format: ExportFormat) => void
+  onExport: (target: ExportTarget) => void
   children?: React.ReactNode
 }
 
@@ -150,7 +150,7 @@ function ExportMenu({
       >
         {exporting
           ? <><span className="export-spinner" /><b>{exportProgress}%</b></>
-          : <><Download size={17} /><b>Export all as ZIP</b><ChevronDown className="export-button-chevron" size={13} /></>}
+          : <><Download size={17} /><b>Export</b><ChevronDown className="export-button-chevron" size={13} /></>}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="export-menu-content w-64">
         <DropdownMenuGroup>
@@ -158,6 +158,18 @@ function ExportMenu({
             <strong>Export all screens</strong>
             <span>Choose App Store format</span>
           </DropdownMenuLabel>
+          <DropdownMenuItem
+            className="export-menu-item"
+            onClick={() => onExport('all')}
+          >
+            <span className="export-menu-size">All</span>
+            <span className="export-menu-copy">
+              <strong>All sizes</strong>
+              <small>ZIP with a folder per format</small>
+            </span>
+            <Download size={15} />
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {EXPORT_FORMATS.map((format) => (
             <DropdownMenuItem
               key={format.id}

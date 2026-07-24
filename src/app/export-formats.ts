@@ -20,3 +20,5 @@ export const EXPORT_FORMATS = [
 ] as const
 
 export type ExportFormat = (typeof EXPORT_FORMATS)[number]
+
+export type ExportTarget = ExportFormat | 'all'

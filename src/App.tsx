@@ -223,7 +223,7 @@ export default function App() {
         onUndo={history.undo}
         onRedo={history.redo}
         onOpenAi={ai.openGenerator}
-        onExport={(format) => void slideExport.exportAll(format)}
+        onExport={(target) => void slideExport.exportAll(target)}
       >
         {selectedElement && selectedElementIds.length === 1 && (
           <ElementToolbar

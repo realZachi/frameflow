@@ -1,0 +1,23 @@
+export const getSafeFilename = (name: string, fallback: string) =>
+  name.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') || fallback
+
+export const getSlidePngFilename = (index: number, slideName: string) =>
+  `${String(index + 1).padStart(2, '0')}-${getSafeFilename(slideName, `Screen-${index + 1}`)}.png`
+
+export const getExportZipEntryPath = (
+  formatFilename: string,
+  index: number,
+  slideName: string,
+  nested: boolean,
+) => {
+  const filename = getSlidePngFilename(index, slideName)
+  return nested ? `${formatFilename}/${filename}` : filename
+}
+
+export const getExportZipDownloadName = (
+  projectName: string,
+  formatFilename: string,
+) => {
+  const projectFilename = getSafeFilename(projectName.trim(), 'Frameflow')
+  return `${projectFilename}-${formatFilename}-Screens.zip`
+}

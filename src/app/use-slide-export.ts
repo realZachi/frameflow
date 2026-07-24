@@ -2,7 +2,16 @@ import { getFontEmbedCSS, toBlob } from 'html-to-image'
 import JSZip from 'jszip'
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react'
 import { downloadBlob } from '../utils'
-import { EXPORT_ARTBOARD_WIDTH, type ExportFormat } from './export-formats'
+import {
+  EXPORT_ARTBOARD_WIDTH,
+  EXPORT_FORMATS,
+  type ExportFormat,
+  type ExportTarget,
+} from './export-formats'
+import {
+  getExportZipDownloadName,
+  getExportZipEntryPath,
+} from './export-paths'
 import type { Slide } from '../types'
 
 type SlideExportOptions = {
@@ -12,8 +21,26 @@ type SlideExportOptions = {
   setToast: Dispatch<SetStateAction<string | null>>
 }
 
-const getSafeFilename = (name: string, fallback: string) =>
-  name.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') || fallback
+async function renderSlidePng(
+  slide: Slide,
+  format: ExportFormat,
+  fontEmbedCSS: string | null,
+) {
+  const node = document.getElementById(`artboard-${slide.id}`)
+  if (!node) return null
+
+  return toBlob(node, {
+    pixelRatio: 1,
+    width: EXPORT_ARTBOARD_WIDTH,
+    height: EXPORT_ARTBOARD_WIDTH * format.height / format.width,
+    canvasWidth: format.width,
+    canvasHeight: format.height,
+    backgroundColor: slide.background.color1,
+    ...(fontEmbedCSS ? { fontEmbedCSS } : {}),
+    filter: (candidate) =>
+      !(candidate instanceof HTMLElement && candidate.dataset['aiOverlay']),
+  })
+}
 
 export function useSlideExport({
   slides,
@@ -24,8 +51,12 @@ export function useSlideExport({
   const [exporting, setExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
 
-  const exportAll = useCallback(async (format: ExportFormat) => {
+  const exportAll = useCallback(async (target: ExportTarget) => {
     if (exporting || slides.length === 0) return
+
+    const formats = target === 'all' ? [...EXPORT_FORMATS] : [target]
+    const nested = target === 'all'
+    const total = slides.length * formats.length
 
     setExporting(true)
     setExportProgress(0)
@@ -42,25 +73,19 @@ export function useSlideExport({
         ? await getFontEmbedCSS(firstNode)
         : null
 
-      for (const [index, slide] of slides.entries()) {
-        const node = document.getElementById(`artboard-${slide.id}`)
-        if (!node) continue
-        const blob = await toBlob(node, {
-          pixelRatio: 1,
-          width: EXPORT_ARTBOARD_WIDTH,
-          height: EXPORT_ARTBOARD_WIDTH * format.height / format.width,
-          canvasWidth: format.width,
-          canvasHeight: format.height,
-          backgroundColor: slide.background.color1,
-          ...(fontEmbedCSS ? { fontEmbedCSS } : {}),
-          filter: (candidate) =>
-            !(candidate instanceof HTMLElement && candidate.dataset['aiOverlay']),
-        })
-        if (!blob) throw new Error(`Screen ${index + 1} couldn’t be rendered`)
+      let completed = 0
+      for (const format of formats) {
+        for (const [index, slide] of slides.entries()) {
+          const blob = await renderSlidePng(slide, format, fontEmbedCSS)
+          if (!blob) throw new Error(`Screen ${index + 1} couldn’t be rendered`)
 
-        const filename = getSafeFilename(slide.name, `Screen-${index + 1}`)
-        zip.file(`${String(index + 1).padStart(2, '0')}-${filename}.png`, blob)
-        setExportProgress(Math.round(((index + 1) / slides.length) * 100))
+          zip.file(
+            getExportZipEntryPath(format.filename, index, slide.name, nested),
+            blob,
+          )
+          completed += 1
+          setExportProgress(Math.round((completed / total) * 100))
+        }
       }
 
       const blob = await zip.generateAsync({
@@ -68,9 +93,13 @@ export function useSlideExport({
         compression: 'DEFLATE',
         compressionOptions: { level: 6 },
       })
-      const projectFilename = getSafeFilename(projectName.trim(), 'Frameflow')
-      downloadBlob(blob, `${projectFilename}-${format.filename}-Screens.zip`)
-      setToast(`Exported ${slides.length} PNGs for ${format.label} as a ZIP archive`)
+      const formatFilename = target === 'all' ? 'all-sizes' : target.filename
+      downloadBlob(blob, getExportZipDownloadName(projectName, formatFilename))
+      setToast(
+        target === 'all'
+          ? `Exported ${slides.length} PNGs in ${formats.length} size folders as a ZIP archive`
+          : `Exported ${slides.length} PNGs for ${target.label} as a ZIP archive`,
+      )
     } catch (error) {
       console.error(error)
       setToast('Export failed — please try again')
