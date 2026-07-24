@@ -6,8 +6,10 @@ export type AiReasoningEffort =
   | 'medium'
   | 'high'
   | 'xhigh'
+  | 'max'
 
-export type AiSdkReasoningEffort = AiReasoningEffort
+/** Values accepted by the AI SDK top-level `reasoning` option (`max` uses provider options). */
+export type AiSdkReasoningEffort = Exclude<AiReasoningEffort, 'max'>
 
 export type AiModelSelection = {
   provider: AiProviderId
@@ -38,6 +40,7 @@ export const AI_REASONING_EFFORT_LABELS: Record<AiReasoningEffort, string> = {
   medium: 'Medium',
   high: 'High',
   xhigh: 'XHigh',
+  max: 'Max',
 }
 
 const GOOGLE_REASONING_EFFORTS = [
@@ -60,6 +63,13 @@ const XAI_REASONING_EFFORTS = [
   'high',
 ] as const satisfies readonly AiReasoningEffort[]
 
+/** Kimi K3 API: low / high / max (API default is max). */
+const MOONSHOT_REASONING_EFFORTS = [
+  'low',
+  'high',
+  'max',
+] as const satisfies readonly AiReasoningEffort[]
+
 export const AI_PROVIDERS: readonly AiProviderOption[] = [
   {
     id: 'moonshot',
@@ -71,6 +81,7 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         id: 'kimi-k3',
         label: 'Kimi K3',
         description: 'Existing Frameflow model · local CORS proxy required',
+        reasoningEfforts: MOONSHOT_REASONING_EFFORTS,
       },
     ],
   },
@@ -252,7 +263,7 @@ export const clampAiReasoningEffort = (
 
 export const getAiSdkReasoningEffort = (
   selection: AiModelSelection,
-): AiSdkReasoningEffort | undefined => {
+): AiReasoningEffort | undefined => {
   const model = getAiModel(selection)
   if (!model.reasoningEfforts) {
     if (!selection.reasoningEffort) return undefined
@@ -263,4 +274,26 @@ export const getAiSdkReasoningEffort = (
     throw new Error(`Unsupported reasoning effort for ${model.label}`)
   }
   return reasoningEffort
+}
+
+/** Top-level AI SDK `reasoning` values; `max` is OpenAI-compat providerOptions only. */
+export const toAiSdkReasoningEffort = (
+  reasoningEffort: AiReasoningEffort,
+): AiSdkReasoningEffort | undefined =>
+  reasoningEffort === 'max' ? undefined : reasoningEffort
+
+export type AiStreamReasoningOptions =
+  | { reasoning: AiSdkReasoningEffort }
+  | { providerOptions: { openai: { reasoningEffort: 'max' } } }
+
+/** Options to spread into `streamText` / `generateText` for the selected effort. */
+export const getAiStreamReasoningOptions = (
+  selection: AiModelSelection,
+): AiStreamReasoningOptions | undefined => {
+  const reasoningEffort = getAiSdkReasoningEffort(selection)
+  if (!reasoningEffort) return undefined
+  if (reasoningEffort === 'max') {
+    return { providerOptions: { openai: { reasoningEffort: 'max' } } }
+  }
+  return { reasoning: reasoningEffort }
 }

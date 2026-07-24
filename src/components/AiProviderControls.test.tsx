@@ -91,7 +91,11 @@ describe('AI provider controls', () => {
 
     const moonshotMarkup = renderToStaticMarkup(
       <AiProviderControls
-        selection={{ provider: 'moonshot', model: 'kimi-k3' }}
+        selection={{
+          provider: 'moonshot',
+          model: 'kimi-k3',
+          reasoningEffort: 'high',
+        }}
         availability={{
           moonshot: true,
           google: false,
@@ -105,7 +109,11 @@ describe('AI provider controls', () => {
       />,
     )
 
-    expect(moonshotMarkup).not.toContain('Reasoning effort')
+    expect(moonshotMarkup).toContain('Reasoning effort')
+    expect(moonshotMarkup).toContain('Low')
+    expect(moonshotMarkup).toContain('High')
+    expect(moonshotMarkup).toContain('Max')
+    expect(moonshotMarkup).not.toContain('Medium')
     expect(moonshotMarkup).not.toContain('Provider default')
     expect(moonshotMarkup).toContain('Moonshot · Kimi K3')
   })

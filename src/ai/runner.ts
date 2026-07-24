@@ -13,6 +13,7 @@ import {
   getAiModel,
   getAiProvider,
   getAiSdkReasoningEffort,
+  getAiStreamReasoningOptions,
   type AiModelSelection,
 } from './provider-catalog'
 import { getAiProviderKey } from './provider-config'
@@ -324,6 +325,7 @@ export async function runAiGeneration(options: {
     })
 
     const runController = targetSlideId ? scopeAiControllerToSlide(controller, targetSlideId) : controller
+    const reasoningOptions = getAiStreamReasoningOptions(selection)
     const result = streamText({
       model,
       instructions: buildInstructions(targetSlideId ? { targetSlideId } : {}),
@@ -333,7 +335,7 @@ export async function runAiGeneration(options: {
         ...(onActivity ? { onActivity } : {}),
       }),
       stopWhen: isStepCount(64),
-      ...(reasoning ? { reasoning } : {}),
+      ...(reasoningOptions ?? {}),
       ...(signal ? { abortSignal: signal } : {}),
     })
 

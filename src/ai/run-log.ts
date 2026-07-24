@@ -222,6 +222,7 @@ const isAiReasoningEffort = (value: unknown): value is AiReasoningEffort =>
   || value === 'medium'
   || value === 'high'
   || value === 'xhigh'
+  || value === 'max'
 
 const isFinishReason = (value: unknown): value is FinishReason =>
   value === 'stop'

@@ -7,8 +7,10 @@ import {
   getAiModel,
   getAiProvider,
   getAiSdkReasoningEffort,
+  getAiStreamReasoningOptions,
   getDefaultAiModel,
   isAiProviderId,
+  toAiSdkReasoningEffort,
 } from './provider-catalog'
 
 describe('AI provider catalog', () => {
@@ -66,8 +68,12 @@ describe('AI provider catalog', () => {
     expect(clampAiReasoningEffort(openAiModel, undefined)).toBe('high')
     expect(clampAiReasoningEffort(
       getAiModel({ provider: 'moonshot', model: 'kimi-k3' }),
-      'high',
-    )).toBeUndefined()
+      'medium',
+    )).toBe('high')
+    expect(clampAiReasoningEffort(
+      getAiModel({ provider: 'moonshot', model: 'kimi-k3' }),
+      'max',
+    )).toBe('max')
   })
 
   it('exposes only model-supported reasoning efforts to the AI SDK', () => {
@@ -76,6 +82,11 @@ describe('AI provider catalog', () => {
       'medium',
       'high',
       'xhigh',
+    ])
+    expect(getAiProvider('moonshot').models[0]?.reasoningEfforts).toEqual([
+      'low',
+      'high',
+      'max',
     ])
     expect(getAiSdkReasoningEffort({
       provider: 'openai',
@@ -91,10 +102,24 @@ describe('AI provider catalog', () => {
       model: 'gemini-3.6-flash',
       reasoningEffort: 'xhigh',
     })).toBe('high')
-    expect(() => getAiSdkReasoningEffort({
+    expect(getAiSdkReasoningEffort({
+      provider: 'moonshot',
+      model: 'kimi-k3',
+      reasoningEffort: 'max',
+    })).toBe('max')
+    expect(toAiSdkReasoningEffort('high')).toBe('high')
+    expect(toAiSdkReasoningEffort('max')).toBeUndefined()
+    expect(getAiStreamReasoningOptions({
       provider: 'moonshot',
       model: 'kimi-k3',
       reasoningEffort: 'high',
-    })).toThrow('does not support reasoning effort')
+    })).toEqual({ reasoning: 'high' })
+    expect(getAiStreamReasoningOptions({
+      provider: 'moonshot',
+      model: 'kimi-k3',
+      reasoningEffort: 'max',
+    })).toEqual({
+      providerOptions: { openai: { reasoningEffort: 'max' } },
+    })
   })
 })

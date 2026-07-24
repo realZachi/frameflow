@@ -84,6 +84,7 @@ describe('AI provider configuration', () => {
     })).toEqual({
       provider: 'moonshot',
       model: 'kimi-k3',
+      reasoningEffort: 'high',
     })
   })
 })
