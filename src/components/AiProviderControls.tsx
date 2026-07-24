@@ -1,6 +1,7 @@
 import {
   AI_PROVIDERS,
   AI_REASONING_EFFORT_LABELS,
+  clampAiReasoningEffort,
   findAiModelById,
   getAiModel,
   getAiProvider,
@@ -54,7 +55,7 @@ export const AiProviderControls = ({
   const provider = getAiProvider(selection.provider)
   const model = getAiModel(selection)
   const isConfigured = availability[selection.provider]
-  const reasoningEffort = selection.reasoningEffort ?? 'provider-default'
+  const reasoningEffort = clampAiReasoningEffort(model, selection.reasoningEffort)
   const SelectedIcon = AI_PROVIDER_ICONS[selection.provider]
 
   return (
@@ -101,7 +102,7 @@ export const AiProviderControls = ({
           </SelectContent>
         </Select>
       </div>
-      {model.reasoningEfforts && (
+      {model.reasoningEfforts && reasoningEffort && (
         <div className="ai-modal-field ai-modal-field--compact">
           <span className="ai-provider-effort-label" id="ai-effort-label">
             Reasoning effort

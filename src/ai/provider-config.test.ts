@@ -60,6 +60,7 @@ describe('AI provider configuration', () => {
     })).toEqual({
       provider: 'openai',
       model: 'gpt-5.6-terra',
+      reasoningEffort: 'high',
     })
     expect(getInitialAiSelection({
       moonshot: false,
@@ -71,6 +72,18 @@ describe('AI provider configuration', () => {
     })).toEqual({
       provider: 'google',
       model: 'gemini-3.6-flash',
+      reasoningEffort: 'high',
+    })
+    expect(getInitialAiSelection({
+      moonshot: true,
+      google: true,
+      qwen: false,
+      openai: false,
+      anthropic: false,
+      xai: false,
+    })).toEqual({
+      provider: 'moonshot',
+      model: 'kimi-k3',
     })
   })
 })

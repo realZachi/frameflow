@@ -82,7 +82,7 @@ describe('AI provider controls', () => {
     )
 
     expect(openAiMarkup).toContain('Reasoning effort')
-    expect(openAiMarkup).toContain('Provider default')
+    expect(openAiMarkup).not.toContain('Provider default')
     expect(openAiMarkup).toContain('Low')
     expect(openAiMarkup).toContain('Medium')
     expect(openAiMarkup).toContain('High')

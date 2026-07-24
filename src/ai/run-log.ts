@@ -1,4 +1,5 @@
 import {
+  DEFAULT_AI_REASONING_EFFORT,
   isAiProviderId,
   type AiModelSelection,
   type AiReasoningEffort,
@@ -125,7 +126,7 @@ export const createAiRunLog = ({
     mode,
     provider: selection.provider,
     model: selection.model,
-    reasoningEffort: selection.reasoningEffort ?? 'provider-default',
+    reasoningEffort: selection.reasoningEffort ?? DEFAULT_AI_REASONING_EFFORT,
     request: {
       descriptionCharacters: nonNegativeInteger(descriptionCharacters),
       screenshotCount: nonNegativeInteger(screenshotCount),
@@ -216,8 +217,7 @@ const isAiRunOutcome = (value: unknown): value is AiRunOutcome =>
   value === 'completed' || value === 'failed' || value === 'cancelled'
 
 const isAiReasoningEffort = (value: unknown): value is AiReasoningEffort =>
-  value === 'provider-default'
-  || value === 'minimal'
+  value === 'minimal'
   || value === 'low'
   || value === 'medium'
   || value === 'high'
@@ -251,7 +251,10 @@ export const normalizeAiRunLog = (value: unknown): AiRunLog | null => {
   const mode = value['mode']
   const provider = value['provider']
   const model = value['model']
-  const reasoningEffort = value['reasoningEffort']
+  const rawReasoningEffort = value['reasoningEffort']
+  const reasoningEffort = rawReasoningEffort === 'provider-default'
+    ? DEFAULT_AI_REASONING_EFFORT
+    : rawReasoningEffort
   const request = normalizeRequest(value['request'])
   const outcome = value['outcome']
   const assistantOutput = value['assistantOutput']

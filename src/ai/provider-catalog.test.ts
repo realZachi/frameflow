@@ -59,11 +59,11 @@ describe('AI provider catalog', () => {
     expect(() => findAiModelById('not-a-model')).toThrow('Unknown AI model')
   })
 
-  it('clamps reasoning effort to the selected model', () => {
+  it('clamps reasoning effort to the selected model and defaults to high', () => {
     const openAiModel = getAiModel({ provider: 'openai', model: 'gpt-5.6-terra' })
     expect(clampAiReasoningEffort(openAiModel, 'high')).toBe('high')
-    expect(clampAiReasoningEffort(openAiModel, 'minimal')).toBeUndefined()
-    expect(clampAiReasoningEffort(openAiModel, undefined)).toBeUndefined()
+    expect(clampAiReasoningEffort(openAiModel, 'minimal')).toBe('high')
+    expect(clampAiReasoningEffort(openAiModel, undefined)).toBe('high')
     expect(clampAiReasoningEffort(
       getAiModel({ provider: 'moonshot', model: 'kimi-k3' }),
       'high',
@@ -72,7 +72,6 @@ describe('AI provider catalog', () => {
 
   it('exposes only model-supported reasoning efforts to the AI SDK', () => {
     expect(getAiProvider('openai').models[0]?.reasoningEfforts).toEqual([
-      'provider-default',
       'low',
       'medium',
       'high',
@@ -86,12 +85,12 @@ describe('AI provider catalog', () => {
     expect(getAiSdkReasoningEffort({
       provider: 'openai',
       model: 'gpt-5.6-terra',
-    })).toBeUndefined()
-    expect(() => getAiSdkReasoningEffort({
+    })).toBe('high')
+    expect(getAiSdkReasoningEffort({
       provider: 'google',
       model: 'gemini-3.6-flash',
       reasoningEffort: 'xhigh',
-    })).toThrow('Unsupported reasoning effort')
+    })).toBe('high')
     expect(() => getAiSdkReasoningEffort({
       provider: 'moonshot',
       model: 'kimi-k3',

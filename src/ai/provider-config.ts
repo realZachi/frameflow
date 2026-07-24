@@ -1,6 +1,8 @@
 import {
   AI_PROVIDERS,
+  DEFAULT_AI_REASONING_EFFORT,
   DEFAULT_AI_SELECTION,
+  clampAiReasoningEffort,
   getDefaultAiModel,
   type AiModelSelection,
   type AiProviderId,
@@ -48,9 +50,12 @@ export const getInitialAiSelection = (
 ): AiModelSelection => {
   const provider = AI_PROVIDERS.find((option) => availability[option.id])
   if (!provider) return DEFAULT_AI_SELECTION
+  const model = getDefaultAiModel(provider.id)
+  const reasoningEffort = clampAiReasoningEffort(model, DEFAULT_AI_REASONING_EFFORT)
   return {
     provider: provider.id,
-    model: getDefaultAiModel(provider.id).id,
+    model: model.id,
+    ...(reasoningEffort ? { reasoningEffort } : {}),
   }
 }
 

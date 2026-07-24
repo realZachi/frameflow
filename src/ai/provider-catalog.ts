@@ -1,14 +1,13 @@
 export type AiProviderId = 'moonshot' | 'google' | 'qwen' | 'openai' | 'anthropic' | 'xai'
 
 export type AiReasoningEffort =
-  | 'provider-default'
   | 'minimal'
   | 'low'
   | 'medium'
   | 'high'
   | 'xhigh'
 
-export type AiSdkReasoningEffort = Exclude<AiReasoningEffort, 'provider-default'>
+export type AiSdkReasoningEffort = AiReasoningEffort
 
 export type AiModelSelection = {
   provider: AiProviderId
@@ -31,8 +30,9 @@ export type AiProviderOption = {
   models: readonly AiModelOption[]
 }
 
+export const DEFAULT_AI_REASONING_EFFORT = 'high' as const satisfies AiReasoningEffort
+
 export const AI_REASONING_EFFORT_LABELS: Record<AiReasoningEffort, string> = {
-  'provider-default': 'Provider default',
   minimal: 'Minimal',
   low: 'Low',
   medium: 'Medium',
@@ -41,7 +41,6 @@ export const AI_REASONING_EFFORT_LABELS: Record<AiReasoningEffort, string> = {
 }
 
 const GOOGLE_REASONING_EFFORTS = [
-  'provider-default',
   'minimal',
   'low',
   'medium',
@@ -49,7 +48,6 @@ const GOOGLE_REASONING_EFFORTS = [
 ] as const satisfies readonly AiReasoningEffort[]
 
 const STANDARD_REASONING_EFFORTS = [
-  'provider-default',
   'low',
   'medium',
   'high',
@@ -57,7 +55,6 @@ const STANDARD_REASONING_EFFORTS = [
 ] as const satisfies readonly AiReasoningEffort[]
 
 const XAI_REASONING_EFFORTS = [
-  'provider-default',
   'low',
   'medium',
   'high',
@@ -200,6 +197,7 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
 export const DEFAULT_AI_SELECTION: AiModelSelection = {
   provider: 'google',
   model: 'gemini-3.6-flash',
+  reasoningEffort: DEFAULT_AI_REASONING_EFFORT,
 }
 
 export const isAiProviderId = (value: unknown): value is AiProviderId =>
@@ -245,20 +243,24 @@ export const clampAiReasoningEffort = (
   if (reasoningEffort && model.reasoningEfforts.includes(reasoningEffort)) {
     return reasoningEffort
   }
-  return undefined
+  if (model.reasoningEfforts.includes(DEFAULT_AI_REASONING_EFFORT)) {
+    return DEFAULT_AI_REASONING_EFFORT
+  }
+  if (model.reasoningEfforts.includes('medium')) return 'medium'
+  return model.reasoningEfforts[0]
 }
 
 export const getAiSdkReasoningEffort = (
   selection: AiModelSelection,
 ): AiSdkReasoningEffort | undefined => {
   const model = getAiModel(selection)
-  const reasoningEffort = selection.reasoningEffort ?? 'provider-default'
   if (!model.reasoningEfforts) {
-    if (reasoningEffort === 'provider-default') return undefined
+    if (!selection.reasoningEffort) return undefined
     throw new Error(`${model.label} does not support reasoning effort`)
   }
-  if (!model.reasoningEfforts.includes(reasoningEffort)) {
-    throw new Error(`Unsupported reasoning effort for ${model.label}: ${reasoningEffort}`)
+  const reasoningEffort = clampAiReasoningEffort(model, selection.reasoningEffort)
+  if (!reasoningEffort) {
+    throw new Error(`Unsupported reasoning effort for ${model.label}`)
   }
-  return reasoningEffort === 'provider-default' ? undefined : reasoningEffort
+  return reasoningEffort
 }

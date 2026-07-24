@@ -79,7 +79,7 @@ describe('AI run logs', () => {
       durationMs: 2000,
       provider: 'openai',
       model: 'gpt-test',
-      reasoningEffort: 'provider-default',
+      reasoningEffort: 'high',
       request: {
         descriptionCharacters: 42,
         screenshotCount: 2,
