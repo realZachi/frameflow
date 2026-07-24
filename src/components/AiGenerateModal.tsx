@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type RefObject,
+} from 'react'
 import {
   clampAiReasoningEffort,
   findAiModelById,
@@ -11,6 +17,7 @@ import {
 } from '../ai/provider-config'
 import { runAiGeneration, type AiRunEvent, type AiToolActivity } from '../ai/runner'
 import { fileToDataUrl, uid } from '../utils'
+import { filterAcceptedImageFiles } from './ai-modal-image-files'
 import { AiProviderControls } from './AiProviderControls'
 import { CopyCodingPromptButton } from './CopyCodingPrompt'
 import { StartUp02, Upload, X } from './icons'
@@ -19,6 +26,14 @@ import type { AiEditorController } from '../ai/controller'
 type ImageDraft = { id: string; file: File; name: string; dataUrl: string }
 type LogEntry = { kind: 'status' | 'tool'; text: string }
 type RunPhase = 'idle' | 'running' | 'done' | 'error'
+
+const toImageDrafts = async (files: File[], idPrefix: 'logo' | 'shot'): Promise<ImageDraft[]> =>
+  Promise.all(files.map(async (file) => ({
+    id: uid(idPrefix),
+    file,
+    name: file.name,
+    dataUrl: await fileToDataUrl(file),
+  })))
 
 export type AiGenerateModalProps = {
   open: boolean
@@ -30,6 +45,86 @@ export type AiGenerateModalProps = {
   onActivity?: (activity: AiToolActivity | null) => void
 }
 
+type ImageDropzoneProps = {
+  label: string
+  inputRef: RefObject<HTMLInputElement | null>
+  onFiles: (files: File[]) => void
+}
+
+type LogoPreviewProps = {
+  logo: ImageDraft
+  onRemove: () => void
+}
+
+const ImageDropzone = ({ label, inputRef, onFiles }: ImageDropzoneProps) => {
+  const [isDragging, setIsDragging] = useState(false)
+  const dragDepthRef = useRef(0)
+
+  const resetDragState = () => {
+    dragDepthRef.current = 0
+    setIsDragging(false)
+  }
+
+  const handleDragEnter = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragDepthRef.current += 1
+    if (Array.from(event.dataTransfer.types).includes('Files')) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleDragLeave = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragDepthRef.current -= 1
+    if (dragDepthRef.current <= 0) resetDragState()
+  }
+
+  const handleDragOver = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
+  const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    resetDragState()
+    const files = filterAcceptedImageFiles(event.dataTransfer.files)
+    if (files.length > 0) onFiles(files)
+  }
+
+  return (
+    <button
+      type="button"
+      className={`ai-modal-dropzone${isDragging ? ' ai-modal-dropzone--active' : ''}`}
+      onClick={() => inputRef.current?.click()}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <Upload size={16} />
+      <span>{label}</span>
+    </button>
+  )
+}
+
+const LogoPreview = ({ logo, onRemove }: LogoPreviewProps) => (
+  <div className="ai-modal-logo-slot">
+    <img src={logo.dataUrl} alt={logo.name} />
+    <button
+      type="button"
+      className="ai-modal-logo-slot__remove"
+      onClick={onRemove}
+      aria-label={`Remove ${logo.name}`}
+    >
+      <X size={11} />
+    </button>
+  </div>
+)
+
 type IdleContentProps = {
   isEditMode: boolean
   appName: string
@@ -40,9 +135,9 @@ type IdleContentProps = {
   fileInputRef: RefObject<HTMLInputElement | null>
   onAppNameChange: (appName: string) => void
   onDescriptionChange: (description: string) => void
-  onLogoFile: (event: ChangeEvent<HTMLInputElement>) => void
+  onLogoFiles: (files: File[]) => void
   onRemoveLogo: () => void
-  onFiles: (event: ChangeEvent<HTMLInputElement>) => void
+  onScreenshotFiles: (files: File[]) => void
   onRemoveScreenshot: (id: string) => void
 }
 
@@ -56,9 +151,9 @@ const IdleContent = ({
   fileInputRef,
   onAppNameChange,
   onDescriptionChange,
-  onLogoFile,
+  onLogoFiles,
   onRemoveLogo,
-  onFiles,
+  onScreenshotFiles,
   onRemoveScreenshot,
 }: IdleContentProps) => (
   <>
@@ -82,33 +177,24 @@ const IdleContent = ({
             type="file"
             accept="image/png,image/jpeg,image/webp"
             hidden
-            onChange={onLogoFile}
+            onChange={(event) => {
+              const files = event.target.files
+              if (files?.length) onLogoFiles(Array.from(files))
+              event.target.value = ''
+            }}
           />
-          <button
-            type="button"
-            className="ai-modal-dropzone"
-            onClick={() => logoInputRef.current?.click()}
-          >
-            <Upload size={16} />
-            <span>{logo ? 'Replace logo' : 'Upload app logo'}</span>
-          </button>
+          {logo
+            ? <LogoPreview logo={logo} onRemove={onRemoveLogo} />
+            : (
+                <ImageDropzone
+                  label="Drop or upload app logo"
+                  inputRef={logoInputRef}
+                  onFiles={onLogoFiles}
+                />
+              )}
           <small className="ai-modal-hint">
             The AI will place this logo on the generated screens (not inside device frames).
           </small>
-          {logo && (
-            <div className="ai-modal-thumbs">
-              <div className="ai-modal-thumb ai-modal-thumb--logo">
-                <img src={logo.dataUrl} alt={logo.name} />
-                <button
-                  type="button"
-                  onClick={onRemoveLogo}
-                  aria-label={`Remove ${logo.name}`}
-                >
-                  <X size={11} />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </>
     )}
@@ -142,16 +228,17 @@ const IdleContent = ({
         accept="image/png,image/jpeg,image/webp"
         multiple
         hidden
-        onChange={onFiles}
+        onChange={(event) => {
+          const files = event.target.files
+          if (files?.length) onScreenshotFiles(Array.from(files))
+          event.target.value = ''
+        }}
       />
-      <button
-        type="button"
-        className="ai-modal-dropzone"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <Upload size={16} />
-        <span>{isEditMode ? 'Add screenshot' : 'Choose screenshots'}</span>
-      </button>
+      <ImageDropzone
+        label={isEditMode ? 'Drop or add screenshot' : 'Drop or choose screenshots'}
+        inputRef={fileInputRef}
+        onFiles={onScreenshotFiles}
+      />
       {isEditMode && (
         <small className="ai-modal-hint">
           Only needed if you want to use a new image or app screenshot.
@@ -324,29 +411,19 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
     && (isEditMode || (Boolean(appName.trim()) && logo !== null && screenshots.length > 0))
     && AI_PROVIDER_AVAILABILITY[selection.provider]
 
-  const handleLogoFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleLogoFiles = async (files: File[]) => {
+    const [file] = filterAcceptedImageFiles(files)
     if (!file) return
-    setLogo({
-      id: uid('logo'),
-      file,
-      name: file.name,
-      dataUrl: await fileToDataUrl(file),
-    })
-    event.target.value = ''
+    const [draft] = await toImageDrafts([file], 'logo')
+    if (!draft) return
+    setLogo(draft)
   }
 
-  const handleFiles = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files?.length) return
-    const drafts = await Promise.all(Array.from(files).map(async (file) => ({
-      id: uid('shot'),
-      file,
-      name: file.name,
-      dataUrl: await fileToDataUrl(file),
-    })))
+  const handleScreenshotFiles = async (files: File[]) => {
+    const accepted = filterAcceptedImageFiles(files)
+    if (!accepted.length) return
+    const drafts = await toImageDrafts(accepted, 'shot')
     setScreenshots((current) => [...current, ...drafts])
-    event.target.value = ''
   }
 
   const removeScreenshot = (id: string) => setScreenshots((current) => current.filter((shot) => shot.id !== id))
@@ -466,12 +543,12 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
                 fileInputRef={fileInputRef}
                 onAppNameChange={setAppName}
                 onDescriptionChange={setDescription}
-                onLogoFile={(event) => {
-                  void handleLogoFile(event)
+                onLogoFiles={(files) => {
+                  void handleLogoFiles(files)
                 }}
                 onRemoveLogo={() => setLogo(null)}
-                onFiles={(event) => {
-                  void handleFiles(event)
+                onScreenshotFiles={(files) => {
+                  void handleScreenshotFiles(files)
                 }}
                 onRemoveScreenshot={removeScreenshot}
               />
