@@ -13,13 +13,18 @@ import {
   ChevronDown as ChevronDownIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  ChatGptIcon,
+  ClaudeIcon,
   Cloud as CloudIcon,
   Copy as CopyIcon,
   CursorMagicSelection02Icon,
   Download as DownloadIcon,
+  GoogleGeminiIcon,
+  GrokIcon,
   Home01Icon,
   ImagePlus as ImagePlusIcon,
   Italic as ItalicIcon,
+  KimiAiIcon,
   Layers as Layers3Icon,
   Lock as LockIcon,
   LockKeyhole as LockKeyholeIcon,
@@ -29,6 +34,7 @@ import {
   MoreHorizontalIcon,
   Palette as PaletteIcon,
   Plus as PlusIcon,
+  QwenIcon,
   Redo2 as Redo2Icon,
   SaveIcon,
   Search01Icon,
@@ -70,13 +76,18 @@ export const Check = createIcon(CheckIcon)
 export const ChevronDown = createIcon(ChevronDownIcon)
 export const ChevronLeft = createIcon(ChevronLeftIcon)
 export const ChevronRight = createIcon(ChevronRightIcon)
+export const ChatGpt = createIcon(ChatGptIcon)
+export const Claude = createIcon(ClaudeIcon)
 export const Cloud = createIcon(CloudIcon)
 export const Copy = createIcon(CopyIcon)
 export const CursorMagicSelection02 = createIcon(CursorMagicSelection02Icon)
 export const Download = createIcon(DownloadIcon)
+export const GoogleGemini = createIcon(GoogleGeminiIcon)
+export const Grok = createIcon(GrokIcon)
 export const Home01 = createIcon(Home01Icon)
 export const ImagePlus = createIcon(ImagePlusIcon)
 export const Italic = createIcon(ItalicIcon)
+export const KimiAi = createIcon(KimiAiIcon)
 export const Layers3 = createIcon(Layers3Icon)
 export const Lock = createIcon(LockIcon)
 export const LockKeyhole = createIcon(LockKeyholeIcon)
@@ -86,6 +97,7 @@ export const MonitorSmartphone = createIcon(MonitorSmartphoneIcon)
 export const MoreHorizontal = createIcon(MoreHorizontalIcon)
 export const Palette = createIcon(PaletteIcon)
 export const Plus = createIcon(PlusIcon)
+export const Qwen = createIcon(QwenIcon)
 export const Redo2 = createIcon(Redo2Icon)
 export const Save = createIcon(SaveIcon)
 export const Search01 = createIcon(Search01Icon)

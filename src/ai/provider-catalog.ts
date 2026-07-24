@@ -227,6 +227,27 @@ export const getAiModel = (selection: AiModelSelection): AiModelOption => {
   return model
 }
 
+export const findAiModelById = (
+  modelId: string,
+): { provider: AiProviderOption; model: AiModelOption } => {
+  for (const provider of AI_PROVIDERS) {
+    const model = provider.models.find((option) => option.id === modelId)
+    if (model) return { provider, model }
+  }
+  throw new Error(`Unknown AI model: ${modelId}`)
+}
+
+export const clampAiReasoningEffort = (
+  model: AiModelOption,
+  reasoningEffort: AiReasoningEffort | undefined,
+): AiReasoningEffort | undefined => {
+  if (!model.reasoningEfforts) return undefined
+  if (reasoningEffort && model.reasoningEfforts.includes(reasoningEffort)) {
+    return reasoningEffort
+  }
+  return undefined
+}
+
 export const getAiSdkReasoningEffort = (
   selection: AiModelSelection,
 ): AiSdkReasoningEffort | undefined => {

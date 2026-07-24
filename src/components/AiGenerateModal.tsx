@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
 import {
-  getDefaultAiModel,
+  clampAiReasoningEffort,
+  findAiModelById,
   type AiModelSelection,
   type AiProviderId,
 } from '../ai/provider-catalog'
@@ -350,10 +351,13 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
 
   const removeScreenshot = (id: string) => setScreenshots((current) => current.filter((shot) => shot.id !== id))
 
-  const handleProviderChange = (provider: AiProviderId) => {
+  const handleModelSelect = (provider: AiProviderId, modelId: string) => {
+    const { model } = findAiModelById(modelId)
+    const reasoningEffort = clampAiReasoningEffort(model, selection.reasoningEffort)
     setSelection({
       provider,
-      model: getDefaultAiModel(provider).id,
+      model: modelId,
+      ...(reasoningEffort ? { reasoningEffort } : {}),
     })
   }
 
@@ -447,8 +451,7 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
               <AiProviderControls
                 selection={selection}
                 availability={AI_PROVIDER_AVAILABILITY}
-                onProviderChange={handleProviderChange}
-                onModelChange={(model) => setSelection((current) => ({ ...current, model }))}
+                onModelSelect={handleModelSelect}
                 onReasoningEffortChange={(reasoningEffort) => {
                   setSelection((current) => ({ ...current, reasoningEffort }))
                 }}

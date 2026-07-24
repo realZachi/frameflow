@@ -370,6 +370,7 @@ select:focus-visible {
 .number-field input { color: var(--foreground); }
 
 .segmented-control,
+.ai-effort-segmented,
 .choice-row {
   background: var(--muted);
   border-color: var(--border);
@@ -377,9 +378,11 @@ select:focus-visible {
 }
 
 .segmented-control button,
+.ai-effort-segmented button,
 .choice-row button { color: var(--muted-foreground); }
 
 .segmented-control button.is-active,
+.ai-effort-segmented button.is-active,
 .choice-row button.is-active {
   background: var(--background);
   color: var(--foreground);

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   AI_PROVIDERS,
   DEFAULT_AI_SELECTION,
+  clampAiReasoningEffort,
+  findAiModelById,
   getAiModel,
   getAiProvider,
   getAiSdkReasoningEffort,
@@ -50,6 +52,22 @@ describe('AI provider catalog', () => {
       'Unknown google model',
     )
     expect(getAiProvider('qwen').label).toBe('Qwen')
+    expect(findAiModelById('gpt-5.6-sol')).toEqual({
+      provider: getAiProvider('openai'),
+      model: getAiModel({ provider: 'openai', model: 'gpt-5.6-sol' }),
+    })
+    expect(() => findAiModelById('not-a-model')).toThrow('Unknown AI model')
+  })
+
+  it('clamps reasoning effort to the selected model', () => {
+    const openAiModel = getAiModel({ provider: 'openai', model: 'gpt-5.6-terra' })
+    expect(clampAiReasoningEffort(openAiModel, 'high')).toBe('high')
+    expect(clampAiReasoningEffort(openAiModel, 'minimal')).toBeUndefined()
+    expect(clampAiReasoningEffort(openAiModel, undefined)).toBeUndefined()
+    expect(clampAiReasoningEffort(
+      getAiModel({ provider: 'moonshot', model: 'kimi-k3' }),
+      'high',
+    )).toBeUndefined()
   })
 
   it('exposes only model-supported reasoning efforts to the AI SDK', () => {

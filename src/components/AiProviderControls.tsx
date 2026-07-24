@@ -1,125 +1,131 @@
 import {
   AI_PROVIDERS,
   AI_REASONING_EFFORT_LABELS,
+  findAiModelById,
   getAiModel,
   getAiProvider,
-  isAiProviderId,
   type AiModelSelection,
   type AiProviderId,
   type AiReasoningEffort,
 } from '../ai/provider-catalog'
-import { AlertCircle } from './icons'
+import {
+  AlertCircle,
+  ChatGpt,
+  Claude,
+  GoogleGemini,
+  Grok,
+  KimiAi,
+  Qwen,
+} from './icons'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from './ui/select'
 import type { AiProviderAvailability } from '../ai/provider-config'
+import type { ComponentType } from 'react'
+
+const AI_PROVIDER_ICONS: Record<AiProviderId, ComponentType<{ className?: string; size?: number }>> = {
+  moonshot: KimiAi,
+  google: GoogleGemini,
+  qwen: Qwen,
+  openai: ChatGpt,
+  anthropic: Claude,
+  xai: Grok,
+}
 
 export type AiProviderControlsProps = {
   selection: AiModelSelection
   availability: AiProviderAvailability
-  onProviderChange: (providerId: AiProviderId) => void
-  onModelChange: (modelId: string) => void
+  onModelSelect: (providerId: AiProviderId, modelId: string) => void
   onReasoningEffortChange: (reasoningEffort: AiReasoningEffort) => void
 }
 
 export const AiProviderControls = ({
   selection,
   availability,
-  onProviderChange,
-  onModelChange,
+  onModelSelect,
   onReasoningEffortChange,
 }: AiProviderControlsProps) => {
   const provider = getAiProvider(selection.provider)
   const model = getAiModel(selection)
   const isConfigured = availability[selection.provider]
   const reasoningEffort = selection.reasoningEffort ?? 'provider-default'
+  const SelectedIcon = AI_PROVIDER_ICONS[selection.provider]
 
   return (
     <div className="ai-provider-controls">
-      <div className={`ai-provider-grid${model.reasoningEfforts ? ' ai-provider-grid--with-effort' : ''}`}>
-        <div className="ai-modal-field ai-modal-field--compact">
-          <label htmlFor="ai-provider-trigger">Provider</label>
-          <Select
-            value={selection.provider}
-            onValueChange={(value) => {
-              if (isAiProviderId(value)) onProviderChange(value)
-            }}
+      <div className="ai-modal-field ai-modal-field--compact">
+        <label htmlFor="ai-model-trigger">Model</label>
+        <Select
+          value={selection.model}
+          onValueChange={(value) => {
+            if (typeof value !== 'string') return
+            const match = findAiModelById(value)
+            onModelSelect(match.provider.id, match.model.id)
+          }}
+        >
+          <SelectTrigger
+            id="ai-model-trigger"
+            className="ai-provider-trigger"
+            aria-label="AI model"
           >
-            <SelectTrigger
-              id="ai-provider-trigger"
-              className="ai-provider-trigger"
-              aria-label="AI provider"
-            >
-              <SelectValue>{provider.label}</SelectValue>
-            </SelectTrigger>
-            <SelectContent align="start" className="ai-modal-select-content">
-              {AI_PROVIDERS.map((option) => (
-                <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="ai-modal-field ai-modal-field--compact">
-          <label htmlFor="ai-model-trigger">Model</label>
-          <Select
-            value={selection.model}
-            onValueChange={(value) => {
-              if (
-                typeof value === 'string'
-                && provider.models.some((option) => option.id === value)
-              ) {
-                onModelChange(value)
-              }
-            }}
-          >
-            <SelectTrigger
-              id="ai-model-trigger"
-              className="ai-provider-trigger"
-              aria-label="AI model"
-            >
-              <SelectValue>{model.label}</SelectValue>
-            </SelectTrigger>
-            <SelectContent align="end" className="ai-modal-select-content">
-              {provider.models.map((option) => (
-                <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {model.reasoningEfforts && (
-          <div className="ai-modal-field ai-modal-field--compact">
-            <label htmlFor="ai-effort-trigger">Effort</label>
-            <Select
-              value={reasoningEffort}
-              onValueChange={(value) => {
-                const supportedEffort = model.reasoningEfforts?.find(
-                  (option) => option === value,
-                )
-                if (supportedEffort) onReasoningEffortChange(supportedEffort)
-              }}
-            >
-              <SelectTrigger
-                id="ai-effort-trigger"
-                className="ai-provider-trigger"
-                aria-label="Reasoning effort"
-              >
-                <SelectValue>{AI_REASONING_EFFORT_LABELS[reasoningEffort]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent align="end" className="ai-modal-select-content">
-                {model.reasoningEfforts.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {AI_REASONING_EFFORT_LABELS[option]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+            <SelectValue>
+              <SelectedIcon className="ai-provider-icon" size={15} />
+              <span>{`${provider.label} · ${model.label}`}</span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent align="start" className="ai-modal-select-content">
+            {AI_PROVIDERS.map((option) => {
+              const ProviderIcon = AI_PROVIDER_ICONS[option.id]
+              return (
+                <SelectGroup key={option.id}>
+                  <SelectLabel>
+                    <ProviderIcon className="ai-provider-icon" size={14} />
+                    <span>
+                      {availability[option.id] ? option.label : `${option.label} · key missing`}
+                    </span>
+                  </SelectLabel>
+                  {option.models.map((modelOption) => (
+                    <SelectItem key={modelOption.id} value={modelOption.id}>
+                      {modelOption.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              )
+            })}
+          </SelectContent>
+        </Select>
       </div>
+      {model.reasoningEfforts && (
+        <div className="ai-modal-field ai-modal-field--compact">
+          <span className="ai-provider-effort-label" id="ai-effort-label">
+            Reasoning effort
+          </span>
+          <div
+            className="ai-effort-segmented"
+            role="radiogroup"
+            aria-labelledby="ai-effort-label"
+          >
+            {model.reasoningEfforts.map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={reasoningEffort === option}
+                className={reasoningEffort === option ? 'is-active' : undefined}
+                onClick={() => onReasoningEffortChange(option)}
+              >
+                {AI_REASONING_EFFORT_LABELS[option]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <small className="ai-provider-description">{model.description}</small>
       {!isConfigured && (
         <div className="ai-provider-warning" role="alert">

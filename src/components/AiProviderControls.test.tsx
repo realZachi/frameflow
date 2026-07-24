@@ -6,6 +6,8 @@ import type { ComponentProps, ReactNode } from 'react'
 vi.mock('./ui/select', () => ({
   Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectGroup: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectLabel: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   SelectItem: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   SelectTrigger: ({ children, ...props }: ComponentProps<'button'>) => (
     <button {...props}>{children}</button>
@@ -26,8 +28,7 @@ describe('AI provider controls', () => {
           anthropic: true,
           xai: true,
         }}
-        onProviderChange={() => undefined}
-        onModelChange={() => undefined}
+        onModelSelect={() => undefined}
         onReasoningEffortChange={() => undefined}
       />,
     )
@@ -35,6 +36,7 @@ describe('AI provider controls', () => {
     expect(markup).toContain('API key missing.')
     expect(markup).toContain('OPENAI_API_KEY')
     expect(markup).toContain('.env.local')
+    expect(markup).toContain('OpenAI · key missing')
   })
 
   it('does not show a missing-key warning for a configured provider', () => {
@@ -49,16 +51,16 @@ describe('AI provider controls', () => {
           anthropic: false,
           xai: false,
         }}
-        onProviderChange={() => undefined}
-        onModelChange={() => undefined}
+        onModelSelect={() => undefined}
         onReasoningEffortChange={() => undefined}
       />,
     )
 
     expect(markup).not.toContain('API key missing.')
+    expect(markup).toContain('Google · Gemini 3.6 Flash')
   })
 
-  it('shows model-specific reasoning efforts and omits them for Moonshot', () => {
+  it('shows model-specific reasoning effort chips and omits them for Moonshot', () => {
     const openAiMarkup = renderToStaticMarkup(
       <AiProviderControls
         selection={{
@@ -74,8 +76,7 @@ describe('AI provider controls', () => {
           anthropic: false,
           xai: false,
         }}
-        onProviderChange={() => undefined}
-        onModelChange={() => undefined}
+        onModelSelect={() => undefined}
         onReasoningEffortChange={() => undefined}
       />,
     )
@@ -86,6 +87,7 @@ describe('AI provider controls', () => {
     expect(openAiMarkup).toContain('Medium')
     expect(openAiMarkup).toContain('High')
     expect(openAiMarkup).toContain('XHigh')
+    expect(openAiMarkup).toContain('role="radiogroup"')
 
     const moonshotMarkup = renderToStaticMarkup(
       <AiProviderControls
@@ -98,13 +100,13 @@ describe('AI provider controls', () => {
           anthropic: false,
           xai: false,
         }}
-        onProviderChange={() => undefined}
-        onModelChange={() => undefined}
+        onModelSelect={() => undefined}
         onReasoningEffortChange={() => undefined}
       />,
     )
 
     expect(moonshotMarkup).not.toContain('Reasoning effort')
     expect(moonshotMarkup).not.toContain('Provider default')
+    expect(moonshotMarkup).toContain('Moonshot · Kimi K3')
   })
 })
